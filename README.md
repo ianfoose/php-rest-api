@@ -57,7 +57,7 @@ An auth route is provided to do any authentication at the top level,
 such as checking api keys or credentials.
 
 ```php
-Router::auth('/', function($req) {
+Router::auth(function($req) {
   // check api key or something here...
 });
 
@@ -71,6 +71,68 @@ $api->run();
 ```
 
 ### DataHelper
+
+The DatabaseHelper class is used to access a mysql database, and uses the PDO class to connect and perform databse operations. 
+
+To create a new insatnce and connection,  
+
+```php
+$dataHelper = new DatabaseHelper($url, $username, $password, $database);
+```
+
+To query the database,
+
+```php
+$dataHelper->query($queryString);
+```
+
+Error Handling,
+
+To access error data, use the ```errorCode``` property for the associated HTTP status code for the error and  
+the ```errorMessage``` for a an description.  
+
+```php
+if($result = $dataHelper->query($queryString,$params)) {
+  $result->fetch();
+} else {
+  echo $dataHelper->errorMessage;
+  echo $dataHelper->errorCode;
+}
+```
+
+Finding one row of data,
+
+To find a single row of data use the 'find' method.
+
+```php
+if($dataHelper->find('*','id',$id,$tableName,'Not found message')) {
+  echo 'item exists';
+} else {
+  echo $dataHelper->errorMessage;
+}
+```
+
+Transactions
+
+To start a transaction:
+
+```php
+$dataHelper->beginTransaction();
+```
+
+To rollback a transcation:
+
+```php
+$dataHelper->rollback();
+```
+
+To commit a transaction:
+
+```php
+$dataHelper->commit();
+```
+
+
 
 ### Utilities
 
