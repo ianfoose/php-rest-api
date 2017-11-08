@@ -35,7 +35,7 @@ By default it's set to UTC.
 
 Put this as the first thing in the constructor.
 
-```  
+```php  
 Router::set('/',function() {
   header("Access-Control-Allow-Origin: *");
 });
@@ -45,7 +45,7 @@ Put any other routes in the constructor method of the class.
 
 A general catch all route for blank routes.
 
-```
+```php
 Router::all('/',function() {
   return 'Chicken In A Shoebox API';
 });
@@ -56,7 +56,7 @@ Router::all('/',function() {
 An auth route is provided to do any authentication at the top level,  
 such as checking api keys or credentials.
 
-```
+```php
 Router::auth('/', function($req) {
   // check api key or something here...
 });
@@ -65,7 +65,7 @@ Router::auth('/', function($req) {
 
 Finally...  Run the API!
 
-```
+```php
 $api = new API();
 $api->run();
 ```
