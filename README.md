@@ -1,5 +1,5 @@
 # About
-A REST API framework in PHP
+A REST API framework for PHP
 
 ## Use
 
