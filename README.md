@@ -1,4 +1,4 @@
-# php-rest-api
+# About
 A REST API framework in PHP
 
 ## Use
