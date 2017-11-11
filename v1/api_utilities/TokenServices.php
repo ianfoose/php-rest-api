@@ -12,8 +12,8 @@ require_once('TableNames.php');
 class TokenServices {
 	protected static $dataHelper;
 
-	const TOKEN_SECRET = 'secret'; // SET
-	const PREFIX = 'token_prefix'; // SET
+	const TOKEN_SECRET = 'chicken'; // SET
+	const PREFIX = 'chicken_in_a_shoebox'; // SET
 
 	/**
 	* Constructor
@@ -58,6 +58,12 @@ class TokenServices {
 		return false;
 	}
 
+	/**
+	* Validates a refresh token
+	*
+	* @param $rToken string Refresh Token
+	* @return bool
+	*/
 	public function validateRefreshToken($rToken) {
 		$token = self::decodeToken($rToken);
 
@@ -75,6 +81,12 @@ class TokenServices {
 		return false;
 	}
 
+	/**
+	* Refreshes a token
+	*
+	* @param $rToken string Refresh Token
+	* @return array | Exception
+	*/
 	public function refreshToken($rToken) {
 		if(self::validateRefreshToken($rToken)) {
 			if($dToken = self::decodeToken($rToken)) {
@@ -110,7 +122,7 @@ class TokenServices {
 	* @param $data array body data array
 	* @return string
 	*/
-	public function createToken($id, $data=null) {
+	public static function createToken($id, $data=null) {
 		return $this->create($id,$data);
 	}
 
@@ -126,8 +138,8 @@ class TokenServices {
 		try {
 			$this->save($id,$token);
 			return $token;
-		} catch(Excpetion $ex) {
-			return new Response($ex->getCode(),$ex->getMessage());
+		} catch(Excpetion $e) {
+			throw new Exception($e->getMessage(), $e->getCode());
 		}
 	}
 
