@@ -12,8 +12,8 @@ require_once('TableNames.php');
 class TokenServices {
 	protected static $dataHelper;
 
-	const TOKEN_SECRET = 'chicken'; // SET
-	const PREFIX = 'chicken_in_a_shoebox'; // SET
+	const TOKEN_SECRET = 'secret'; // SET
+	const PREFIX = 'prefix'; // SET
 
 	/**
 	* Constructor
