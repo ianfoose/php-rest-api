@@ -43,7 +43,10 @@ class IPServices {
 	public function logVistitor() {
 		$ip = IPServices::getIP();
 		$client = IPServices::getClient();
-		return self::$dataHelper->query("INSERT INTO ".VISITORS." SET ip='$ip',client='$client'");
+		if(self::$dataHelper->query("INSERT INTO ".VISITORS." SET ip='$ip',client='$client'")) {
+			return 'Logged';
+		}	
+		throw new Exception(self::$dataHelper->errorMessage,self::$dataHelper->errorCode);
 	}
 
 	/**
@@ -62,11 +65,15 @@ class IPServices {
 	/**
 	* Gets visistors
 	*
-	* @param int $startID Start ID
+	* @param int $sinceID Since ID
+	* @param int $maxID Max ID
+	* @param int $limit Limit
 	* @return array | Exception
 	*/
-	public function getVisitors($startID, $maxID, $limit) {
-		if($result = self::$dataHelper->query("SELECT * FROM ".VISITORS)) {
+	public function getVisitors($sinceID=0, $maxID=0, $limit=35) {
+		$o = self::$dataHelper->getOffset($sinceID,$maxID,VISITORS,'id',$limit);
+
+		if($result = self::$dataHelper->query("SELECT * FROM ".VISITORS.$o[0],$o[1])) {
 			$visits = array();
 
 			while($visit = $result->fetch()) {
@@ -85,7 +92,8 @@ class IPServices {
 	* @return object
 	*/
 	public function getVisitorData($item) {
-		$item['string_date'] = formateDate($item['date']);
+		if(!empty($item['date']))
+			$item['string_date'] = formateDate($item['date']);
 
 		return $item;
 	}
