@@ -242,6 +242,96 @@ echo 'Code: '.$dataHelper->errorCode.' '.$dataHelper->errorMessage;
 
 ## Utilities
 
+Contains formatting utilities for different data types.  
+
+### Dates
+
+Used for formating a date. 
+
+```php
+$stringDate = formatDate($date);
+```
+
+A format can be passed as the second parameter for manual formating of the date.  
+
+```php
+$stringDate = formatDate($date, 'Y-m-d');
+```
+
+Time formatting
+
+```php
+
+```
+
+### File Size
+
+The last parameter, 'suffix' is used for putting a readable suffix on, such as 'mb' or 'GB'.  
+
+```php
+$size = formatSize($bytes, true);
+```
+
+### Bools
+
+A string representing a bool from an int.
+
+```php
+$bool = getStringBoolFromInt(1);
+```
+
+A string value from a boolean.  
+
+```php
+$bool = getStringBoolFromBool(true);
+```
+
+A boolean value from an int.  
+
+```php
+$bool = getBoolFromInt(1); 
+```
+
+A bool from a string.  
+
+```php
+$bool = getBoolFromString('true');
+```
+
+An int value for a bool.  
+
+```php
+$bool = getIntFromBool(true);
+```
+
+### Query String Getters
+
+Used to get some values from the query string such as limit,sinceID,maxID, and deleted.
+
+## Limit
+
+```php
+$limit = getLimit();
+```
+
+## Since ID
+
+```php
+$sinceID = getSinceID();
+```
+
+## Max ID
+
+```php
+$maxID = getMaxID();
+```
+
+## Deleted
+
+```php
+$deleted = getDeleted();
+```
+
 ## Partial Response
 
 ## Output Types
