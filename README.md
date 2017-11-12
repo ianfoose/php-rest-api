@@ -329,6 +329,48 @@ try {
 }
 ```
 
+### IP Services
+
+IP Services are used for tracking of clients, sucha as source IP address and what client is being used.  
+IP Services gets the info and can store and retrieve the info.
+
+## Get IP Address
+
+```php
+$ip = IPServices::getIP()
+```
+
+## Get Client
+
+```php
+$client = IPServices::getClient();
+```
+
+### IP Storage Functions
+
+Requires an instance object of ```IPServices``` class.
+
+## Save Visitor
+
+```php
+$ipServices->logVistitor();
+```
+
+## Get Visitor Logs
+
+Method can be called without any paramters and should be if being called the first time.  
+Method takes parameters, ```$sinceID```,```$maxID```, and ```$limit```
+
+```php
+$logs = $ipServices->getVisitors();
+```
+
+## Get a Visitor
+
+```php
+$visitor = $ipServices->getVisitor($logID);
+```
+
 ### Email Services
 
 EmailServices manages email subscriptions and an email template system to save email templates and fill the with data.
