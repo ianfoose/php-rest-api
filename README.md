@@ -1,10 +1,53 @@
 # About
 A REST API framework for PHP
 
-## Use
+### Use
 
 Deploy the contents of the directory, v1 folder and the .htaccess file into the host of your choice.  
 The .htaccess file is important to make the api work.
+
+## Install
+
+To make sure that all features are fully functional, build a database and run the script ```default_database.sql```  
+in that database to build the required data tables for he framework.
+
+## Constants
+
+Located in the ```Constants.php``` file are the table names and a few other configuration strings required for the framework.  
+
+While most are required some are optional.
+
+### Required Constants
+
+For accessing the database
+
+URL
+USER
+PASSWORD 
+DB 
+
+### Optional Constants
+
+For Email templates and subscriptions
+
+EMAIL_TEMPLATES 
+EMAIL_TEMPLATE_EDITS
+
+For Push Notifications
+
+PUSH_UUID 
+
+For Tokens
+
+TOKENS
+
+For Error Logging
+
+ERROR_URL
+ERROR_USER 
+ERROR_PASSWORD 
+ERROR_DB 
+ERRORS 
 
 ## API File
 
