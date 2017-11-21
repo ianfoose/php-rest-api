@@ -1,17 +1,17 @@
 # About
 A REST API framework for PHP
 
-### Use
+## Use
 
 Deploy the contents of the directory, v1 folder and the .htaccess file into the host of your choice.  
 The .htaccess file is important to make the api work.
 
-## Install
+### Install
 
 To make sure that all features are fully functional, build a database and run the script ```default_database.sql```  
 in that database to build the required data tables for he framework.
 
-## Constants
+### Constants
 
 Located in the ```Constants.php``` file are the table names and a few other configuration strings required for the framework.  
 
@@ -237,7 +237,7 @@ if($dataHelper->beginTransaction()) {
 echo 'Code: '.$dataHelper->errorCode.' '.$dataHelper->errorMessage;
 ```
 
-### Error Logging
+## Error Logging
 
 
 ## Utilities
@@ -355,7 +355,7 @@ Located under 'api_utilities' the 'TokenServices' class provides a means for gen
 
 ### Setup
 
-Before use set a custom 'prefix' and 'secret' value for the tokens.
+Before use set a custom 'prefix' and 'secret' value for the tokens in ```Constants.php```.
 
 ```php
 const TOKEN_SECRET  = 'your_secret';
@@ -386,8 +386,15 @@ if(TokenServices::validate($token)) {
 
 ### Generate A Refresh Token
 
-```php
+This method takes a parameter of ```$id``` which is a unique ID for a user and an optional  
+parameter of ```$data``` for any user-defined body data.
 
+```php
+try {
+  $refreshToken = $tokenServices->createRefreshToken($id, $data);
+} catch(Exception $e) {
+  echo 'Error '.$e->getMessage();
+}
 ```
 
 ### Validate A Refresh Token
@@ -468,3 +475,80 @@ EmailServices manages email subscriptions and an email template system to save e
 
 
 ### Notifications
+
+This class provides a simple way to send emails and push notifications.
+
+## Setup
+
+When intializing this class there are a few settings that need to be passed to it.  
+Depending on what platform(s) you need, you will need to setup up the appropriate  
+configuration array for each.
+
+```php
+$email = array(
+  'ssl'=>true
+  'username'=>'user@server.com',
+  'passsord'=>'emailpassword',
+  'server'=>'mail@server.com',
+  'port'=>465
+);
+
+$android = array(
+  'key'=>'api_key',
+  'url'=>'gcm_url'
+);
+
+$ios = array(
+  'ssl'=>'path_to_cert',
+  'passpharse'=>'cert_passphrase',
+  'url'=>'apns_url'
+);
+
+$windows = array(
+  'channel'=>'channel_name'
+);
+
+$notificationServices = new NotificationServices($email, $android, $ios, $windows);
+```
+
+## APNS
+
+## Send Notification
+
+```php
+
+```
+
+## Microsoft
+
+## Send Notification
+
+```php
+
+```
+
+## Google Messages
+
+## Send Notification
+
+Sending an android notification takesa few parameters.  
+The first is the data to send, the second is the  
+device id which you provide from some source, and the third  
+determines if it's displayed on the lock screen as a notification  
+or just a background notification if set to 'false'.
+
+```php
+try {
+  $notificationServices->android($data, $reg_id, true);
+} catch(Exception $e) {
+  echo 'Error '.$e->getMessage();
+}
+```
+
+## Email
+
+## Send Email
+
+```php
+
+```
