@@ -21,33 +21,67 @@ While most are required some are optional.
 
 For accessing the database
 
-URL
-USER
-PASSWORD 
-DB 
+```php
+const URL = 'database_url:port';
+```
+
+```php
+const USER = 'db_user';
+```
+
+```php
+const PASSWORD = 'db_password';
+```
+
+```php
+const DB = 'db_name';
+```
 
 ### Optional Constants
 
 For Email templates and subscriptions
 
-EMAIL_TEMPLATES 
-EMAIL_TEMPLATE_EDITS
+```php
+const EMAIL_TEMPLATES = 'email_templates_tbl';
+```
+
+```php
+const EMAIL_TEMPLATE_EDITS = 'email_template_edits';
+```
 
 For Push Notifications
 
-PUSH_UUID 
+```php
+const PUSH_UUID = 'push_uuid'; 
+```
 
 For Tokens
 
-TOKENS
+```php
+const TOKENS = 'tokens'
+```
 
 For Error Logging
 
-ERROR_URL
-ERROR_USER 
-ERROR_PASSWORD 
-ERROR_DB 
-ERRORS 
+```php
+const ERROR_URL = 'error_db_url:port';
+```
+
+```php
+const ERROR_USER = 'error_db_user';
+```
+
+```php
+const ERROR_PASSWORD = 'error_db_password';
+```
+
+```php
+const ERROR_DB = 'error_db_name';
+```
+
+```php
+const ERRORS = 'errors_tbl_name';
+```
 
 ## API File
 
