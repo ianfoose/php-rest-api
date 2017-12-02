@@ -271,6 +271,34 @@ if($dataHelper->beginTransaction()) {
 echo 'Code: '.$dataHelper->errorCode.' '.$dataHelper->errorMessage;
 ```
 
+## API Response
+
+The API Response class is used mainly to return custom responses  
+consiting of a status code other than 200 and or a non standard payload.  
+The response object allows you to also send back headers as well as a  
+manual response code.
+
+### Response Headers
+
+```php
+
+```
+
+### Response Code
+
+When setting a standard HTTP Response code, no error message is  
+needed if you don't want to override the default message.
+
+```php
+  $response = new Response(304);
+```
+
+### Response and Data
+
+```php
+$response = new Response(200,$someData);
+```
+
 ## Error Logging
 
 
