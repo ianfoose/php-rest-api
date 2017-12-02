@@ -194,7 +194,7 @@ if($result = $dataHelper->query("SELECT * FROM users")) {
 }
 ```
 
-Query With Parameters
+### Query With Parameters
 
 to prevent SQL injections, use the parameters array to pass parameters to the query.
 
@@ -207,7 +207,7 @@ if($result = $dataHelper->query("SELECT * FROM users WHERE id=:id",array(':id'=>
 }
 ```
 
-Error Handling,
+### Error Handling
 
 To access error data, use the ```errorCode``` property for the associated HTTP status code for the error and  
 the ```errorMessage``` for a an description.  
@@ -219,6 +219,9 @@ if($result = $dataHelper->query($queryString,$params)) {
   echo 'Code: '.$dataHelper->errorCode.' '.$dataHelper->errorMessage;
 }
 ```
+
+If the constants for Error Logging are enabled in ```Constants.php```  
+then error logging will work automatically. 
 
 Finding one row of data,
 
@@ -275,14 +278,8 @@ echo 'Code: '.$dataHelper->errorCode.' '.$dataHelper->errorMessage;
 
 The API Response class is used mainly to return custom responses  
 consiting of a status code other than 200 and or a non standard payload.  
-The response object allows you to also send back headers as well as a  
+The response object also allows you to send back data as well as a  
 manual response code.
-
-### Response Headers
-
-```php
-
-```
 
 ### Response Code
 
@@ -301,6 +298,8 @@ $response = new Response(200,$someData);
 
 ## Error Logging
 
+To use error logging, be sure to set the conection information  
+in ```Constants.php```.
 
 ## Utilities
 
