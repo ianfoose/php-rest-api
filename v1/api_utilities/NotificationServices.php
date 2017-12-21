@@ -5,16 +5,20 @@
 * @version 1.0
 */
 
-require_once('./TableNames.php');
+require_once('./Constants.php');
 require_once('DatabaseHelper.php');
 
 class NotificationServices {
 	// (Android)API access key from Google API's Console.
 	private static $API_ACCESS_KEY = '';
+	// (Android) GCM URL, defaults to firebase
+	private static $gcmURL = 'https://fcm.googleapis.com/fcm/send';
 	// (iOS) ssl cert
 	private static $ssl;
 	// (iOS) Private key's passphrase.
 	private static $passphrase = '';
+	// (iOS) APNS URL, defaults to sandbox
+	private static $apnsURL = 'ssl://gateway.sandbox.push.apple.com:2195';
 	// (Windows Phone 8) The name of our push channel.
     private static $channelName = '';
 	// Email Server port
@@ -27,8 +31,7 @@ class NotificationServices {
     private static $emailUsername = '';
     // Email Server Password
     private static $emailPassword = ''; 
-    // use google cloud messenger 
-    private static $gcm = false;
+    
 
     protected static $dataHelper;
 
@@ -44,11 +47,12 @@ class NotificationServices {
 		if(!empty($ios)) {
 			self::$ssl = @$ios['ssl'];
 			self::$passphrase = @$ios['passphrase'];
+			self::$apnsURL = @$ios['url'];
 		}
 
 		if(!empty($android)) {
-			self::$gcm = @$android['gcm'];
 			self::$API_ACCESS_KEY = @$android['key'];
+			self::$gcmURL = @$android['url'];
 		}
 
 		if(!empty($windows)) {
@@ -60,13 +64,6 @@ class NotificationServices {
 	
     // Sends Push notification for Android users
 	public static function android($data, $reg_id, $notification=false) {
-		// firebase url
-	    $url = "https://fcm.googleapis.com/fcm/send";
-
-		if(self::$gcm) { // GCM url
-	    	$url = 'https://android.googleapis.com/gcm/send';
-		}
-
 	    $vibrate = 1;
 	    if(!empty(@$data['vibrate']))
 	    	$vibrate = $data['vibrate'];
@@ -100,7 +97,7 @@ class NotificationServices {
 	    	}
 	    }
 	
-	    $result = self::useCurl($url, $headers, json_encode($fields)); 
+	    $result = self::useCurl(self::$gcmURL, $headers, json_encode($fields)); 
 
 	    if(@$result['success'] == 0 && @$result['failure'] == 1 && PUSH_UUID) {
 	    	self::deletePushToken($reg_id);
@@ -153,7 +150,7 @@ class NotificationServices {
 
 		// Open a connection to the APNS server 2195
 		$fp = stream_socket_client(
-			'ssl://gateway.sandbox.push.apple.com:2195', $err,
+			self::$apnsURL, $err,
 			$errstr, 60, STREAM_CLIENT_CONNECT|STREAM_CLIENT_PERSISTENT, $ctx);
 
 		if (!$fp)
