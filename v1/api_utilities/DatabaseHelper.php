@@ -316,6 +316,38 @@ class DatabaseHelper {
 	}
 
 	/**
+	* Parse Partial response string
+	*
+	* @param string $unparsed Input String
+	* @return array
+	*/
+	public function parsePartialResponse($unparsed) {
+	    $requestedFields = explode(',', trim($unparsed, '()'));
+	    $models = [];
+	    
+	    foreach ($requestedFields as $key => $fieldName) {
+	      // Related model: emails.email,email.id etc.
+	      $dotPos = strpos($fieldName, '.');
+	      if ($dotPos !== false) {
+	        $modelName = substr($fieldName, 0, $dotPos);
+	        $fieldName = substr($fieldName, $dotPos + 1);
+	        // Add to list of fields for related model
+	        if (isset($models[$modelName])) {
+	          $models[$modelName][] = $fieldName;
+	        } else {
+	          $models[$modelName] = [$fieldName];
+	        }
+	      } else {  // Same model, fields only
+	        if (!isset($models['0'])) {
+	          $models['0'] = [];
+	        }
+	        $models['0'][] = $fieldName;
+	      }
+	    }
+	    return $models;
+	}
+
+	/**
 	* Validates a partial response fields
 	*
 	* @param array $validFields Valid partial response fields
@@ -355,106 +387,20 @@ class DatabaseHelper {
 	}
 
 	/**
-	* Parse Partial response string
+	* Validates partial response fields for a certain object and returns approriate fields
 	*
-	* @param string $val Input String
-	* @param int $level Array depth level
-	* @return array
+	* @param array $fields Requested fields
+	* @param array $validFields Valid partial response fields
+	* @param string $name The name of the object to check
+	* @return boolean | array 
 	*/
-	public function parseString($val, $level=0) {
-		$this->resetError();
-
-		if($level < 50) {
-			// future check if ( has previous value 
-			if($level > 0 && $val[0] == '(' && $val[strlen($val)-1] == ')') { // check for valid chars
-				$val = substr($val, 0, -1);
-				$val = substr($val, 1);
-			}
-
-			preg_match_all("/\((?:[^()]|(?R))+\)|'[^']*'|[^(),\s]+/", $val, $matches);
-			$r = array(); // output array
-			$keys = array(); // keys array
-
-			foreach ($matches[0] as $key => $value) {
-				if(self::checkForSymbol($value)) {
-					$lastKey = $matches[0][$key-1];
-					$level++;
-
-					if(self::checkForSymbol($lastKey)) {
-						$this->errorMessage = 'Error, Key cannot contain symbols, check partial response parameter syntax'; 
-						return false; 
-					} else {
-						$keys[] = $lastKey;
-
-						$d = self::parseString($value, $level);
-
-						$r[$lastKey] = $d;
-					}
-				} else {
-					$r[] = $value;
-				}
-			}
-
-			// remove orginal key value with blank data
-			foreach ($keys as $key => $value) {
-				$pos = array_search($value, $r);
-				unset($r[$pos]);
-			}
-
-			// group all singleton keys to root array
-			//if($level == 1) {
-				$a = array();
-				foreach ($r as $key => $value) {
-					if(!is_array($value)) {
-						$a[] = $value;
-						unset($r[$key]);
-					} 
-				}
-
-				$r[0] = $a;
-				//print_r($r[0]).'<br>';
-			//} else {
-				/*foreach ($r as $key => $value) {
-					//echo $key;
-					if(is_numeric($key)) {
-						// $pos = array_search($value, $r);
-						$r[$key] = $value;
-						//unset($r[$pos]);
-					}
-				}*/
-			//}
-		} else {
-			$this->errorMessage = 'Max Levels Reached (50)';
-			return false;
-		}
-
-		return $r;
-	}
-
-	/**
-	* Checks for a ')' symbol 
-	*
-	* 
-	* @return bool
-	*/
-	private function checkForSymbol($value) {
-		$p = strpos($value, '(');
-		$pp = strpos($value, ')');
-
-		if($p == true && $p > 0 && strpos($value, ')') == true && $pp > 0 || strpos($value, ',') == true && strpos($value, ',') > 0) { 
-			return true;
-		} 
-		return false;
-	}
-
-	// test maginc function for all round parsing
 	public function validator($fields,$validFields,$name) {
 		if(!empty($fields)) {
 			if($fields = $this->parseString($fields)) {
 				if(!array_key_exists($name, $fields)) {
 					$checkFields = $fields[0];
 				} else {
-					$checkFields = $fields[$name][0]; // remove 0 once fixed
+					$checkFields = $fields[$name]; 
 				}
 
 				if($p = self::validateResponse($validFields, $checkFields)) {
