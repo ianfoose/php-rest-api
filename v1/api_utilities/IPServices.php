@@ -6,7 +6,7 @@
 * @version 1.0
 */
 
-include_once('./TableNames.php');
+include_once('./Constants.php');
 
 class IPServices {
 	/**
