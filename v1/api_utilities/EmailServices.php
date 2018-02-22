@@ -5,7 +5,7 @@
 * @version 1.0
 */
 
-require_once('./TableNames.php');
+require_once('./Constants.php');
 require_once('DatabaseHelper.php');
 
 class EmailServices {
