@@ -7,7 +7,7 @@
 
 require_once('DatabaseHelper.php');
 require_once('Response.php');
-require_once('./TableNames.php');
+require_once('./Constants.php');
 
 class ErrorLogger {
 	private static $dataHelper;
