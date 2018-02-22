@@ -2,7 +2,7 @@
 include_once('DatabaseHelper.php');
 include_once('utilities.php');
 include_once('Response.php');
-require_once('TableNames.php');
+include_once('./Constants.php');
 
 /**
 * Token Services 
@@ -11,9 +11,6 @@ require_once('TableNames.php');
 */
 class TokenServices {
 	protected static $dataHelper;
-
-	const TOKEN_SECRET = 'secret'; // SET
-	const PREFIX = 'prefix'; // SET
 
 	/**
 	* Constructor
@@ -46,7 +43,7 @@ class TokenServices {
 	public static function validate($token) {
 		$token = self::decodeToken($token);
 
-		$sig = sha1(self::PREFIX.':'.self::TOKEN_SECRET.':'.$token['auth']['t']);
+		$sig = sha1(PREFIX.':'.TOKEN_SECRET.':'.$token['auth']['t']);
 
 		if($sig === $token['auth']['s']) {
 			$today = date("Y:m:d H:i:s");
@@ -67,7 +64,7 @@ class TokenServices {
 	public function validateRefreshToken($rToken) {
 		$token = self::decodeToken($rToken);
 
-		$sig = sha1(self::PREFIX.':'.self::TOKEN_SECRET.':'.$token['auth']['t']);
+		$sig = sha1(PREFIX.':'.TOKEN_SECRET.':'.$token['auth']['t']);
 
 		if($sig === $token['auth']['s']) {
 			$today = date("Y:m:d H:i:s");
@@ -123,7 +120,7 @@ class TokenServices {
 	* @return string
 	*/
 	public static function createToken($id, $data=null) {
-		return $this->create($id,$data);
+		return self::create($id,$data);
 	}
 
 	/**
@@ -151,14 +148,14 @@ class TokenServices {
 	* @param $refresh Bool Generate a refresh token
 	* @return String
 	*/
-	private function create($id, $data=null, $refresh=false) {
+	private static function create($id, $data=null, $refresh=false) {
 		$exp = date('Y:m:d H:i:s', strtotime('+5 Minutes'));
 
 		if($refresh) {
 			$exp = date('Y:m:d H:i:s', strtotime('+1 Hour')); 
 		}
 
-		$sig = sha1(self::PREFIX.':'.self::TOKEN_SECRET.':'.$exp);
+		$sig = sha1(PREFIX.':'.TOKEN_SECRET.':'.$exp);
 		$dataArray = array('id'=>$id);
 
 		if(!empty($data)) 
