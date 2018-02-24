@@ -12,10 +12,6 @@ class API extends APIHelper {
 		$this->scheme = '/api/v1';
 		parent::__construct(); 
 
-		self::$tokens = new TokenServices();
-
-		self::$emailServices = new EmailServices();
-
 		Router::set('/',function() {
 			header("Access-Control-Allow-Origin: *");
 		});
