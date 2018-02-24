@@ -5,3 +5,6 @@ RewriteCond %{REQUEST_FILENAME} !-f
 RewriteCond %{REQUEST_FILENAME} !-l
 
 RewriteRule ^([^/]+)/([^/]+) $1/api.php [QSA,L]
+
+# for empty requests
+RewriteRule ^([^/]+)/ $1/api.php [QSA,L]
