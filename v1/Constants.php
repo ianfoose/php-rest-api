@@ -1,6 +1,6 @@
 <?php
 /**
-* Table Names Class
+* Constants Class
 */
 
 const TOKENS = 'tokens';
