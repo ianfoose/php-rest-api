@@ -293,7 +293,7 @@ class DatabaseHelper {
 
 		if($limit != null) {
 			$q.= " LIMIT :limit";
-			$params[':limit'] = intval($limit);
+			$params[':limit'] = (int)$limit;
 		}
 
 		return array($q,$params);
