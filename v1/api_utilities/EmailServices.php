@@ -263,12 +263,11 @@ class EmailServices {
 	* @param $deleted string Deleted status
 	* @return array | Exception
 	*/
-	public function getEmailSubscribers($sinceID, $maxID, $deleted='') {
+	public function getEmailSubscribers($sinceID, $maxID, $limit, $deleted='') {
 		if(!empty(EMAIL_SUBSCRIPTIONS)) {
 			$queryString = "SELECT * FROM ".EMAIL_SUBSCRIPTIONS;
 
-			$o = self::$dataHelper->getOffset(getSinceID(),getMaxID(),EMAIL_SUBSCRIPTIONS,'id',35);
-			$deleted = getDeleted();
+			$o = self::$dataHelper->getOffset($sinceID,$maxID,EMAIL_SUBSCRIPTIONS,'id',$limit);
 	
 			if(!empty($deleted)) {
 				$queryString .= 'deleted=:d AND ';
