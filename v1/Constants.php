@@ -20,6 +20,8 @@ const ERRORS = 'errors_tbl';
 const EMAIL_TEMPLATES = 'email_templates';
 const EMAIL_TEMPLATE_EDITS = 'email_template_edits';
 
+const EMAIL_SUBSCRIPTIONS = 'mailing_list';
+
 const PUSH_UUID = 'push_tokens';
 
 ?>
