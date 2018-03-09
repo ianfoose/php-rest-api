@@ -108,7 +108,7 @@ class ErrorLogger {
 	*/
 	public static function getErrors() {
 		if(self::connect()) {
-			$o = DatabaseHelper::getOffset(getSinceID(),getMaxID(),ERRORS,'id',getLimit());
+			$o = DatabaseHelper::getOffset(getSinceID(),getMaxID(),ERRORS,getLimit());
 
 			if($result = self::$dataHelper->query("SELECT * FROM ".ERRORS." WHERE".$o[0],$o[1],true)) {
 				$errors = array();
