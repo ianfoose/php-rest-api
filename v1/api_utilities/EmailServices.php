@@ -76,7 +76,7 @@ class EmailServices {
 	* @return array | Exception
 	*/
 	public function getEmailTemplateEdits($templateID, $sinceID, $maxID, $limit, $deleted) {
-		$o = self::$dataHelper->getOffset($sinceID,$maxID,EMAIL_TEMPLATE_EDITS,'id',$limit);
+		$o = self::$dataHelper->getOffset($sinceID,$maxID,EMAIL_TEMPLATE_EDITS,$limit);
 		
 		$queryString = "SELECT * FROM ".EMAIL_TEMPLATE_EDITS.' WHERE template_id=:tID AND ';
 
@@ -169,7 +169,7 @@ class EmailServices {
 	*/
 	public function getTemplates($sinceID=0, $maxID=0, $limit, $deleted) {	
 		if(!empty(EMAIL_TEMPLATES)) {
-			$o = self::$dataHelper->getOffset($sinceID,$maxID,EMAIL_TEMPLATES,'id',$limit);
+			$o = self::$dataHelper->getOffset($sinceID,$maxID,EMAIL_TEMPLATES,$limit);
 		
 			$queryString = "SELECT * FROM ".EMAIL_TEMPLATES.' WHERE ';
 
@@ -267,7 +267,7 @@ class EmailServices {
 		if(!empty(EMAIL_SUBSCRIPTIONS)) {
 			$queryString = "SELECT * FROM ".EMAIL_SUBSCRIPTIONS;
 
-			$o = self::$dataHelper->getOffset($sinceID,$maxID,EMAIL_SUBSCRIPTIONS,$limit,'id');
+			$o = self::$dataHelper->getOffset($sinceID,$maxID,EMAIL_SUBSCRIPTIONS,$limit);
 	
 			if(!empty($deleted)) {
 				$queryString .= 'deleted=:d AND ';
