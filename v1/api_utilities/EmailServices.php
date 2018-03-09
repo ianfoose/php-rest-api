@@ -267,7 +267,7 @@ class EmailServices {
 		if(!empty(EMAIL_SUBSCRIPTIONS)) {
 			$queryString = "SELECT * FROM ".EMAIL_SUBSCRIPTIONS;
 
-			$o = self::$dataHelper->getOffset($sinceID,$maxID,EMAIL_SUBSCRIPTIONS,'id',$limit);
+			$o = self::$dataHelper->getOffset($sinceID,$maxID,EMAIL_SUBSCRIPTIONS,$limit,'id');
 	
 			if(!empty($deleted)) {
 				$queryString .= 'deleted=:d AND ';
