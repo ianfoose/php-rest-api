@@ -20,22 +20,21 @@ class NotificationServices {
 	// (iOS) APNS URL, defaults to sandbox
 	private static $apnsURL = 'ssl://gateway.sandbox.push.apple.com:2195';
 	// (Windows Phone 8) The name of our push channel.
-    private static $channelName = '';
+    	private static $channelName = '';
 	// Email Server port
-    private static $emailPort = '465';
-    // Email Server
-    private static $emailServer = '';
-    // Email Server Use SSL
-    private static $emailSSL = '';
-    // Email Server username
-    private static $emailUsername = '';
-    // Email Server Password
-    private static $emailPassword = ''; 
-    
+    	private static $emailPort = '465';
+   	// Email Server
+    	private static $emailServer = '';
+    	// Email Server Use SSL
+    	private static $emailSSL = '';
+    	// Email Server username
+    	private static $emailUsername = '';
+    	// Email Server Password
+    	private static $emailPassword = ''; 
 
-    protected static $dataHelper;
+    	protected static $dataHelper;
 
-	public function __construct($email, $android, $ios, $windows) {
+	public function __construct($email=null, $android=null, $ios=null, $windows=null) {
 		if(!empty(@$email)) {
 			self::$emailSSL = @$email['ssl'];
 			self::$emailUsername = @$email['username'];
@@ -62,8 +61,8 @@ class NotificationServices {
 		self::$dataHelper = new DatabaseHelper(URL,USER,PASSWORD,DB);
 	}
 	
-    // Sends Push notification for Android users
-	public static function android($data, $reg_id, $notification=false) {
+    	// Sends Push notification for Android users
+	public function android($data, $reg_id, $notification=false) {
 	    $vibrate = 1;
 	    if(!empty(@$data['vibrate']))
 	    	$vibrate = $data['vibrate'];
@@ -104,10 +103,10 @@ class NotificationServices {
 	    }
 
 	   	return $result;
-    }
+   	}
 	
 	// Sends Push's toast notification for Windows Phone 8 users
-	public static function WP($data, $uri) {
+	public function WP($data, $uri) {
 		$delay = 2;
 		$msg =  "<?xml version=\"1.0\" encoding=\"utf-8\"?>" .
 		        "<wp:Notification xmlns:wp=\"WPNotification\">" .
@@ -138,8 +137,8 @@ class NotificationServices {
 		return $result;
 	}
 	
-        // Sends Push notification for iOS users
-	public static function iOS($data, $devicetoken) {
+    	// Sends Push notification for iOS users
+	public function iOS($data, $devicetoken) {
 		$deviceToken = $devicetoken;
 
 		$ctx = stream_context_create();
@@ -238,7 +237,7 @@ class NotificationServices {
     * @param string $platform Notification Platform
     * @return array | string
     */
-    public static function sendNotification($data, $token, $platform) {
+    public function sendNotification($data, $token, $platform) {
     	if($platform == 'apple') {
     		return self::iOS($data, $token);
     	} else if($platform == 'google') {
@@ -256,7 +255,7 @@ class NotificationServices {
     * @param string $token Push Token
     * @return boolean
     */
-    public static function savePushToken($userID, $token, $platform) {
+    public function savePushToken($userID, $token, $platform) {
     	if(!empty(PUSH_UUID)) {
     		if(!self::$dataHelper->find('id','uuid,user_id,platform',$token.','.$userID.','.$platform,PUSH_UUID,'Token')) {
     			if(self::$dataHelper->query("INSERT INTO ".PUSH_UUID." SET platform=:p,uuid=:uuid,user_id=:userID",array(':p'=>$platform,':uuid'=>$token,':userID'=>$userID))) {
@@ -276,7 +275,7 @@ class NotificationServices {
     * @param string $token Push Token
     * @return boolean
     */
-    public static function deletePushToken($token) {
+    public function deletePushToken($token) {
     	if(!empty(PUSH_UUID)) {
     		if(self::$dataHelper->find('id','user_id,uuid',$userID.','.$$token,PUSH_UUID,'Token')) {
     			self::$dataHelper->query("UPDATE ".PUSH_UUID." SET deleted='1' WHERE token=:t",array(':t'=>$token));
@@ -293,7 +292,7 @@ class NotificationServices {
     * @param string $token Push Token
     * @return boolean
     */
-    public static function getPushTokenForUser($userID) {
+    public function getPushTokenForUser($userID) {
     	if(!empty(PUSH_UUID)) {
 	    	if($result = self::$dataHelper->query("SELECT * FROM ".PUSH_UUID." WHERE user_id=:uID",array(':uID'=>$userID))) {
 	    		$tokens = array();
