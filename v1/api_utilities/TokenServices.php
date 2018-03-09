@@ -246,7 +246,7 @@ class TokenServices {
 	* @return array | Error
 	*/
 	public function getTokens() {
-		$o = DatabaseHelper::getOffset(getSinceID(),getMaxID(),TOKENS,'id',getLimit());
+		$o = DatabaseHelper::getOffset(getSinceID(),getMaxID(),TOKENS,getLimit());
 
 		if($results = self::$dataHelper->query("SELECT * FROM ".TOKENS." WHERE ".$o[0],$o[1])) {
 			$tokens = array();
