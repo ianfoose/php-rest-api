@@ -71,7 +71,7 @@ class IPServices {
 	* @return array | Exception
 	*/
 	public function getVisitors($sinceID=0, $maxID=0, $limit=35) {
-		$o = self::$dataHelper->getOffset($sinceID,$maxID,VISITORS,'id',$limit);
+		$o = self::$dataHelper->getOffset($sinceID,$maxID,VISITORS,$limit);
 
 		if($result = self::$dataHelper->query("SELECT * FROM ".VISITORS.$o[0],$o[1])) {
 			$visits = array();
