@@ -289,6 +289,25 @@ class EmailServices {
 	}
 
 	/**
+	* Searches email subscribers
+	*
+	* @param $query string Search query
+	* @return array
+	*/
+	public function searchEmails($query) {
+		if($results = self::$dataHelper->query("SELECT * FROM ".EMAIL_SUBSCRIPTIONS." WHERE email LIKE CONCAT('%',:q,'%')",array(':q'=>$query))) {
+			$emails = array();
+
+			while($email = $results->fetch()) {
+				$emails[] = $this->getSubscriptionData($email);			
+			}
+
+			return $emails;
+		}
+		throw new Exception(self::$dataHelper->errorMessage,self::$dataHelper->errorCode);
+	}
+
+	/**
 	* Gets subsciption data
 	*
 	* @param $sub object Subscription object
