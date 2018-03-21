@@ -237,7 +237,7 @@ class EmailServices {
 	* @param $unsubscribed string Unsibscribe status
 	* @return int | exception
 	*/
-	public function getEmailSubscriptionTotal($unsubscribed) {
+	public function getEmailSubscriptionTotal($unsubscribed=null) {
 		if(!empty(EMAIL_SUBSCRIPTIONS)) {
 			$queryString = "SELECT id FROM ".EMAIL_SUBSCRIPTIONS;
 
@@ -265,7 +265,7 @@ class EmailServices {
 	*/
 	public function getEmailSubscribers($sinceID, $maxID, $limit, $deleted='') {
 		if(!empty(EMAIL_SUBSCRIPTIONS)) {
-			$queryString = "SELECT * FROM ".EMAIL_SUBSCRIPTIONS;
+			$queryString = "SELECT * FROM ".EMAIL_SUBSCRIPTIONS." WHERE ";
 
 			$o = self::$dataHelper->getOffset($sinceID,$maxID,EMAIL_SUBSCRIPTIONS,$limit);
 	
@@ -278,7 +278,7 @@ class EmailServices {
 				$subs = array();
 
 				while($sub = $r->fetch()) {
-					$subs[] = getSubscriptionData($sub);
+					$subs[] = $this->getSubscriptionData($sub);
 				}
 
 				return $subs;
@@ -311,6 +311,10 @@ class EmailServices {
 		if(!empty(EMAIL_SUBSCRIPTIONS)) {
 			if($r = self::$dataHelper->find('id','email',$email,EMAIL_SUBSCRIPTIONS)) {
 				if(self::$dataHelper->query('UPDATE '.EMAIL_SUBSCRIPTIONS." SET subscriber='1' WHERE id=".$r['id'])) {
+					return 'Subscribed';
+				}
+			} else {
+				if(self::$dataHelper->query("INSERT INTO ".EMAIL_SUBSCRIPTIONS." SET email=:e,subscriber=1",array(':e'=>$email))) {
 					return 'Subscribed';
 				}
 			}
