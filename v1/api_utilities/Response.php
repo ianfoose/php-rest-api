@@ -14,7 +14,7 @@ class Response {
 		204=>'No Content',
 		304=>'Not Modifed',
 		400=>'Bad Request',
-		401=>'Unautorized',
+		401=>'Unauthorized',
 		403=>'Forbidden',
 		404=>'Not Found',
 		405=>'Method Not Allowed',
