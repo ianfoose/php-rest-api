@@ -13,6 +13,7 @@ require_once('Response.php');
 
 abstract class APIHelper {
 	public $endpoint = '/';
+	public $req = array();
 	public $params = array();
 	public $headers = array();
 	public $method = '';
@@ -56,10 +57,20 @@ abstract class APIHelper {
 	/**
 	* Function used for Authentication
 	*
-	* @param function $f Function
 	* @return void
 	*/
-	public function auth($f) { $f(); }
+	public function auth() { 
+		return true;
+	}
+
+	/**
+	* Function used typically to set CORS policy but can set other headers
+	*
+	* @return void
+	*/
+	public function set() {
+
+	}
 
 	/**
 	* Runs the API
@@ -131,14 +142,18 @@ abstract class APIHelper {
 						$this->params = array_merge($this->params, $_GET);
 						$input = array_merge($input, $_POST);
 
-						$req = array('body'=>@$input, 'params'=>@$this->params,'headers'=>getallheaders());
+						$this->req = array('body'=>@$input, 'params'=>@$this->params,'headers'=>getallheaders());
 
-						if(isset($t[3]) && !empty($t[3])) {
-							if(checkIfDataExists($t[3])) {
-								self::output($t[2]($req));
+						if(isset($t[3]) && !empty($t[3]) && $t[3]) {
+							$valid = $this->auth();
+
+							if($valid === true) {
+								self::output($t[2]($this->req));
+							} else {
+								self::output($valid);
 							}
 						} else {
-							self::output($t[2]($req));
+							self::output($t[2]($this->req));
 						}
 
 						break;
