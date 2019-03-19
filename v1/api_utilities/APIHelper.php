@@ -97,7 +97,7 @@ abstract class APIHelper {
 
 								if($p === ':') { // param
 									if(!empty($route[ltrim($pKey,':')])) {
-										$this->params[ltrim($pValue,':')] = $route[ltrim($pKey,':')];
+										$this->params[ltrim($pValue,':')] = $route[urldecode(ltrim($pKey,':'))];
 									} 
 								} else { // no param
 									if($pValue != $route[$pKey]) { // no match, abort
