@@ -1,27 +1,23 @@
 <?php
-error_reporting(E_ALL); // Error Reporting 
-ini_set('display_errors', 1); // CHECK BEFORE RELEASING
+require_once('api_utilities/APIHandler.php');
 
-include_once('api_utilities/APIHelper.php');
+class API extends APIHandler {
 
-date_default_timezone_set('UTC'); // important
-
-class API extends APIHelper {
-	
 	public function __construct() {
-		$this->scheme = '/api/v1';
 		parent::__construct(); 
-
-		Router::set('/',function() {
-			header("Access-Control-Allow-Origin: *");
+			
+		Router::all('/',function($req, $res) {
+			$res->output('My API');
 		});
 
-		Router::all('/',function() {
-			return 'API';
+		$this->addAuthHandler('default', function($req, $res) {
+			return true;
 		});
 	}
 }
 
+// start the api
 $api = new API();
+
 $api->run();
 ?>

@@ -6,199 +6,258 @@
 * @version 1.0
 */
 
-// Includes
-require_once('utilities.php');
-require_once('api_utilities/Router.php');
+require_once('DatabaseHelper.php');
 require_once('Response.php');
+require_once('Request.php');
+require_once('ErrorLogger.php');
+require_once('EmailServices.php');
+require_once('IPServices.php');
+require_once('NotificationServices.php');
+require_once('TokenServices.php');
 
 abstract class APIHelper {
-	public $endpoint = '/';
-	public $req = array();
-	public $params = array();
-	public $headers = array();
-	public $method = '';
-	public $format = '';
-	public $scheme = '';
-
-	public function __construct() {
-		if(!empty(@$_SERVER['PATH_INFO']))
-			$this->endpoint = $_SERVER['PATH_INFO'];
-
-		// for htaccess rewrite
-		if(!empty(@$_SERVER['REQUEST_URI'])) {
-			$this->endpoint = strtok(str_replace($this->scheme, "", $_SERVER['REQUEST_URI']),'?');
-		}
-
-		// output format 
-		$this->format = getFormat($this->endpoint); 
-
-		// remove extension from endpoint
-		if(strpos($this->endpoint, '.')) { // set endpoint
-			$endpoint = $this->endpoint;
-			$endpoint = explode('/', $endpoint);
-
-			$pendpoint = $endpoint[1];
-			$pendpoint = explode('.',$pendpoint);
-
-			if(!empty(@$pendpoint[1])) {
-				if($pendpoint[1] == 'json') {
-					$this->format = $pendpoint[1];
-					$endpoint[1] = $pendpoint[0];
-
-					$this->endpoint = implode('/', $endpoint);
-				}
-			}
-		} 
-
-		$this->headers = $_SERVER;
-		$this->method = $_SERVER['REQUEST_METHOD'];
-	}
+	/**
+	* @var array $configs API configs array
+	*/
+	public $configs = array();
 
 	/**
-	* Function used for Authentication
+	* @var array $tables DB Tables Array
+	*/
+	public $tables = array();
+
+	/**
+	* @var array $defaultTables Default DB Tables
+	*/
+	private $defaultTables = array();
+
+	/**
+	* @var DataHelper $dataHelper Main DataHelper class for database interface
+	*/
+	public static $dataHelper;
+
+	/**
+	* Main Constructor
 	*
 	* @return void
 	*/
-	public function auth() { 
+	public function __construct($configs='./config.json') {	
+		$this->getConfigs($configs);
+
+		// set timezone
+		if(@$this->configs['date']['timezone']) {
+			date_default_timezone_set($this->configs['date']['timezone']);
+		} else {
+			date_default_timezone_set('UTC');
+		}
+
+		// database tables
+		if(@$this->configs['tables']) {
+			$this->tables = $this->configs['tables'];
+		} else { // fallback to defaults
+			$this->tables = $this->defaultTables;
+		}
+
+		// set error reporting
+		$errorReporting = 1;
+
+		if(!empty($this->configs['environment']) && $this->configs['environment'] == 'production') {
+			$errorReporting = 0;
+		} else {
+			error_reporting(E_ALL); // Error Reporting 
+		}
+
+		ini_set('display_errors', $errorReporting); 
+
+		$db =$this->configs['database'];
+
+		// default global datahelper
+		self::$dataHelper = new DatabaseHelper($db['url'], @$db['port'], $db['username'], $db['password'], $db['database']);
+	}
+
+	/**
+	* Gets configs from file
+	*
+	* @return void
+	*/
+	private function getConfigs($path) {
+		try {
+			$this->configs = json_decode(file_get_contents($path), true);
+		} catch(Exception $e) {
+			throw new Exception('Config values not set, maybe the file does not exist?');
+		}
+	}
+
+	/**
+	* Check if data exists
+	*
+	* @param string $data String data
+	* @return boolean
+	*/
+	public function checkIfDataExists($data) {
+		$emptyKeys = array();
+
+		if(is_array($data)) {
+			foreach ($data as $key => $value) {
+				if(empty($value)) 
+					$emptyKeys[] = $key;
+			}
+
+			if(count($emptyKeys) > 0) {
+				throw new Exception(implode(',',$emptyKeys).' cannot be empty', 404);
+			} 
+		} else { // error
+			if(empty(@$data)) {
+				throw new Exception('Data is empty', 404);
+			}
+		}
 		return true;
 	}
 
 	/**
-	* Function used typically to set CORS policy but can set other headers
+	* Formats date
 	*
-	* @return void
+	* @param string $date String version of a date
+	* @param string $format String date format can be left empty for default conversion
+	* @return string
 	*/
-	public function set() {
+	public function formatDate($date, $format = null) { 
+		if($format == null) {
+			$date = strtotime($date.date_default_timezone_get()); // sets timezone
+			$date = time() - $date; // to get the time since that moment
+		    $date = ($date<1)? 1 : $date;
+		    $tokens = array (
+		        31536000 => 'year',
+		        2592000 => 'month',
+		        604800 => 'week',
+		        86400 => 'day',
+		        3600 => 'hour',
+		        60 => 'minute',
+		        1 => 'now'
+		    );
 
+		    foreach ($tokens as $unit => $text) {
+		        if ($date < $unit) continue;
+		        $numberOfUnits = floor($date / $unit);
+
+		        if($text == 'now') {
+		        	return $text;
+		        }
+
+		        return $numberOfUnits.' '.$text.(($numberOfUnits>1)?'s':'').' ago';
+		    }
+		} else {
+			return date($format, strtotime($date));
+		}
+		return $date;
 	}
 
 	/**
-	* Runs the API
+	* Formats a database time 
 	*
-	* @return void
+	* @param string $time Time String
+	* @return string
 	*/
-	public function run() {
-		$routes = Router::getInstance()->routes;
+	public function formatTime($time) {
+		return date('g:i A,', strtotime($time));
+	} 
 
-		foreach ($routes as $key => $value) {
-			$t = $value;
+	/**
+	* Formats a number to decimal places with an optional suffix
+	*
+	* @param int $number The number being formated
+	* @param boolean $suffix Determines wheather to output a suffix
+	* @return int | string 
+	*/
+	public function formatNumber($number, $suffix = true) {
+		$ending = '';
 
-			foreach ($t as $tKey => $tValue) {
-				if($t[0] == $this->method || $t[0] == 'ALL') { // method
-					if($this->endpoint != '/') {
-						$purl = explode('/',trim($t[1],'/')); // indexed route
-						$route = explode('/',trim($this->endpoint,'/')); // requested routes
-
-						if(count($purl) == count($route)) {
-							$k = 0;
-
-							foreach ($purl as $pKey => $pValue) {
-								$p = substr($pValue, 0, 1); // param placeholder
-
-								if($p === ':') { // param
-									if(!empty($route[ltrim($pKey,':')])) {
-										$this->params[ltrim($pValue,':')] = $route[urldecode(ltrim($pKey,':'))];
-									} 
-								} else { // no param
-									if($pValue != $route[$pKey]) { // no match, abort
-										$this->params = array();
-										break;
-									} 
-								}
-
-								if($k == count($purl) - 1) {
-									if(substr($this->endpoint, 0,1) == '/' && substr($t[1],0,1) != '/') { // start
-										$this->params = array();
-										break;
-									} elseif(substr($this->endpoint,0,1) != '/' && substr($t[1],0,1) != '/') {
-										$this->params = array();
-										break;
-									}
-
-									if(substr($this->endpoint, -1) == '/' && substr($t[1], -1) != '/') { // end
-										$this->params = array();
-										break;
-									} else if(substr($this->endpoint, -1) != '/' && substr($t[1], -1) == '/') {
-										$this->params = array();
-										break;
-									}
-
-									$this->endpoint = $t[1];
-								}
-
-								$k++;
-							}
-						}
-					}
-
-					if($t[1] === $this->endpoint) {	
-						$input = array();
-						parse_str(file_get_contents('php://input'),$input);
-
-						if(!empty(trim(@$_SERVER['HTTP_IF_NONE_MATCH']))) {
-							$input['etag'] = $_SERVER['HTTP_IF_NONE_MATCH'];
-						}
-
-						$this->params = array_merge($this->params, $_GET);
-						$input = array_merge($input, $_POST);
-
-						$this->req = array('body'=>@$input, 'params'=>@$this->params,'headers'=>getallheaders());
-
-						if(isset($t[3]) && !empty($t[3]) && $t[3]) {
-							$valid = $this->auth();
-
-							if($valid === true) {
-								self::output($t[2]($this->req));
-							} else {
-								self::output($valid);
-							}
-						} else {
-							self::output($t[2]($this->req));
-						}
-
-						break;
-					} 
-					break; // breaks route comparison
-				} 
-			}
+		if($number > 1000 && $number < 100000) { // thousand
+			$number = round(($number/1000), 1);
+			$ending = 'K';
+		} else if ($number > 1000000 && $number < 10000000) { // million
+			$number = round(($number/100000), 1);
+			$ending = 'M';
+		} else if($number > 1000000) { // billion
+			$number = round(($number/10000000), 1);
+			$ending = 'B';
 		}
 
-		self::output(new Response(400,'endpoint does not exist'));
+		if($suffix == true) { $number = $number.' '.$ending; }
+
+		return $number;
 	}
 
 	/**
-	* Outputs data in JSON
+	* Formats file size
 	*
-	* @param string $format Data format
-	* @param array $data Data array
-	* @return JSON
+	* @param int $bytes The number of bytes at the lowest level
+	* @param boolean $suffix Determines wheater to print the suffix
+	* @return string
 	*/
-	public function output($data, $headers=null) {
-		$headerString = ('HTTP/1.1 200 OK'); 
+	public function formatSize($bytes, $suffix=true) {
+	    if ($bytes == 0) {
+	        return '0.00 Bytes';
+	    }
 
-		// check if data is a 'Response' object
-		if(is_a($data, 'Response')) {
-			$headerString = ('HTTP/1.1'.' '.$data->status.' '.$data->getMessage());
-			$data = $data->data;
+	    $stringSize = array('B', 'KB', 'MB', 'GB', 'TB', 'PB');
+	    $size = floor(log($bytes, 1024));
+
+	    $ending = '';
+	    if($suffix == true) { $ending = $stringSize[$size]; }
+
+	    return round($bytes/pow(1024, $size), 2).' '.$ending;
+	}
+
+	/**
+	* Turns unicode into an emoji
+	* 
+	* @param string $input String to be processed 
+	* @return string
+	*/
+	public function processEmoji($input) {
+		return preg_replace("/\\\\u([0-9A-F]{2,5})/i", "&#x$1;", $input);
+	}
+
+	/**
+	* Zips a file
+	*
+	* @param string $name File name 
+	* @param array $files Files to zip
+
+	* @return void
+	*/
+	public function zipFile($name, $files) {
+		$zip = new ZipArchive();
+		$zip->open('zipfile.zip', ZipArchive::CREATE);
+		 
+		foreach ($files as $key => $value) {
+			//$zip->addFile('test.php', 'subdir/test.php');
 		}
-				
-		header($headerString);
+		 
+		$zip->close();
+
+		$filename = $name.'.zip';
+
+		// send $filename to browser
+		$finfo = finfo_open(FILEINFO_MIME_TYPE);
+		$mimeType = finfo_file($finfo, (__DIR__).'/'.$filename);
+		$size = filesize((__DIR__).'/'.$filename);
+		$name = basename($filename);
+		 
+		if (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] == 'on') {
+		    // cache settings for IE6 on HTTPS
+		    header('Cache-Control: max-age=120');
+		    header('Pragma: public');
+		} else {
+		    header('Cache-Control: private, max-age=120, must-revalidate');
+		    header("Pragma: no-cache");
+		}
 		
-		if(!empty($headers)) {
-			header($headers);
-		}
-
-		if(!is_array($data)) { // for single values	
-			$data = array('result'=>$data); 
-		} 
-
-		if($this->format == 'json') { // json	
-			echo json_encode($data);
-		} else { // plain text, default
-			echo $data;
-		}	
-
-		exit;	
+		header("Content-Type: $mimeType");
+		header('Content-Disposition: attachment; filename="' . $name . '";');
+		header("Accept-Ranges: bytes");
+		header('Content-Length: ' . filesize((__DIR__).'/'.$filename));
 	}
 }
 ?>

@@ -1,67 +1,202 @@
 <?php 
+require_once('APIHelper.php');
+
 /**
-* PushNotifications Class
+* Notification Services Class
 *
 * @version 1.0
 */
-
-require_once('./Constants.php');
-require_once('DatabaseHelper.php');
-
-class NotificationServices {
-	// (Android)API access key from Google API's Console.
+class NotificationServices extends APIHelper {
+	/**
+	* @var string $API_ACCESS_KEY (Android)API access key from Google API's Console.
+	*/
 	private static $API_ACCESS_KEY = '';
-	// (Android) GCM URL, defaults to firebase
+
+	/**
+	* @var string $gcmURL (Android) GCM URL, defaults to firebase
+	*/
 	private static $gcmURL = 'https://fcm.googleapis.com/fcm/send';
-	// (iOS) ssl cert
+	
+	/**
+	* @var string $ssl iOS Push SSL cert
+	*/
 	private static $ssl;
-	// (iOS) Private key's passphrase.
+
+	/**
+	* @var string $passphrase (iOS) Private key's passphrase.
+	*/
 	private static $passphrase = '';
-	// (iOS) APNS URL, defaults to sandbox
+
+	/**
+	* @var string $apnsURL (iOS) APNS URL, defaults to sandbox
+	*/
 	private static $apnsURL = 'ssl://gateway.sandbox.push.apple.com:2195';
-	// (Windows Phone 8) The name of our push channel.
-    	private static $channelName = '';
-	// Email Server port
-    	private static $emailPort = '465';
-   	// Email Server
-    	private static $emailServer = '';
-    	// Email Server Use SSL
-    	private static $emailSSL = '';
-    	// Email Server username
-    	private static $emailUsername = '';
-    	// Email Server Password
-    	private static $emailPassword = ''; 
+	
+	/**
+	* @var string $channelName (Windows Phone 8) The name of our push channel.
+	*/
+    private static $channelName = '';
+	
+	/**
+	* @var string $emailPort Email Server port
+	*/
+    private static $emailPort = '465';
 
-    	protected static $dataHelper;
+    /**
+	* @var string $emailServer Email Server
+	*/
+    private static $emailServer = '';
 
-	public function __construct($email=null, $android=null, $ios=null, $windows=null) {
+    /**
+	* @var string $emailSSL Email Server Use SSL
+	*/
+    private static $emailSSL = '';
+
+    /**
+	* @var string $emailUsername Email Server username
+	*/
+    private static $emailUsername = '';
+
+    /**
+	* @var string $emailPassword Email Server Password
+	*/
+    private static $emailPassword = ''; 
+
+	public function __construct($configs=null, $expose=false) {
 		if(!empty(@$email)) {
 			self::$emailSSL = @$email['ssl'];
 			self::$emailUsername = @$email['username'];
 			self::$emailPassword = @$email['password'];
 			self::$emailServer = @$email['server'];
 			self::$emailPort = @$email['port'];
+		} else {
+			self::$emailSSL = @$this->configs['notifications']['email']['ssl'];
+			self::$emailUsername = @$this->configs['notifications']['email']['username'];
+			self::$emailPassword = @$this->configs['notifications']['email']['password'];
+			self::$emailServer = @$this->configs['notifications']['email']['server'];
+			self::$emailPort = @$this->configs['notifications']['email']['port'];
 		}
 
-		if(!empty($ios)) {
-			self::$ssl = @$ios['ssl'];
+		if(!empty(@$ios)) {
+			self::$ssl = @$ios['ssl-key'];
 			self::$passphrase = @$ios['passphrase'];
 			self::$apnsURL = @$ios['url'];
+		} else {
+			self::$ssl = @$this->configs['notifications']['ios']['ssl-key'];
+			self::$passphrase = @$this->configs['notifications']['ios']['passpahrase'];
+			self::$apnsURL = @$this->configs['notifications']['ios']['url'];
 		}
 
-		if(!empty($android)) {
-			self::$API_ACCESS_KEY = @$android['key'];
+		if(!empty(@$android)) {
+			self::$API_ACCESS_KEY = @$android['api-key'];
 			self::$gcmURL = @$android['url'];
+		} else {
+			self::$API_ACCESS_KEY = @$this->configs['notifications']['android']['api-key'];
+			self::$gcmURL = @$this->configs['notifications']['android']['url'];
 		}
 
-		if(!empty($windows)) {
+		if(!empty(@$windows)) {
 			self::$channelName = @$windows['channel'];
+		} else {
+			self::$channelName = @$this->configs['notifications']['windows']['channel'];
 		}
 
-		self::$dataHelper = new DatabaseHelper(URL,USER,PASSWORD,DB);
+		// expose API
+		if($expose) {
+			$this->exposeAPI();
+		}
 	}
 	
-    	// Sends Push notification for Android users
+	/**
+	* Expose functions to API
+	*
+	* @return void
+	*/
+	private function exposeAPI() {
+		Router::post('/notification/send', function($req, $res) {
+			try {
+				$this->sendNotification(@$req['body']['payload'],@$req['body']['users'], @$req['body']['platforms']);
+			} catch (Exception $e) {
+				return new Response($e);
+			}
+		});
+
+		Router::get('/push/token/user/:id', function($req, $res) {
+			try {
+				$res->output($this->getPushTokenForUser($req['params']['id']));
+			} catch (Exception $e) {
+				$res->output($e);
+			}
+		}, 'get_push_token_user');
+
+		Router::delete('/push/token/:token', function($req, $res) {
+			try {
+				$res->output($this->deletePushToken($req['params']['token'], $req['body']['user_id']));
+			} catch (Exception $e) {
+				$res->output($e);
+			}
+		}, 'delete_push_token');
+
+		Router::put('/push/token', function($req, $res) {
+			try {
+				if($this->checkIfDataExists(array('token'=>@$req['body']['token'], 'user_id'=>@$req['body']['user_id'], 'platform'=>@$req['body']['platform']))) {
+					$res->output($this->savePushToken($req['body']['user_id'], $req['body']['token'], $req['body']['platform']));
+				}
+			} catch (Exception $e) {
+				$res->output($e);
+			}
+		}, 'save_push_token');
+	}
+
+	/**
+	* Sends a notifcation to user or all users on a specific platform
+	*
+	* @param array $notificaion Notification Data
+	* @param int $userID User ID to send to, leave empty to send to all Users
+	* @param string $platform Platform to send on, leave blank to send to all
+	*
+	* @return string
+	* @throws Exception
+	*/
+	public function sendNotification($payload, $userID=null, $platform=null) {
+		if(!empty(@$notification)) {
+			$query  = "SELECT token,platform FROM ".$tis->tables['push_uuid'];
+			$params = array();
+
+			if(!empty(@$userID)) {
+				$query .= " WHERE user_id=:uID";
+				$params[':uID'] = $userID;
+			}
+
+			if(!empty(@$platform)) {
+				if(empty(@$userID)) {
+					$query .= " WHERE ";
+				} else {
+					$query .= " AND ";
+				}
+
+				$query .= " platform=:p";
+				$params[':p'] = $platform;
+			}
+
+			if($results = self::$dataHelper->query($query, $params)) {
+				if($results->rowCount() > 0) {
+					while($row = $results->fetch()) {
+						// send notification
+						$this->sendNotificationToPlatform($payload, $row['token'], $row['platform']);
+					}
+				}
+			}
+		} 
+		throw new Exception('Must provide a notification object', 404);
+	}
+
+    /**
+	* Sends Push notification for Android users
+	*
+	*
+	* @return 
+	*/
 	public function android($data, $reg_id, $notification=false) {
 	    $vibrate = 1;
 	    if(!empty(@$data['vibrate']))
@@ -105,7 +240,13 @@ class NotificationServices {
 	   	return $result;
    	}
 	
-	// Sends Push's toast notification for Windows Phone 8 users
+	/**
+	* Sends Push's toast notification for Windows Phone 8 users
+	*
+	* @param array $data Notification Data
+	* @param string $uri URL for sending the notification
+	* @return string Send Result
+	*/
 	public function WP($data, $uri) {
 		$delay = 2;
 		$msg =  "<?xml version=\"1.0\" encoding=\"utf-8\"?>" .
@@ -137,69 +278,86 @@ class NotificationServices {
 		return $result;
 	}
 	
-    	// Sends Push notification for iOS users
+	/**
+	* Sends Push notification for iOS users
+	*
+	* @param array $data Notifiction Data
+	* @param string $devicetoken Device Token
+	* @return string Send Result
+	* @throws Exception
+	*/
 	public function iOS($data, $devicetoken) {
 		$deviceToken = $devicetoken;
 
-		$ctx = stream_context_create();
-		// ck.pem is your certificate file
-		stream_context_set_option($ctx, 'ssl', 'verify_peer', false); # for sandboxing only
-		stream_context_set_option($ctx, 'ssl', 'local_cert', '/Library/WebServer/Documents/cias/api/v2/api_utilities/ck.pem');
-		stream_context_set_option($ctx, 'ssl', 'passphrase', self::$passphrase);
+		if(!empty(@$this->ssl)) {
+			$ctx = stream_context_create();
+			// ck.pem is your certificate file
+			stream_context_set_option($ctx, 'ssl', 'verify_peer', false); # for sandboxing only
+			stream_context_set_option($ctx, 'ssl', 'local_cert', $this->ssl);
+			stream_context_set_option($ctx, 'ssl', 'passphrase', $this->passphrase);
 
-		// Open a connection to the APNS server 2195
-		$fp = stream_socket_client(
-			self::$apnsURL, $err,
-			$errstr, 60, STREAM_CLIENT_CONNECT|STREAM_CLIENT_PERSISTENT, $ctx);
+			// Open a connection to the APNS server 2195
+			$fp = stream_socket_client(
+				$this->apnsURL, $err,
+				$errstr, 60, STREAM_CLIENT_CONNECT|STREAM_CLIENT_PERSISTENT, $ctx);
 
-		if (!$fp)
-			exit("Failed to connect: $err $errstr" . PHP_EOL);
+			if (!$fp)
+				exit("Failed to connect: $err $errstr" . PHP_EOL);
 
-		$sound = 'default';
+			$sound = 'default';
 
-		if(!empty(@$data['sound']))
-			$sound = $data['sound'];
+			if(!empty(@$data['sound']))
+				$sound = $data['sound'];
 
-		// Create the payload body
-		$body['aps'] = array(
-			'alert' => array(
-			    'title' => $data['mtitle'],
-                'body' => $data['mdesc'],
-			 ),
-			'content-available' => @$data['mcontent'],
-			'link_url' => @$data['mlinkurl'],
-			'category' => @$data['mcategory'],
-			'sound' => $sound
-		);
+			// Create the payload body
+			$body['aps'] = array(
+				'alert' => array(
+				    'title' => $data['mtitle'],
+	                'body' => $data['mdesc'],
+				 ),
+				'content-available' => @$data['mcontent'],
+				'link_url' => @$data['mlinkurl'],
+				'category' => @$data['mcategory'],
+				'sound' => $sound
+			);
 
-		// custom data
-		if(!empty(@$data['data'])) {
-			foreach ($data['date'] as $value) {
-				$body[] = $value;
+			// custom data
+			if(!empty(@$data['data'])) {
+				foreach ($data['date'] as $value) {
+					$body[] = $value;
+				}
 			}
-		}
 
-		// Encode the payload as JSON
-		$payload = json_encode($body);
+			// Encode the payload as JSON
+			$payload = json_encode($body);
 
-		// Build the binary notification
-		$msg = chr(0) . pack('n', 32) . pack('H*', $deviceToken) . pack('n', strlen($payload)) . $payload;
+			// Build the binary notification
+			$msg = chr(0) . pack('n', 32) . pack('H*', $deviceToken) . pack('n', strlen($payload)) . $payload;
 
-		// Send it to the server
-		$result = fwrite($fp, $msg, strlen($msg));
+			// Send it to the server
+			$result = fwrite($fp, $msg, strlen($msg));
 
-		// Close the connection to the server
-		fclose($fp);
+			// Close the connection to the server
+			fclose($fp);
 
-		if(!$result) {
-			throw new Exception('Message not delivered',500);
+			if(!$result) {
+				throw new Exception('Message not delivered',500);
+			} else {
+				return $result;
+			}
 		} else {
-			return $result;
+			throw new Exception('APNS SSL Cert cannot be NULL');
 		}
 	}
 	
-	// Curl 
-	//private static function useCurl($url, $headers, $fields = null) {
+	/**
+	* CURL Request
+	*
+	* @param string $url URL to request
+	* @param array $headers Headers to send
+	* @param array $fields Body fields to send
+	* @return object
+	*/
 	private static function useCurl($url, $headers, $fields = null) {
 	    // Open connection
 	    $ch = curl_init();
@@ -235,37 +393,40 @@ class NotificationServices {
     * @param array $data Notification Payload
     * @param string $token Device Token
     * @param string $platform Notification Platform
-    * @return array | string
+    *
+    * @return array or string if response is just text
+    * @throws Exception
     */
-    public function sendNotification($data, $token, $platform) {
+    public function sendNotificationToPlatform($data, $token, $platform) {
     	if($platform == 'apple') {
-    		return self::iOS($data, $token);
+    		return $this->iOS($data, $token);
     	} else if($platform == 'google') {
-    		return self::android($data, $token, @$data['notification']);
+    		return $this->android($data, $token, @$data['notification']);
     	} else if($platform == 'microsoft') {
-    		return self::WP($data, $token);
+    		return $this->WP($data, $token);
     	}
-    	return 'Invalid Platform';
+    	throw new Exception('Invalid Platform',500);
     }
 
     /**
     * Saves a push notification token for a user
     *
-    * @param string | int $userID User ID 
+    * @param string or int $userID User ID 
     * @param string $token Push Token
-    * @return boolean
+    *
+    * @return bool
+    * @throws Exception
     */
     public function savePushToken($userID, $token, $platform) {
-    	if(!empty(PUSH_UUID)) {
-    		if(!self::$dataHelper->find('id','uuid,user_id,platform',$token.','.$userID.','.$platform,PUSH_UUID,'Token')) {
-    			if(self::$dataHelper->query("INSERT INTO ".PUSH_UUID." SET platform=:p,uuid=:uuid,user_id=:userID",array(':p'=>$platform,':uuid'=>$token,':userID'=>$userID))) {
-    				return 'Push Token Added';
-    			}
-    		} else {
-    			throw new Exception(self::$dataHelper->errorMessage, self::$dataHelper->errorCode);
-    		}
-    	}
-    	throw new Exception('Push Tokens Table not set',500);
+    	try {
+	    	if(!self::$dataHelper->find('id',array('uuid'=>@$token,'user_id'=>@$userID,'platform'=>$platform),'uuid,user_id,platform',$this->tables['push_uuid'],'Token')) {
+	   			if(self::$dataHelper->query("INSERT INTO ".$this->tables['push_uuid']." SET platform=:p,uuid=:uuid,user_id=:userID",array(':p'=>$platform,':uuid'=>$token,':userID'=>$userID))) {
+	   				return 'Push Token Added';
+	   			}
+	   		} 
+    	} catch(Exception $e) {
+	   		throw $e;
+	   	}
     }
 
     /**
@@ -273,39 +434,47 @@ class NotificationServices {
     *
     * @param string | int $userID User ID 
     * @param string $token Push Token
-    * @return boolean
+    *
+    * @return bool
+    * @throws Exception
     */
-    public function deletePushToken($token) {
-    	if(!empty(PUSH_UUID)) {
-    		if(self::$dataHelper->find('id','user_id,uuid',$userID.','.$$token,PUSH_UUID,'Token')) {
-    			self::$dataHelper->query("UPDATE ".PUSH_UUID." SET deleted='1' WHERE token=:t",array(':t'=>$token));
-    		}
-    		throw new Exception(self::$dataHelper->errorMessage, self::$dataHelper->errorCode);
-    	}
-    	throw new Exception('Push Tokens Table not set',500);
+    public function deletePushToken($token, $userID) {
+    	try {
+	    	if(self::$dataHelper->find('id',array('user_id'=>@$userID,'uuid'=>@$token), $this->tables['push_uuid'],'Token')) {
+	    		self::$dataHelper->query("UPDATE ".$this->tables['push_uuid']." SET deleted='1' WHERE token=:t",array(':t'=>$token));
+
+	    		return 'Push Token Deleted';
+	   		}
+	   	} catch (Exception $e) {
+	    	throw $e;
+	    }
     }
 
     /**
     * Gets push notification tokens for a user
     *
-    * @param string | int $userID User ID 
+    * @param string or int $userID User ID 
     * @param string $token Push Token
-    * @return boolean
+    *
+    * @return bool
+    * @throws Exception
     */
     public function getPushTokenForUser($userID) {
-    	if(!empty(PUSH_UUID)) {
-	    	if($result = self::$dataHelper->query("SELECT * FROM ".PUSH_UUID." WHERE user_id=:uID",array(':uID'=>$userID))) {
-	    		$tokens = array();
+	    try {
+		    if($result = self::$dataHelper->query("SELECT * FROM ".$this->tables['push_uuid']." WHERE user_id=:uID",array(':uID'=>$userID))) {
+		    	
+		    	$tokens = array();
 
-	    		while($token = $result->fetch()) {
-	    			$token['string_date'] = formatDate($token['date']);
-	    			$tokens[] = $token;
-	    		}
-	    		return $tokens;
-	    	}
-	    	throw new Exception(self::$dataHelper->errorMessage, self::$dataHelper->errorCode);
-	    }
-	    throw new Exception('Push Tokens Table not set',500);
+		    		
+		    	while($token = $result->fetch()) {
+		    		$token['string_date'] = formatDate($token['date']);
+		    		$tokens[] = $token;
+		    	}
+		   		return $tokens;
+		  	}
+		} catch (Exception $e) {
+		    throw $e;
+		}
     }
 
     /**
@@ -315,12 +484,13 @@ class NotificationServices {
 	* @param string $from Email Sender
 	* @param string $subject Email Subject
 	* @param string $body Email body
+	*
 	* @return bool
 	*/
 	public function sendEmail($to,$from,$fromName,$subject,$body,$html=false) {
 		require_once('swift_mailer/swift_required.php');
 
-		if(!empty($to) && !empty($from) && !empty($fromName) && !empty($subject) && !empty($body) && !empty(self::$emailUsername) && !empty(self::$emailPassword) && !empty(self::$emailServer)) {
+		if(!empty(@$to) && !empty(@$from) && !empty(@$fromName) && !empty(@$subject) && !empty(@$body) && !empty(self::$emailUsername) && !empty(self::$emailPassword) && !empty(self::$emailServer)) {
 			$transport = Swift_SmtpTransport::newInstance(self::$emailServer, self::$emailPort, self::$emailSSL)
 			->setUsername(self::$emailUsername) 
 			->setPassword(self::$emailPassword); 

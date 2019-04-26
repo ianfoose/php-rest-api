@@ -1,0 +1,40 @@
+{
+	"name": "My API",
+	"log_errors": true,
+	"database": {
+		"type": "mysql",
+		"url": "localhost",
+		"port": 3306,
+		"username": "root",
+		"password": "root",
+		"database": "sakila",
+		"limit": 40
+	},
+	"date": {
+		"timezone": "UTC"
+	},
+	"environment": "development",
+	"error_logging": {
+		"type": "mysql",
+		"url": "localhost",
+		"port": 3306,
+		"username": "root",
+		"password": "root",
+		"database": "sakila",
+	},
+	"notifications": { },
+	"email": { },
+	"tokens": {
+		"prefix": "api-token",
+		"secret": "api123456"
+	},
+	"tables": {
+		"email_subscriptions": "email_subscriptions",
+		"tokens": "tokens",
+		"errors": "errors",
+		"uuid": "push_tokens",
+		"push_uuid": "push_tokens",
+		"traffic": "traffic_logs"
+	},
+	"format": "json"
+}

@@ -18,7 +18,7 @@ CREATE TABLE `email_templates` (
   PRIMARY KEY (`id`)
 ) ENGINE=InnoDB AUTO_INCREMENT=26 DEFAULT CHARSET=utf8;
 
-CREATE TABLE `errors_tbl` (
+CREATE TABLE `errors` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
   `code` varchar(455) DEFAULT NULL,
   `date` datetime DEFAULT CURRENT_TIMESTAMP,
@@ -28,7 +28,7 @@ CREATE TABLE `errors_tbl` (
   PRIMARY KEY (`id`)
 ) ENGINE=InnoDB AUTO_INCREMENT=470 DEFAULT CHARSET=utf8;
 
-CREATE TABLE `mailing_list` (
+CREATE TABLE `email_subscriptions` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
   `email` varchar(255) DEFAULT NULL,
   `subscriber` tinyint(1) DEFAULT '0',
@@ -55,7 +55,7 @@ CREATE TABLE `tokens` (
   PRIMARY KEY (`id`)
 ) ENGINE=InnoDB AUTO_INCREMENT=186 DEFAULT CHARSET=utf8;
 
-CREATE TABLE `visitor_logs` (
+CREATE TABLE `traffic_logs` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
   `date` datetime DEFAULT CURRENT_TIMESTAMP,
   `ip` varchar(45) DEFAULT NULL,

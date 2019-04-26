@@ -6,19 +6,19 @@
 * @version 1.0
 */
 
-require_once('utilities.php');
+require_once('Response.php');
+require_once('ErrorLogger.php');
 
 session_start();
 
 class DatabaseHelper {
 	private $dbURL;
+	private $dbPort;
 	private $dbUser;
 	private $dbPassword;
 	private $dbName;
 
 	public $insertID;
-	public $errorMessage = "Database Error";
-	public $errorCode = 500;
 
 	private $transaction = false;
 	protected static $db;
@@ -33,8 +33,9 @@ class DatabaseHelper {
 	* 
 	* @return void
 	*/
-	public function __construct($url, $user, $password, $dbName) {
+	public function __construct($url, $port=3306, $user, $password, $dbName) {
 		$this->dbURL = $url;
+		$this->dbPort = $port;
 		$this->dbUser = $user;
 		$this->dbPassword = $password;
 		$this->dbName = $dbName;
@@ -58,37 +59,61 @@ class DatabaseHelper {
 	* @return Error | DB Connection
 	*/
 	public function connect() {
-		$this->resetError();
 		if(self::$db != null) {
 			return self::$db;
 		} else {
 			try {
-				self::$db = new PDO("mysql:host=".$this->dbURL.";dbname=".$this->dbName.";",$this->dbUser,$this->dbPassword);
+				self::$db = new PDO("mysql:host=".$this->dbURL.":".$this->dbPort.";dbname=".$this->dbName.";",$this->dbUser,$this->dbPassword);
 				self::$db->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
 				self::$db->setAttribute(PDO::ATTR_DEFAULT_FETCH_MODE, PDO::FETCH_ASSOC);
 				self::$db->setAttribute( PDO::ATTR_EMULATE_PREPARES, false );
 
 				return self::$db;
 			} catch(Exception $e) {
-				$this->errorMessage = 'Unable to connect to db';
-				try {
-					ErrorLogger::logError(500,$this->errorMessage,$e->getMessage()); 
-				} catch(Exception $e) {
-					return false;
-				}
-				return false;
+				throw new Exception('Unable to connect to DB',500);
 			} 
 		}
 	}
 
 	/**
-	* Resets error variables
+	* Queries the database
 	*
-	* @return void
+	* @param string $query Query String
+	* @param bool $output Outputs the error
+	* @return MySQLi result | Error Object
 	*/
-	private function resetError() {
-		$this->errorCode = 500;
-		$this->errorMessage = 'Database Error';
+	public function query($query, $params=null, $useResult=false) {
+		if(!empty($query)) {
+			try {
+				if($this->connect()) {
+					if($useResult)
+						self::$db->setAttribute(PDO::MYSQL_ATTR_USE_BUFFERED_QUERY, true);
+
+			
+					$statement = $this->connect()->prepare($query);
+           			$statement->execute($params);
+
+           			$this->insertID = self::$db->lastInsertId();
+
+					return $statement;
+				}
+			} catch(Exception $e) { // query failed
+				// log error
+				try {
+					$errorLogger = new ErrorLogger();
+					
+					$errorLogger->logError(500,$e->getMessage());
+				} catch(Exception $e) {
+					throw $e;
+				}
+
+				if($this->transaction) { // auto rollback
+	               	self::rollback();
+	            }
+
+				throw new Exception('Query Error: '.$e->getMessage(), 500);
+			} 
+		}
 	}
 
 	/**
@@ -101,76 +126,103 @@ class DatabaseHelper {
 	* @param $message string Name of item being found, default 'item'
 	* @return Bool | Response
 	*/
-	public function find($keys, $cols, $vals, $tbl,$message='item') {
-		$this->resetError();
-		$cols = explode(',',$cols);
-		
+	public function find($keys, $vals, $tbl, $message='item') {
 		if(!is_array($vals))
-			$vals = explode(',',$vals);
+			throw new Exception('Values must be in an array', 500);
 
-		if(count($cols) == count($vals)) {
-			$queryString = "SELECT ".$keys." FROM ".$tbl." WHERE ";
-			$params = array();
+		$queryString = "SELECT ".$keys." FROM ".$tbl." WHERE ";
+		$params = array();
 
-			$j = 0;
-			foreach ($cols as $key => $value) {
-				$queryString .= $value."=:".$value;
-				$params[':'.$value] = $vals[$key];
+		$j = 0;
+		foreach ($vals as $key => $value) {
+			$queryString .= $key."=:".$j;
+			$params[':'.$j] = $vals[$key];
 
-				if($j < count($cols)-1) {
-					$queryString .= " AND ";
-				}
-
-				$j++;
+			if($j < count($vals)-1) {
+				$queryString .= " AND ";
 			}
 
+			$j++;
+		}
+
+		// run query
+		try {
 			if($result = self::query($queryString,$params)) {
 				if($result->rowCount() == 1) {
 					return $result->fetch();
+				} else {
+					throw new Exception($message.' not found', 404);
 				}
 			}
-			$this->errorMessage = $message.' not found';
-			$this->errorCode = 404;
-			return false;
-		} 
-		return false;
+		} catch (Exception $e) {
+			throw $e;
+		}
 	}
 
 	/**
-	* Queries the database
+	* Logs an audit event for a piece of data, example is editing a user, store the event and who edited
 	*
-	* @param string $query Query String
-	* @param bool $output Outputs the error
-	* @return MySQLi result | Error Object
+	* @param $itemID int Item being edited
+	* @param $editingID int Editor ID
+	* @param $event string Event being logged, example (changed, added, deleted)
+	*
+	* @return String | Exception
 	*/
-	public function query($query, $params=null, $useResult=false) {
-		$this->resetError();
-		if(!empty($query)) {
-			if(self::connect()) {
-				if($useResult)
-					self::$db->setAttribute(PDO::MYSQL_ATTR_USE_BUFFERED_QUERY, true);
+	public function saveAuditLog($itemID, $editingID, $event='changed') {
+		try {
+			if(self::query("INSERT INTO ".$this->tables['audit_logs']." SET item_id=:id, event=:e, editor_id:eID",array(':id'=>$itemID,':eID'=>$editingID,':event'=>$event))) {
+				return 'Audit Saved';
+			}
+		} catch (Exception $e) {
+			throw $e;
+		}
+	}
 
-				try {
-					$statement = self::connect()->prepare($query);
-           			$statement->execute($params);
+	/**
+	* Gets an audit log by id
+	*
+	* @param int $id Audit Id
+	* @return Data Object
+	*/
+	public function getAuditLog($id) {
+		try {
+			if($auditLog = self::find('*',array('id'=>$id),$this->tables['audit_logs'])) {
+				return $auditLog;
+			}
+		} catch (Exception $e) {
+			throw $e;
+		}
+	}
 
-           			$this->insertID = self::$db->lastInsertId();
+	/**
+	* Gets all audit logs
+	*
+	* @param $sinceID Int
+	* @param $maxID Int
+	* @param $limit Int Fetch Limit
+	* @return
+	*/
+	public function getAuditLogs($sinceID=0, $maxID=0, $limit=35) {
+		try {
+			if($logs = self::query("SELECT * FROM ".$this->tables['audit_logs'])) {
+				$logs = array();
 
-					return $statement;
-				} catch(Exception $e) {
-					try {
-						ErrorLogger::logError(500,$e->getMessage());
-					} catch(Exception $e) {
-						return false;
+				while($log = $logs->fetch()) {
+					$log['string_date'] = formateDate($log['date']);
+
+					if(!empty(@$mapping)) {
+						// if($object = self::find('*','id',$log['object_id'], $this->tables[$mapping])) {
+						// 	$log['object'] = $object;
+						// }
 					}
 
-					if($this->transaction) // auto rollback
-	                	self::rollback();
-
-	                $this->errorMessage = $e->getMessage();
-					return false;
+					$logs[] = $log;
 				}
-			} 
+
+				return $logs;
+			}
+		} catch(Exception $e) {
+			throw $e;
 		}
 	}
 
@@ -188,8 +240,7 @@ class DatabaseHelper {
 				$this->transaction = true;
 				return true;
 			} catch(Exception $e) {
-				$this->errorMessage = $e->getMessage();
-				return false;
+				throw new Exception('Begin Transaction Error: '.$e->getMessage(), 500);
 			}
 		}
 	}
@@ -205,8 +256,7 @@ class DatabaseHelper {
 			$this->transaction = false;
 			return true;
 		} catch(Exception $e) {
-			$this->errorMessage = $e->getMessage();
-			return false;
+			throw new Exception('Rollback Error: '.$e->getMessage(), 500);
 		}
 	}
 
@@ -221,8 +271,7 @@ class DatabaseHelper {
 			$this->transaction = false;
 			return true;
 		} catch(Exception $e) {
-			$this->errorMessage = $e->getMessage();
-			return false;
+			throw new Exception('Commit Error: '.$e->getMessage(), 500);
 		}
 	}
 
@@ -263,8 +312,17 @@ class DatabaseHelper {
 	* @param int $limit Limit
 	* @return string
 	*/
-	public static function getOffset($sinceID, $maxID, $tbl, $id='id', $limit=null) {
+	public static function getOffset($tbl, $id='id', $sinceID=0, $maxID=0, $deleted, $limit, $order='') {
 		$params = array();
+
+		// set db select limit
+		if(empty(@$limit) || !isset($limit)) {
+			if(!empty(@$this->configs['database']['limit'])) {
+				$limit = @$this->configs['database']['limit'];
+			} else {
+				$limit = 30;
+			}
+		}
 
 		$q = " $id <=(SELECT MAX($tbl.$id) FROM $tbl)";
 		
@@ -289,7 +347,25 @@ class DatabaseHelper {
 			} 
 		}
 
-		$q .= " ORDER BY id DESC";
+		// deleted
+		if(!empty(@$deleted)) {
+			if(is_array($deleted)) {
+				if(!empty(@$deleted['key']) && !empty(@$deleted['value'])) {
+					$q .= " ".$deleted['key']."=:d";
+					$params[':d'] = $deleted;
+				} 
+			} else {
+				$q .= " deleted=:d";
+				$params[':d'] = $deleted;
+			}
+		}
+
+		// order param
+		if(!empty(@$order)) {
+			if($order == 'DESC' || $order == 'ASC') {
+				$q .= " ORDER BY id ".$order;
+			}
+		}
 
 		if($limit != null) {
 			$q.= " LIMIT :limit";
@@ -305,7 +381,7 @@ class DatabaseHelper {
 	* @param string $deleted Deleted filter
 	* @return string
 	*/
-	public static function getDeletedQuery($deleted) {
+	public static function deletedQuery($deleted) {
 		$baseQueryString = ' deleted=';
 		if($deleted == 'true') { // deleted
 			return $baseQueryString .= "'1'";
@@ -355,7 +431,6 @@ class DatabaseHelper {
 	* @return boolean | array 
 	*/
 	public function validateResponse($validFields, $fields) {
-		$this->resetError();
 		if(!empty($validFields) && !empty($fields)) {
 			$invalidFields = array();
 
@@ -373,7 +448,9 @@ class DatabaseHelper {
 					$outputSuffix = ' is an invalid field';
 				}
 				
-				$this->errorMessage = $errorDescription.$outputSuffix; 
+				if($output) {
+					throw new Exception(404, $errorDescription.$outputSuffix);
+				}
 				return false;
 			} else {
 				if(!in_array('id', $fields)) {
@@ -381,9 +458,9 @@ class DatabaseHelper {
 				}
 				return implode(',', $fields);
 			}
+		} else {
+			throw new Exception('null data', 404);
 		}
-		$this->errorMessage = 'null data';
-		return false;
 	}
 
 	/**
@@ -394,7 +471,7 @@ class DatabaseHelper {
 	* @param string $name The name of the object to check
 	* @return boolean | array 
 	*/
-	public function validator($fields,$validFields,$name) {
+	public function validator($fields, $validFields, $name) {
 		if(!empty($fields)) {
 			if($fields = $this->parseString($fields)) {
 				if(!array_key_exists($name, $fields)) {
@@ -406,9 +483,9 @@ class DatabaseHelper {
 				if($p = self::validateResponse($validFields, $checkFields)) {
 					return $p;
 				}
+			} else {
+				throw new Exception('Invalid Partial Response fields', 500);
 			}
-			$this->errorCode = 500;
-			return false;
 		}
 		return '*';
 	}
@@ -420,9 +497,8 @@ class DatabaseHelper {
 	* @param boolean $query Strict search or general search
 	* @return array
 	*/
-	public static function buildFilter($filters,$query=true) {
+	public static function buildFilter($filters, $query=true) {
 		$q = '';
-		$p = array();
 		$i = 0;
 
 		foreach ($filters as $key => $value) {
@@ -445,37 +521,6 @@ class DatabaseHelper {
 		}
 
 		return array($q,$p);
-	}
-
-	/**
-	* Check if data exists
-	*
-	* @param string $data String data
-	* @return boolean
-	*/
-	public function checkIfDataExists($data) {
-		$this->resetError();
-		$emptyKeys = array();
-
-		if(is_array($data)) {
-			foreach ($data as $key => $value) {
-				if(empty($value)) 
-					$emptyKeys[] = $key;
-			}
-
-			if(count($emptyKeys) > 0) {
-				$this->errorCode = 404;
-				$this->errorMessage = implode(',',$emptyKeys).' cannot be empty';
-				return false;
-			} 
-		} else { // error
-			if(empty($data)) {
-				$this->errorCode = 404;
-				$this->errorMessage = 'data is empty';
-				return false;
-			}
-		}
-		return true;
 	}
 }
 ?>

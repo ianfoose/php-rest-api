@@ -6,9 +6,67 @@
 * @version 1.0
 */
 
-include_once('./Constants.php');
+require_once('APIHelper.php');
 
-class IPServices {
+class IPServices extends APIHelper {
+	/**
+	* Main Constructor
+	*
+	* @return void
+	*/
+	public function __construct($expose=true) {
+		if($expose) {
+			$this->exposeAPI();
+		}
+	}
+
+	/**
+	* Exposes functions to the API
+	*
+	* @return void
+	*/
+	public function exposeAPI() {
+		Router::get('/visits', function($req, $res) {
+			try {
+				$res->output($this->getVisitors(@$_GET['since_id'], @$_GET['max_id'], @$_GET['limit'], @$_GET['deleted']));
+			} catch (Exception $e) {
+				return new Response($e);
+			}
+		});
+
+		Router::get('/visits/count/number', function($req, $res) {
+			try {
+				$res->output($this->getTotalNumberOfVisits(@$_GET['deleted']));
+			} catch (Exception $e) {
+				return new Response($e);
+			}
+		});
+
+		Router::get('/visit/:id', function($req, $res) {
+			try {
+				$res->output($this->getVisitor(@$req['params']['id']));
+			} catch (Exception $e) {
+				return new Response($e);
+			}
+		});
+
+		Router::get('/visits/search/:query', function($req, $res) {
+			try {
+				$res->output($this->search);
+			} catch (Exception $e) {
+				return new Response($e);
+			}
+		});
+
+		Router::put('/visit', function($req, $res) {
+			try {
+				$res->output($this->logVistitor());
+			} catch (Exception $e) {
+				return new Response($e);
+			}
+		});
+	}
+
 	/**
 	* Get IP address of a user
 	*
@@ -18,9 +76,9 @@ class IPServices {
 		$ipRemote = @$_SERVER['REMOTE_ADDR'];
 		$httpClientIP = @$_SERVER['HTTP_CLIENT_IP'];
 		$httpXforwardedFor = @$_SERVER['HTTP_X_FORWARDED_FOR'];
-		if(!empty($httpClientIP)) {
+		if(!empty(@$httpClientIP)) {
 			return $httpClientIP;
-		} else if(!empty($httpXForwardedFor)) {
+		} else if(!empty(@$httpXForwardedFor)) {
 			return $httpXForwardedFor;
 		} 
 		return $ipRemote;
@@ -38,28 +96,37 @@ class IPServices {
 	/**
 	* Logs a visitor
 	*
-	* @return boolean
+	* @return string
+	* @throws Exception
 	*/
 	public function logVistitor() {
-		$ip = IPServices::getIP();
-		$client = IPServices::getClient();
-		if(self::$dataHelper->query("INSERT INTO ".VISITORS." SET ip='$ip',client='$client'")) {
-			return 'Logged';
-		}	
-		throw new Exception(self::$dataHelper->errorMessage,self::$dataHelper->errorCode);
+		try {
+			$ip = IPServices::getIP();
+			$client = IPServices::getClient();
+			
+			if(self::$dataHelper->query("INSERT INTO ".$this->tables['traffic']." SET ip=:ip,client=:client", array(':ip'=>$ip,':client'=>$client))) {
+				return 'Logged';
+			}	
+		} catch(Exception $e) {
+			throw $e;
+		}
 	}
 
 	/**
 	* Gets a visitor by ID
 	*
 	* @param int $id Visitor ID
-	* @return object | Exception
+	* @return object
+	* @throws Exception
 	*/
 	public function getVisitor($id) {
-		if($result = self::$dataHelper->find('*','id',$id,VISITORS)) { 
-			return self::getVisitorData($result);
+		try {
+			if($result = self::$dataHelper->find('*', array('id'=>$id), $this->tables['traffic'])) { 
+				return self::getVisitorData($result);
+			}
+		} catch(Exception $e) {
+			throw $e;
 		}
-		throw new Exception(self::$dataHelper->errorMessage, self::$dataHelper->errorCode);
 	}
 
 	/**
@@ -68,27 +135,31 @@ class IPServices {
 	* @param int $sinceID Since ID
 	* @param int $maxID Max ID
 	* @param int $limit Limit
-	* @return array | Exception
+	* @return array
+	* @throws Exception
 	*/
 	public function getVisitors($sinceID=0, $maxID=0, $limit=35) {
-		$o = self::$dataHelper->getOffset($sinceID,$maxID,VISITORS,$limit);
+		try {
+			$o = self::$dataHelper->getOffset($this->tables['traffic'], $id='id', $sinceID, $maxID, null, $limit);
 
-		if($result = self::$dataHelper->query("SELECT * FROM ".VISITORS.$o[0],$o[1])) {
-			$visits = array();
+			if($result = self::$dataHelper->query("SELECT * FROM ".$this->tables['traffic'].$o[0],$o[1])) {
+				$visits = array();
 
-			while($visit = $result->fetch()) {
-				$visits[] = self::getVisitorData($visit);
+				while($visit = $result->fetch()) {
+					$visits[] = self::getVisitorData($visit);
+				}
+
+				return $visits;
 			}
-
-			return $visits;
+		} catch (Exception $e) {
+			throw $e;
 		}
-		throw new Exception(self::$dataHelper->errorMessage, self::$dataHelper->errorCode);
 	}
 
 	/**
 	* Gets visitor data
 	*
-	* @param $item object Visitor Object 
+	* @param object $item Visitor Object 
 	* @return object
 	*/
 	public function getVisitorData($item) {
@@ -101,13 +172,17 @@ class IPServices {
 	/**
 	* Gets total number of visitors
 	*
-	* @return int | exception
+	* @return int
+	* @throws Exception
 	*/
 	public function getTotalNumberOfVisits() {
-		if($result = self::$dataHelper->query("SELECT id FROM ".VISITORS)) {
-			return $result->rowCount();
+		try {
+			if($result = self::$dataHelper->query("SELECT id FROM ".$this->tables['traffic'])) {
+				return $result->rowCount();
+			}
+		} catch(Exception $e) {
+			throw $e;
 		}
-		throw new Exception(self::$dataHelper->errorMessage, self::$dataHelper->errorCode);
 	}
 }
 ?>
