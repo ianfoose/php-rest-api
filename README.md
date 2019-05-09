@@ -2,7 +2,7 @@
 
 A REST API framework for PHP
 
-3 Table of Contents
+# Table of Contents
 1. Install
 2.
 3.
