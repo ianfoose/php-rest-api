@@ -24,8 +24,10 @@ class TokenServices extends APIHelper {
 	* @return void
 	*/
 	public function __construct($expose=true) {
-		if(!empty(@$this->configs['tokens'])) {
-			$tokensConfig = $this->configs['table'];
+		parent::__construct();
+
+		if(!empty(@$this->tables['tokens'])) {
+			$tokensConfig = $this->configs['tokens'];
 
 			if(!empty(@$tokensConfig['prefix'])) {
 				$this->prefix = $tokensConfig['prefix'];
@@ -228,7 +230,7 @@ class TokenServices extends APIHelper {
 	* @param bool $refresh Generate a refresh token
 	* @return string
 	*/
-	private static function create($id, $data=null, $refresh=false) {
+	private function create($id, $data=null, $refresh=false) {
 		if($this->checkTokenConfigs()) {
 			$exp = date('Y:m:d H:i:s', strtotime('+5 Minutes'));
 
