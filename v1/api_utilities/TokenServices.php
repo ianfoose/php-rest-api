@@ -200,8 +200,8 @@ class TokenServices extends APIHelper {
 	* @param array $data body data array
 	* @return string
 	*/
-	public static function createToken($id, $data=null) {
-		return self::create($id,$data);
+	public function createToken($id, $data=null) {
+		return $this->create($id,$data);
 	}
 
 	/**
