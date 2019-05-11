@@ -31,6 +31,7 @@ class Response {
 	/**
 	* Main Constructor
  	*
+    * @param string $format Response format
 	* @return void
 	*/
 	public function __construct($format) {
@@ -42,6 +43,7 @@ class Response {
     /**
     * Gets a messages for status code
     *
+    * @param int $status Response HTTP status
     * @return string
     */
 	private function getMessage($status=200) {
@@ -54,6 +56,7 @@ class Response {
     * Outputs data in JSON
     *
     * @param array $data Data array
+    * @param int $status Response HTTP status
     * @param array $headers Output headers
     * @return void
     */
@@ -106,7 +109,6 @@ class Response {
     *
     * @param array $array Array to be converted
     * @param object $xml XML element to append to
-    *
     * @return SimpleXML Element 
     */
     private function array_to_xml($array, &$xml) {
@@ -125,10 +127,11 @@ class Response {
     }
 
     /**
-     * Takes in a filename and an array associative data array and outputs a csv file
-     * @param string $fileName
-     * @param array $assocDataArray     
-     */
+    * Takes in a filename and an array associative data array and outputs a csv file
+    *
+    * @param string $fileName
+    * @param array $assocDataArray     
+    */
     private function outputCsv($fileName, $assocDataArray) {
         header('Pragma: public');
         header('Expires: 0');
