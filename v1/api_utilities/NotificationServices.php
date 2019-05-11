@@ -115,7 +115,7 @@ class NotificationServices extends APIHelper {
 	private function exposeAPI() {
 		Router::post('/notification/send', function($req, $res) {
 			try {
-				$this->sendNotification(@$req['body']['payload'],@$req['body']['users'], @$req['body']['platforms']);
+				$this->sendNotification(@$req->body['payload'],@$req->body['users'], @$req->body['platforms']);
 			} catch (Exception $e) {
 				return new Response($e);
 			}
@@ -123,7 +123,7 @@ class NotificationServices extends APIHelper {
 
 		Router::get('/push/token/user/:id', function($req, $res) {
 			try {
-				$res->output($this->getPushTokenForUser($req['params']['id']));
+				$res->output($this->getPushTokenForUser($req->params['id']));
 			} catch (Exception $e) {
 				$res->output($e);
 			}
@@ -131,7 +131,7 @@ class NotificationServices extends APIHelper {
 
 		Router::delete('/push/token/:token', function($req, $res) {
 			try {
-				$res->output($this->deletePushToken($req['params']['token'], $req['body']['user_id']));
+				$res->output($this->deletePushToken($req->params['token'], $req->body['user_id']));
 			} catch (Exception $e) {
 				$res->output($e);
 			}
@@ -139,8 +139,8 @@ class NotificationServices extends APIHelper {
 
 		Router::put('/push/token', function($req, $res) {
 			try {
-				if($this->checkIfDataExists(array('token'=>@$req['body']['token'], 'user_id'=>@$req['body']['user_id'], 'platform'=>@$req['body']['platform']))) {
-					$res->output($this->savePushToken($req['body']['user_id'], $req['body']['token'], $req['body']['platform']));
+				if($this->checkIfDataExists(array('token'=>@$req->body['token'], 'user_id'=>@$req->body['user_id'], 'platform'=>@$req->body['platform']))) {
+					$res->output($this->savePushToken($req->body['user_id'], $req->body['token'], $req->body['platform']));
 				}
 			} catch (Exception $e) {
 				$res->output($e);
