@@ -38,10 +38,16 @@ class Request {
 	public $token;
 
 	/**
+	* Main Constructor
 	*
+	* @param array $params Request URL Params
+	* @param array $body Request Body
+	* @param array $headers Request headers
+	* @param string $format Response format
+	* @param string $token Request token (optional)
 	* @return void
 	*/
-	public function __construct($params=null, $body=null, $headers=null, $format=null, $token=null) {
+	public function __construct($params=null, $body=null, $headers=null, $format='json', $token=null) {
 		if(!empty(@$params)) {
 			$this->params = $params;
 		}
