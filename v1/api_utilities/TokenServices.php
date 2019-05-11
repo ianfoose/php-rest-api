@@ -21,6 +21,7 @@ class TokenServices extends APIHelper {
 	/**
 	* Main Constructor
 	*
+	* @param bool $expose Expose API functions
 	* @return void
 	*/
 	public function __construct($expose=true) {
@@ -54,7 +55,7 @@ class TokenServices extends APIHelper {
 	public function exposeAPI() {
 		Router::post('/token/refresh', function($req, $res) {
 			try {
-				$res->output($this->refreshToken(@$req['body']['x-api-key']));
+				$res->output($this->refreshToken(@$req->headers['x-api-key']));
 			} catch (Exception $e) {
 				return new Response($e);
 			}
@@ -70,7 +71,7 @@ class TokenServices extends APIHelper {
 
 		Router::get('/token/:id', function($req, $res) {
 			try {
-				$res->output($this->getToken(@$req['params']['id']));
+				$res->output($this->getToken(@$req->params['id']));
 			} catch (Exception $e) {
 				return new Response($e);
 			}
@@ -78,7 +79,7 @@ class TokenServices extends APIHelper {
 
 		Router::get('/token/unique/:id', function($req, $res) {
 			try {
-				$res->output($this->getTokenUnique(@$req['params']['id']));
+				$res->output($this->getTokenUnique(@$req->params['id']));
 			} catch (Exception $e) {
 				return new Response($e);
 			}
@@ -88,10 +89,10 @@ class TokenServices extends APIHelper {
 	/**
 	* Decodes a token
 	*
-	* @param Object $token Token
+	* @param string $token Base64 Token
 	* @return array
 	*/
-	public static function decodeToken($token) {
+	public function decodeToken($token) {
 		$token = base64_decode($token);
 		$token = json_decode($token,true);
 
@@ -101,12 +102,12 @@ class TokenServices extends APIHelper {
 	/**
 	* validates a token, non database
 	*
-	* @param string $token Token
-	* @return Bool or token Token
+	* @param string $token Base64 Token
+	* @return Bool
 	*/
-	public static function validate($token) {
+	public function validate($token) {
 		if($this->checkTokenConfigs()) {
-			$token = self::decodeToken($token);
+			$token = $this->decodeToken($token);
 
 			$sig = sha1($this->prefix.':'.$this->secret.':'.$token['auth']['t']);
 
@@ -132,7 +133,7 @@ class TokenServices extends APIHelper {
 	*/
 	public function validateRefreshToken($rToken) {
 		if($this->checkTokenConfigs()) {
-			$token = self::decodeToken($rToken);
+			$token = $this->decodeToken($rToken);
 
 			$sig = sha1($this->prefix.':'.$this->secret.':'.$token['auth']['t']);
 
@@ -163,8 +164,8 @@ class TokenServices extends APIHelper {
 	* @throws Exception
 	*/
 	public function refreshToken($rToken) {
-		if(self::validateRefreshToken($rToken)) {
-			if($dToken = self::decodeToken($rToken)) {
+		if($this->validateRefreshToken($rToken)) {
+			if($dToken = $this->decodeToken($rToken)) {
 				if(!empty(@$dToken['data']['id'])) {
 					$userID = $dToken['data']['id'];
 
@@ -173,7 +174,7 @@ class TokenServices extends APIHelper {
 							if(self::$dataHelper->beginTransaction()) {
 								try {
 									$newRToken = $this->createRefreshToken($userID,$dToken['data']);
-									$newDToken = self::decodeToken($newRToken);
+									$newDToken = $this->decodeToken($newRToken);
 
 									if(self::$dataHelper->commit()) {
 										return array('token'=>$this->createToken($userID,$dToken['data']),'refresh_token'=>$newRToken);
@@ -265,13 +266,13 @@ class TokenServices extends APIHelper {
 	*/
 	public function save($uID, $token) {
 		try {
-			$dToken = self::decodeToken($token);
+			$dToken = $this->decodeToken($token);
 			
 			if(!empty(@$dToken['auth']['t'])) {
 				try {
-					if(self::$dataHelper->find('id', array('token'=>@$token), $this->tables['tokens'])) {
+					/*if(self::$dataHelper->find('id', array('token'=>@$token), $this->tables['tokens'])) {
 						self::$dataHelper->query("UPDATE ".$this->tables['tokens']." SET revoked='1' WHERE u_id=:uID AND token=:t",array(':uID'=>$uID,':t'=>$token));
-					}
+					}*/
 
 					if(self::$dataHelper->query("INSERT INTO ".$this->tables['tokens']." SET token=:token,u_id=:uID,exp_date=:eDate",array(':token'=>$token,':uID'=>$uID,':eDate'=>$dToken['auth']['t']))) {
 						return 'Saved';
@@ -321,7 +322,7 @@ class TokenServices extends APIHelper {
 	public function getTokenUnique($uID) {
 		try {
 			if($result = $this->dataHelper->find('*', array('u_id'=>@$uID), $this->tables['tokens'])) {
-				return self::getTokenData($result);
+				return $this->getTokenData($result);
 			}
 		} catch (Exception $e) {
 			throw $e;
@@ -338,7 +339,7 @@ class TokenServices extends APIHelper {
 	public function getToken($id) {
 		try {
 			if($result = self::$dataHelper->find('*', array('id'=>@$id), $this->tables['tokens'])) {
-				return self::getTokenData($result);
+				return $this->getTokenData($result);
 			}
 		} catch (Exception $e) {
 			throw $e;
