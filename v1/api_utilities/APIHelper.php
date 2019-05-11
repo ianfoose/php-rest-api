@@ -39,6 +39,7 @@ abstract class APIHelper {
 	/**
 	* Main Constructor
 	*
+	* @param string $configs Configs file path
 	* @return void
 	*/
 	public function __construct($configs='./config.json') {	
@@ -79,6 +80,7 @@ abstract class APIHelper {
 	* Gets configs from file
 	*
 	* @return void
+	* @throws Exception
 	*/
 	private function getConfigs($path) {
 		try {
@@ -93,6 +95,7 @@ abstract class APIHelper {
 	*
 	* @param string $data String data
 	* @return boolean
+	* @throws Exception
 	*/
 	public function checkIfDataExists($data) {
 		$emptyKeys = array();
