@@ -35,33 +35,40 @@ class NotificationServices extends APIHelper {
 	/**
 	* @var string $channelName (Windows Phone 8) The name of our push channel.
 	*/
-    private static $channelName = '';
+    	private static $channelName = '';
 	
 	/**
 	* @var string $emailPort Email Server port
 	*/
-    private static $emailPort = '465';
+    	private static $emailPort = '465';
 
-    /**
+    	/**
 	* @var string $emailServer Email Server
 	*/
-    private static $emailServer = '';
+    	private static $emailServer = '';
 
-    /**
+    	/**
 	* @var string $emailSSL Email Server Use SSL
 	*/
-    private static $emailSSL = '';
+    	private static $emailSSL = '';
 
-    /**
+    	/**
 	* @var string $emailUsername Email Server username
 	*/
-    private static $emailUsername = '';
+    	private static $emailUsername = '';
 
-    /**
+    	/**
 	* @var string $emailPassword Email Server Password
 	*/
-    private static $emailPassword = ''; 
+    	private static $emailPassword = ''; 
 
+    	/**
+    	* Main Constructor
+    	*
+    	* @param array $configs Notification configs
+    	* @param bool $expose Expose API functions
+    	* @return void
+    	*/
 	public function __construct($configs=null, $expose=false) {
 		if(!empty(@$email)) {
 			self::$emailSSL = @$email['ssl'];
