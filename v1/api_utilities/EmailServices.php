@@ -12,6 +12,7 @@ class EmailServices extends APIHelper {
 	/**
 	* Constructor
 	*
+	* @param bool $expose Expose API functions
 	* @return void
 	*/
 	public function __construct($expose=false) {
@@ -22,7 +23,11 @@ class EmailServices extends APIHelper {
 		}
 	}
 
-
+	/**
+	* Exposes API functions
+	*
+	* @return void
+	*/
 	public function exposeAPI() {
 		// templates
 		Router::get('/email/templates', function($req, $res) {
@@ -43,7 +48,7 @@ class EmailServices extends APIHelper {
 
 		Router::get('/email/template/:id', function($req, $res) {
 			try {
-				$res->output($this->getTemplate($req['params']['id']));
+				$res->output($this->getTemplate($req->params['id']));
 			} catch (Exception $e) {
 				$res->output($e);
 			}
@@ -51,7 +56,7 @@ class EmailServices extends APIHelper {
 
 		Router::delete('/email/template/:id', function($req, $res) {
 			try {
-				$res->output($this->deleteTemplate($req['params']['id']));
+				$res->output($this->deleteTemplate($req->params['id']));
 			} catch (Exception $e) {
 				$res->output($e);
 			}
@@ -67,7 +72,7 @@ class EmailServices extends APIHelper {
 
 		Router::delete('/email/template/:id', function($req, $res) {
 			try {
-				$res->output($this->deleteTemplate($req['params']['id']));
+				$res->output($this->deleteTemplate($req->params['id']));
 			} catch (Exception $e) {
 				$res->output($e);
 			}
@@ -77,7 +82,7 @@ class EmailServices extends APIHelper {
 
 		Router::put('/email/subscribe/:email', function($req, $res) {
 			try {
-				$res->output($this->addSubscriber($req['params']['email']));
+				$res->output($this->addSubscriber($req->params['email']));
 			} catch (Exception $e) {
 				$res->output($e);
 			}
@@ -85,7 +90,7 @@ class EmailServices extends APIHelper {
 
 		Router::delete('/email/unsubscribe/:email', function($req, $res) {
 			try {
-				$res->output($this->removeSubscriber($req['params']['email']));
+				$res->output($this->removeSubscriber($req->params['email']));
 			} catch (Exception $e) {
 				$res->output($e);
 			}
@@ -97,11 +102,11 @@ class EmailServices extends APIHelper {
 			} catch (Exception $e) {
 				$res->output($e);
 			}
-		}, 'default');
+		}, 'email_subscriptions');
 
 		Router::get('/email/subscription/:id', function($req, $res) {
 			try {
-				$res->output($this->getEmailSubscriber($req['params']['id']));
+				$res->output($this->getEmailSubscriber($req->params['id']));
 			} catch (Exception $e) {
 				$res->output($e);
 			}
@@ -109,7 +114,7 @@ class EmailServices extends APIHelper {
 
 		Router::get('/email/subscriptions/search/:query', function($req, $res) {
 			try {
-				$res->output($this->searchEmails($req['params']['query'])); 
+				$res->output($this->searchEmails($req->params['query'])); 
 			} catch (Exception $e) {
 				$res->output($e);
 			}
