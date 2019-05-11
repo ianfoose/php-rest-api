@@ -12,24 +12,53 @@ require_once('ErrorLogger.php');
 session_start();
 
 class DatabaseHelper {
+	/**
+	* @var string $dbURL Database URL
+	*/
 	private $dbURL;
+
+	/**
+	* @var int $dbPort Database Port
+	*/
 	private $dbPort;
+
+	/**
+	* @var string $dbUser Database User 
+	*/
 	private $dbUser;
+
+	/**
+	* @var string $dbPassword Database Password 
+	*/
 	private $dbPassword;
+
+	/**
+	* @var string $dbName Database name (optional)
+	*/
 	private $dbName;
 
+	/**
+	* @var int $insertID last inserted ID
+	*/
 	public $insertID;
 
+	/**
+	* @var bool $transaction Database transaction flag
+	*/
 	private $transaction = false;
+	
+	/**
+	* @var Database Object $db Current database connection
+	*/
 	protected static $db;
 
 	/**
 	* Intializer
 	*
-	* @param $url String URL
-	* @param $user String User
-	* @param $password String Password
-	* @param $dbName String Database Name
+	* @param string $url URL
+	* @param string $user Username
+	* @param string $password Password
+	* @param string $dbName Database Name
 	* 
 	* @return void
 	*/
@@ -56,7 +85,8 @@ class DatabaseHelper {
 	/**
 	* Sets up a mysqli database connection
 	*
-	* @return Error | DB Connection
+	* @return Database Connection
+	* @throws Exception
 	*/
 	public function connect() {
 		if(self::$db != null) {
@@ -80,7 +110,8 @@ class DatabaseHelper {
 	*
 	* @param string $query Query String
 	* @param bool $output Outputs the error
-	* @return MySQLi result | Error Object
+	* @return MySQLi result
+	* @throws Exception
 	*/
 	public function query($query, $params=null, $useResult=false) {
 		if(!empty($query)) {
@@ -103,8 +134,8 @@ class DatabaseHelper {
 					$errorLogger = new ErrorLogger();
 					
 					$errorLogger->logError(500,$e->getMessage());
-				} catch(Exception $e) {
-					throw $e;
+				} catch(Exception $errorE) {
+					throw $errorE;
 				}
 
 				if($this->transaction) { // auto rollback
@@ -119,12 +150,11 @@ class DatabaseHelper {
 	/**
 	* Finds a data row
 	*
-	* @param $keys string Keys to be retrieved
-	* @param $cols string Columns to be checked against
-	* @param $vals string | array Values to check columns against
-	* @param $tbl string Table name to query
-	* @param $message string Name of item being found, default 'item'
-	* @return Bool | Response
+	* @param string $keys Keys to be retrieved
+	* @param array $vals Values to check columns against
+	* @param string $tbl Table name to query
+	* @param string $message string Name of item being found, default 'item'
+	* @return Bool
 	*/
 	public function find($keys, $vals, $tbl, $message='item') {
 		if(!is_array($vals))
@@ -151,7 +181,7 @@ class DatabaseHelper {
 				if($result->rowCount() == 1) {
 					return $result->fetch();
 				} else {
-					throw new Exception($message.' not found', 404);
+					return false;
 				}
 			}
 		} catch (Exception $e) {
@@ -162,11 +192,12 @@ class DatabaseHelper {
 	/**
 	* Logs an audit event for a piece of data, example is editing a user, store the event and who edited
 	*
-	* @param $itemID int Item being edited
-	* @param $editingID int Editor ID
-	* @param $event string Event being logged, example (changed, added, deleted)
+	* @param int $itemID Item being edited
+	* @param int $editingID Editor ID
+	* @param string $event Event being logged, example (changed, added, deleted)
 	*
-	* @return String | Exception
+	* @return String
+	* @throws Exception
 	*/
 	public function saveAuditLog($itemID, $editingID, $event='changed') {
 		try {
@@ -183,6 +214,7 @@ class DatabaseHelper {
 	*
 	* @param int $id Audit Id
 	* @return Data Object
+	* @throws Exception
 	*/
 	public function getAuditLog($id) {
 		try {
@@ -197,10 +229,11 @@ class DatabaseHelper {
 	/**
 	* Gets all audit logs
 	*
-	* @param $sinceID Int
-	* @param $maxID Int
-	* @param $limit Int Fetch Limit
-	* @return
+	* @param int $sinceID
+	* @param int $maxID
+	* @param int $limit Fetch Limit
+	* @return array
+	* @throws Exception
 	*/
 	public function getAuditLogs($sinceID=0, $maxID=0, $limit=35) {
 		try {
@@ -230,6 +263,7 @@ class DatabaseHelper {
 	* Begin a transaction
 	*
 	* @return void
+	* @throws Exception
 	*/
 	public function beginTransaction() {
 		if($this->transaction) {
@@ -249,6 +283,7 @@ class DatabaseHelper {
 	* Rollback a transaction
 	*
 	* @return void
+	* @throws Exception
 	*/
 	public function rollback() {
 		try {
@@ -264,6 +299,7 @@ class DatabaseHelper {
 	* Commit a transaction
 	*
 	* @return void
+	* @throws Exception
 	*/
 	public function commit() {
 		try {
@@ -305,11 +341,13 @@ class DatabaseHelper {
 	/**
 	* Gets offset string for query
 	*
-	* @param int $sinceID Since ID
-	* @param int $maxID Max ID
 	* @param string $tbl Table name
 	* @param string $id ID column name
+	* @param int $sinceID Since ID
+	* @param int $maxID Max ID
+	* @param string $deleted Deleted filter
 	* @param int $limit Limit
+	* @param string $order MySQL Order
 	* @return string
 	*/
 	public static function getOffset($tbl, $id='id', $sinceID=0, $maxID=0, $deleted, $limit, $order='') {
@@ -317,11 +355,11 @@ class DatabaseHelper {
 
 		// set db select limit
 		if(empty(@$limit) || !isset($limit)) {
-			if(!empty(@$this->configs['database']['limit'])) {
-				$limit = @$this->configs['database']['limit'];
-			} else {
-				$limit = 30;
-			}
+			// if(!empty(@$this->configs['database']['limit'])) {
+			// 	$limit = @$this->configs['database']['limit'];
+			// } else {
+			// 	$limit = 30;
+			// }
 		}
 
 		$q = " $id <=(SELECT MAX($tbl.$id) FROM $tbl)";
@@ -429,6 +467,7 @@ class DatabaseHelper {
 	* @param array $validFields Valid partial response fields
 	* @param array $fields Requested fields
 	* @return boolean | array 
+	* @throws Exception
 	*/
 	public function validateResponse($validFields, $fields) {
 		if(!empty($validFields) && !empty($fields)) {
@@ -470,6 +509,7 @@ class DatabaseHelper {
 	* @param array $validFields Valid partial response fields
 	* @param string $name The name of the object to check
 	* @return boolean | array 
+	* @throws Exception
 	*/
 	public function validator($fields, $validFields, $name) {
 		if(!empty($fields)) {
