@@ -9,8 +9,6 @@
 require_once('Response.php');
 require_once('ErrorLogger.php');
 
-session_start();
-
 class DatabaseHelper {
 	/**
 	* @var string $dbURL Database URL
@@ -69,11 +67,17 @@ class DatabaseHelper {
 		$this->dbPassword = $password;
 		$this->dbName = $dbName;
 	}
+	
+	// Experimental Constructor
+	/*public function __construct($configs) {
+		if(!empty(@$configs))
+			$this->configs = $configs;
+	}*/
 
 	/**
 	* Returns a database connection
 	*
-	* @return Database Connection
+	* @return Database Connection | Bool
 	*/
 	public function getDB() {
 		if(self::$db != null) {
@@ -138,8 +142,12 @@ class DatabaseHelper {
 				// log error
 				try {
 					$errorLogger = new ErrorLogger();	
-					$errorLogger->logError(500,$e->getMessage());
-				} catch(Exception $errorE) {
+					$errorLogger->logError(500,'Query Error: '.$e->getMessage());
+				} catch(Exception $logError) {
+					if($this->configs['environment'] == 'development') {
+						$errorMessage .= 'Log Error: '.$logError->getMessage();	
+					}
+					
 					throw new Exception($errorMessage, 500);
 				}
 
@@ -360,11 +368,11 @@ class DatabaseHelper {
 
 		// set db select limit
 		if(empty(@$limit) || !isset($limit)) {
-			// if(!empty(@$this->configs['database']['limit'])) {
-			// 	$limit = @$this->configs['database']['limit'];
-			// } else {
-			// 	$limit = 30;
-			// }
+			if(!empty(@$this->configs['database']['limit'])) {
+			 	$limit = @$this->configs['database']['limit'];
+			} else {
+			 	$limit = 30;
+			}
 		}
 
 		$q = " $id <=(SELECT MAX($tbl.$id) FROM $tbl)";
