@@ -44,7 +44,6 @@ abstract class APIHelper {
 	*/
 	public function __construct($configs='./config.json') {	
 		$this->getConfigs($configs);
-		$this->configs['database']['environment'] = @$this->configs['environment'];
 		
 		// set timezone
 		if(@$this->configs['date']['timezone']) {
@@ -71,10 +70,8 @@ abstract class APIHelper {
 
 		ini_set('display_errors', $errorReporting); 
 
-		$db =$this->configs['database'];
-
 		// default global datahelper
-		self::$dataHelper = new DatabaseHelper($db['url'], @$db['port'], $db['username'], $db['password'], $db['database']);
+		self::$dataHelper = new DatabaseHelper(@$this->configs['database']);
 	}
 
 	/**
