@@ -122,27 +122,32 @@ class DatabaseHelper {
 
 			
 					$statement = $this->connect()->prepare($query);
-           			$statement->execute($params);
+           				$statement->execute($params);
 
-           			$this->insertID = self::$db->lastInsertId();
+           				$this->insertID = self::$db->lastInsertId();
 
 					return $statement;
 				}
 			} catch(Exception $e) { // query failed
+				$errorMessage = 'Query Error';
+				
+				if($this->configs['environment'] == 'development') {
+					$errorMessage = 'Query Error: '.$e->getMessage();	
+				}
+				
 				// log error
 				try {
-					$errorLogger = new ErrorLogger();
-					
+					$errorLogger = new ErrorLogger();	
 					$errorLogger->logError(500,$e->getMessage());
 				} catch(Exception $errorE) {
-					throw $errorE;
+					throw new Exception($errorMessage, 500);
 				}
 
 				if($this->transaction) { // auto rollback
-	               	self::rollback();
-	            }
+	               			self::rollback();
+	            		}
 
-				throw new Exception('Query Error: '.$e->getMessage(), 500);
+				throw new Exception($errorMessage, 500);
 			} 
 		}
 	}
