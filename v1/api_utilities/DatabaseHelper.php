@@ -6,35 +6,16 @@
 * @version 1.0
 */
 
+require_once('APIHelper.php');
 require_once('Response.php');
 require_once('ErrorLogger.php');
 
-class DatabaseHelper {
+class DatabaseHelper extends APIHelper {
 	/**
-	* @var string $dbURL Database URL
+	* @var array $dbConfigs Database Configs
 	*/
-	private $dbURL;
-
-	/**
-	* @var int $dbPort Database Port
-	*/
-	private $dbPort;
-
-	/**
-	* @var string $dbUser Database User 
-	*/
-	private $dbUser;
-
-	/**
-	* @var string $dbPassword Database Password 
-	*/
-	private $dbPassword;
-
-	/**
-	* @var string $dbName Database name (optional)
-	*/
-	private $dbName;
-
+	private var $dbConfigs = array();
+	
 	/**
 	* @var int $insertID last inserted ID
 	*/
@@ -51,28 +32,28 @@ class DatabaseHelper {
 	protected static $db;
 
 	/**
-	* Intializer
+	* Main Constructor
 	*
-	* @param string $url URL
-	* @param string $user Username
-	* @param string $password Password
-	* @param string $dbName Database Name
-	* 
+	* @param array $configs Database connection properties
 	* @return void
 	*/
-	public function __construct($url, $port=3306, $user, $password, $dbName) {
-		$this->dbURL = $url;
-		$this->dbPort = $port;
-		$this->dbUser = $user;
-		$this->dbPassword = $password;
-		$this->dbName = $dbName;
+	public function __construct($configs) {
+		parent::_construct();
+		$errorMessage = '';
+		
+		if(!empty(@$configs)) {
+			if(!empty(@$configs['url']) && !empty(@$configs['user']) && !empty(@$configs['password'] && !empty(@$configs['db']) {
+				if(empty(@$configs['port'])
+				   $configs['port'] = 3306;
+				   
+				$this->dbConfigs = $configs;
+			} else {
+				throw new Exception($errorMessage, 500);	
+			}
+		} else {
+			throw new Exception($errorMessge, 500);
+		}
 	}
-	
-	// Experimental Constructor
-	/*public function __construct($configs) {
-		if(!empty(@$configs))
-			$this->configs = $configs;
-	}*/
 
 	/**
 	* Returns a database connection
@@ -97,7 +78,7 @@ class DatabaseHelper {
 			return self::$db;
 		} else {
 			try {
-				self::$db = new PDO("mysql:host=".$this->dbURL.":".$this->dbPort.";dbname=".$this->dbName.";",$this->dbUser,$this->dbPassword);
+				self::$db = new PDO("mysql:host=".$this->dbConfigs['url'].":".$this->dbConfigs['port'].";dbname=".$this->dbConfigs['db'].";",$this->dbConfigs['user'],$this->dbConfigs['password']);
 				self::$db->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
 				self::$db->setAttribute(PDO::ATTR_DEFAULT_FETCH_MODE, PDO::FETCH_ASSOC);
 				self::$db->setAttribute( PDO::ATTR_EMULATE_PREPARES, false );
