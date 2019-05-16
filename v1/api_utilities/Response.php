@@ -10,47 +10,62 @@ class Response {
     * @var string $format Output format
     */
     public $format = 'json';
-
+	
+    /**
+    * @var int $httpStatus HTTP Status Code
+    */
+    public var $httpStatus = 200;
+	
     /**
     * @var array $errorArray Error Message for HTTP Status code 
     */
-	public static $errorArray = array(
-		200=>'OK',
-		201=>'Created',
-		204=>'No Content',
-		304=>'Not Modifed',
-		400=>'Bad Request',
-		401=>'Unauthorized',
-		403=>'Forbidden',
-		404=>'Not Found',
-		405=>'Method Not Allowed',
-		409=>'Conflict',
-		500=>'Internal Server Error'
-	);
+    public static $errorArray = array(
+        200=>'OK',
+	201=>'Created',
+	204=>'No Content',
+	304=>'Not Modifed',
+	400=>'Bad Request',
+	401=>'Unauthorized',
+	403=>'Forbidden',
+	404=>'Not Found',
+	405=>'Method Not Allowed',
+	409=>'Conflict',
+	500=>'Internal Server Error'
+    );
 
-	/**
-	* Main Constructor
- 	*
+    /**
+    * Main Constructor
+    *
     * @param string $format Response format
-	* @return void
-	*/
-	public function __construct($format) {
+    * @return void
+    */
+    public function __construct($format) {
         if(!empty(@$format)) {
             $this->format = $format;
         }
     }
-
+	
+    /*public function status($status) {
+	$this->httpStatus = $status;
+	return $this;   
+    }
+	
+    public function headers($headers) {
+	$this->headers = $headers;    
+    	return $this;
+    }*/
+	
     /**
     * Gets a messages for status code
     *
     * @param int $status Response HTTP status
     * @return string
     */
-	private function getMessage($status=200) {
-		if(isset(self::$errorArray[$status])) {
-			return self::$errorArray[$status];
-		} 
-	}
+    private function getMessage($status=200) {
+        if(isset(self::$errorArray[$status])) {
+		return self::$errorArray[$status];
+	} 
+    }
 
     /**
     * Outputs data in JSON
@@ -60,7 +75,7 @@ class Response {
     * @param array $headers Output headers
     * @return void
     */
-    public function output($data, $status=200, $headers=null) {
+    public function output($data=null, $status=200, $headers=null) {
         // check if data is an exception
         if($data instanceof Exception) {
             $status = $data->getCode();
