@@ -59,6 +59,11 @@ abstract class APIHelper {
 			$this->tables = $this->defaultTables;
 		}
 
+		foreach ($this->tables as $key => $value) {
+			if(!defined(strtoupper($key)))
+				define(strtoupper($key), $value);
+		}
+		
 		// set error reporting
 		$errorReporting = 1;
 
