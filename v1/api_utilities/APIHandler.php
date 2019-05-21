@@ -177,91 +177,86 @@ abstract class APIHandler extends APIHelper {
 		$body = array();
 
 		foreach ($routes as $key => $value) {
-			$t = $value;
+			if($value['method'] == $method || $value['method'] == 'ALL') { // method
+				if($endpoint != '/') {
+					$purl = explode('/',trim($value['route'],'/')); // indexed route
+					$route = explode('/',trim($endpoint,'/')); // requested routes
 
-			foreach ($t as $tKey => $tValue) {
-				if($t[0] == $method || $t[0] == 'ALL') { // method
-					if($endpoint != '/') {
-						$purl = explode('/',trim($t[1],'/')); // indexed route
-						$route = explode('/',trim($endpoint,'/')); // requested routes
+					if(count($purl) == count($route)) { // number of paths matches route
+						$k = 0;
 
-						if(count($purl) == count($route)) { // number of paths matches route
-							$k = 0;
+						// get any params in path
+						foreach ($purl as $pKey => $pValue) {
+							$p = substr($pValue, 0, 1); // param placeholder
 
-							// get any params in path
-							foreach ($purl as $pKey => $pValue) {
-								$p = substr($pValue, 0, 1); // param placeholder
+							if($p === ':') { // param
+								if(!empty($route[ltrim($pKey,':')])) {
+									$params[ltrim($pValue,':')] = $route[urldecode(ltrim($pKey,':'))];
+								} 
+							} else { // no param
+								if($pValue != $route[$pKey]) { // no match, abort
+									$params = array();
+									break;
+								} 
+							}
 
-								if($p === ':') { // param
-									if(!empty($route[ltrim($pKey,':')])) {
-										$params[ltrim($pValue,':')] = $route[urldecode(ltrim($pKey,':'))];
-									} 
-								} else { // no param
-									if($pValue != $route[$pKey]) { // no match, abort
-										$params = array();
-										break;
-									} 
+							// put params in array
+							if($k == count($purl) - 1) {
+								if(substr($endpoint, 0,1) == '/' && substr($value['route'],0,1) != '/') { // start
+									$params = array();
+									break;
+								} elseif(substr($endpoint,0,1) != '/' && substr($value['route'],0,1) != '/') {
+									$params = array();
+									break;
 								}
 
-								// put params in array
-								if($k == count($purl) - 1) {
-									if(substr($endpoint, 0,1) == '/' && substr($t[1],0,1) != '/') { // start
-										$params = array();
-										break;
-									} elseif(substr($endpoint,0,1) != '/' && substr($t[1],0,1) != '/') {
-										$params = array();
-										break;
-									}
-
-									if(substr($endpoint, -1) == '/' && substr($t[1], -1) != '/') { // end
-										$params = array();
-										break;
-									} else if(substr($endpoint, -1) != '/' && substr($t[1], -1) == '/') {
-										$params = array();
-										break;
-									}
-
-									$endpoint = $t[1];
+								if(substr($endpoint, -1) == '/' && substr($value['route'], -1) != '/') { // end
+									$params = array();
+									break;
+								} else if(substr($endpoint, -1) != '/' && substr($value['route'], -1) == '/') {
+									$params = array();
+									break;
 								}
 
-								$k++;
+								$endpoint = $value['route'];
 							}
+
+							$k++;
 						}
-					} 
-
-					// if route matches url
-					if($t[1] === $endpoint) {	
-						$body = array();
-						parse_str(file_get_contents('php://input'),$body);
-
-						if(!empty(trim(@$_SERVER['HTTP_IF_NONE_MATCH']))) {
-							$body['etag'] = $_SERVER['HTTP_IF_NONE_MATCH'];
-						}
-
-						$params = array_merge($params, $_GET);
-						$body = array_merge($body, $_POST); 
-					
-						$headers = array_merge($_SERVER, getallheaders());
-
-						$this->req = new Request($params, @$body, $headers, $this->format);
-
-						// checks for custom auth function
-						if(isset($t[3]) && !empty($t[3]) && $t[3]) {
-							$valid = $this->authHandler($t[3], $this->req, $this->res);
-
-							if($valid === true) {
-								$t[2]($this->req, $this->res);
-							}
-							$this->res->output($valid);
-						} else {
-							$t[2]($this->req, $this->res);
-						}
-
-						break;
-					} 
-					break; // breaks route comparison, if unsatisfied
+					}
 				} 
-			}
+
+				// if route matches url
+				if($value['route'] === $endpoint) {	
+					$body = array();
+					parse_str(file_get_contents('php://input'),$body);
+
+					if(!empty(trim(@$_SERVER['HTTP_IF_NONE_MATCH']))) {
+						$body['etag'] = $_SERVER['HTTP_IF_NONE_MATCH'];
+					}
+
+					$params = array_merge($params, $_GET);
+					$body = array_merge($body, $_POST); 
+					
+					$headers = array_merge($_SERVER, getallheaders());
+
+					$this->req = new Request($params, @$body, $headers, $this->format);
+
+					// checks for custom auth function
+					if(isset($value['verify']) && !empty($value['verify']) && $value['verify']) {
+						$valid = $this->authHandler($value['verify'], $this->req, $this->res);
+
+						if($valid === true) {
+							$value['function']($this->req, $this->res);
+						}
+						$this->res->output($valid);
+					} else {
+						$value['function']($this->req, $this->res);
+					}
+
+					break;
+				} 
+			} 
 		}
 
 		$this->res->output($endpoint.' does not exist', 400);
