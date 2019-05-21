@@ -2,14 +2,21 @@
 /**
 * Router Class
 *
-* @version 1.0
+* @version 2.0
 */
 class Router {
+	/**
+	* @var array $routes Routes array
+	*/
 	public $routes = array();
+	
+	/**
+	* @var Router $instance Singleton instance of router (this class)
+	*/
 	private static $instance;
 
 	/**
-	* Construct Function 
+	* Main Constructor 
 	*
 	* @return void
 	*/
@@ -46,9 +53,11 @@ class Router {
 	*
 	* @param string $n Route name
 	* @param function $f Route function
+	* @param bool $v API verification
+	* @param bool $o Override pre existing route
 	* @return void
 	*/
-	public static function all($n,$f,$v=false) {
+	public static function all($n,$f,$v=false,$o=false) {
 		self::addRoute('ALL',$n,$f,$v);
 	}
 
@@ -57,10 +66,12 @@ class Router {
 	*
 	* @param string $n Route name
 	* @param function $f Route function
+	* @param bool $v API verification
+	* @param bool $o Override pre existing route
 	* @return void
 	*/
-	public static function get($n,$f,$v=false) {
-		self::addRoute('GET',$n,$f,$v);
+	public static function get($n,$f,$v=false,$o=false) {
+		self::addRoute('GET',$n,$f,$v,$o);
 	}
 	
 	/**
@@ -68,9 +79,11 @@ class Router {
 	*
 	* @param string $n Route name
 	* @param function $f Route function
+	* @param bool $v API verification
+	* @param bool $o Override pre existing route
 	* @return void
 	*/
-	public static function post($n,$f,$v=false) {
+	public static function post($n,$f,$v=false,$o=false) {
 		self::addRoute('POST',$n,$f,$v);
 	}
 
@@ -79,9 +92,11 @@ class Router {
 	*
 	* @param string $n Route name
 	* @param function $f Route function
+	* @param bool $v API verification
+	* @param bool $o Override pre existing route
 	* @return void
 	*/
-	public static function patch($n,$f,$v=false) {
+	public static function patch($n,$f,$v=false,$o=false) {
 		self::addRoute('PATCH',$n,$f,$v);
 	}
 
@@ -90,9 +105,11 @@ class Router {
 	*
 	* @param string $n Route name
 	* @param function $f Route function
+	* @param bool $v API verification
+	* @param bool $o Override pre existing route
 	* @return void
 	*/
-	public static function put($n,$f,$v=false) {
+	public static function put($n,$f,$v=false,$o=false) {
 		self::addRoute('PUT',$n,$f,$v);
 	}
 
@@ -101,9 +118,11 @@ class Router {
 	*
 	* @param string $n Route name
 	* @param function $f Route function
+	* @param bool $v API verification
+	* @param bool $o Override pre existing route
 	* @return void
 	*/
-	public static function delete($n,$f,$v=false) {
+	public static function delete($n,$f,$v=false,$o=false) {
 		self::addRoute('DELETE',$n,$f,$v);
 	}
 
@@ -113,10 +132,27 @@ class Router {
 	* @param string $m Method
 	* @param string $n Route name
 	* @param function $f Route function
+	* @param bool $v API verification
+	* @param bool $o Override pre existing route
 	* @return void
 	*/
-	private static function addRoute($m,$n,$f,$v=false) {
-		self::getInstance()->routes[] = array($m,$n,$f,$v);
+	private static function addRoute($m,$n,$f,$v=false,$o=false) {	
+		$newRoute = array('method'=>$m,'route'=>$n,'function'=>$f,'verify'=>$v);
+		
+		// route overriding
+		if($o == true) {
+			if($routes = self::getInstance()->routes) {
+				foreach($routes as $key => $route) {
+					if($route['route'] == $n) {
+						$routes[$key] = $newRoute;
+						break;
+					} 	 
+				}
+			}
+		}		
+
+		self::getInstance()->routes[] = $newRoute;
 	}
 }
+
 ?>
