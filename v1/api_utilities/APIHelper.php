@@ -45,6 +45,8 @@ abstract class APIHelper {
 	public function __construct($configs='./config.json') {	
 		$this->getConfigs($configs);
 		
+		$this->configs['database']['environment'] = $this->configs['environment'];
+
 		// set timezone
 		if(@$this->configs['date']['timezone']) {
 			date_default_timezone_set($this->configs['date']['timezone']);
@@ -63,7 +65,7 @@ abstract class APIHelper {
 			if(!defined(strtoupper($key)))
 				define(strtoupper($key), $value);
 		}
-		
+
 		// set error reporting
 		$errorReporting = 1;
 
