@@ -259,7 +259,7 @@ abstract class APIHandler extends APIHelper {
 			} 
 		}
 
-		$this->res->output($endpoint.' does not exist', 400);
+		$this->res->output('Endpoint: '.$endpoint.' does not exist', 400);
 	}
 }
 ?>
