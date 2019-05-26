@@ -30,7 +30,7 @@ class IPServices extends APIHelper {
 			try {
 				$res->output($this->getVisitors(@$_GET['since_id'], @$_GET['max_id'], @$_GET['limit'], @$_GET['deleted']));
 			} catch (Exception $e) {
-				return new Response($e);
+				$res->output($e);
 			}
 		});
 
@@ -38,7 +38,7 @@ class IPServices extends APIHelper {
 			try {
 				$res->output($this->getTotalNumberOfVisits(@$_GET['deleted']));
 			} catch (Exception $e) {
-				return new Response($e);
+				$res->output($e);
 			}
 		});
 
@@ -46,7 +46,7 @@ class IPServices extends APIHelper {
 			try {
 				$res->output($this->getVisitor(@$req['params']['id']));
 			} catch (Exception $e) {
-				return new Response($e);
+				$res->output($e);
 			}
 		});
 
@@ -54,7 +54,7 @@ class IPServices extends APIHelper {
 			try {
 				$res->output($this->search);
 			} catch (Exception $e) {
-				return new Response($e);
+				$res->output($e);
 			}
 		});
 
@@ -62,7 +62,7 @@ class IPServices extends APIHelper {
 			try {
 				$res->output($this->logVistitor());
 			} catch (Exception $e) {
-				return new Response($e);
+				$res->output($e);
 			}
 		});
 	}
