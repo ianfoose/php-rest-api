@@ -124,7 +124,7 @@ class NotificationServices extends APIHelper {
 			try {
 				$this->sendNotification(@$req->body['payload'],@$req->body['users'], @$req->body['platforms']);
 			} catch (Exception $e) {
-				return new Response($e);
+				$res->output($e);
 			}
 		});
 
