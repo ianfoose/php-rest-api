@@ -55,9 +55,12 @@ class TokenServices extends APIHelper {
 	public function exposeAPI() {
 		Router::post('/token/refresh', function($req, $res) {
 			try {
-				$res->output($this->refreshToken(@$req->headers['x-api-key']));
+				if(!empty($req->body['token'])) {
+					$res->output($this->refreshToken(@$req->body['token']));
+				}
+				throw new Exception('Missing token', 404);
 			} catch (Exception $e) {
-				return new Response($e);
+				$res->output($e);
 			}
 		});
 
@@ -65,7 +68,7 @@ class TokenServices extends APIHelper {
 			try {
 				$res->output($this->getTokens(@$_GET['since_id'], @$_GET['max_id'], @$_GET['limit'], @$_GET['deleted']));
 			} catch (Exception $e) {
-				return new Response($e);
+				$res->output($e);
 			}
 		}, 'get_tokens');
 
@@ -73,7 +76,7 @@ class TokenServices extends APIHelper {
 			try {
 				$res->output($this->getToken(@$req->params['id']));
 			} catch (Exception $e) {
-				return new Response($e);
+				$res->output($e);
 			}
 		}, 'get_token');
 
@@ -81,7 +84,7 @@ class TokenServices extends APIHelper {
 			try {
 				$res->output($this->getTokenUnique(@$req->params['id']));
 			} catch (Exception $e) {
-				return new Response($e);
+				$res->output($e);
 			}
 		}, 'get_token_unique');
 	}
