@@ -53,7 +53,7 @@ class ErrorLogger extends APIHelper {
 			try {
 			 	$res->output($this->getErrors(@$_GET['since_id'], @$_GET['max_id'], @$_GET['limit'], @$_GET['deleted']));
 			} catch (Exception $e) {
-				return new Response($e);
+				$res->output($e);
 			}
 		});
 
@@ -61,7 +61,7 @@ class ErrorLogger extends APIHelper {
 			try {
 				$res->output($this->getError(@$req['params']['id']));
 			} catch (Exception $e) {
-				return new Response($e);
+				$res->output($e);
 			}
 		});
 
@@ -69,7 +69,7 @@ class ErrorLogger extends APIHelper {
 			try {
 				$res->output($this->getNumberOfErrors(@$_GET['deleted']));
 			} catch (Exception $e) {
-				return new Response($e);
+				$res->output($e);
 			}
 		});
 
@@ -77,7 +77,7 @@ class ErrorLogger extends APIHelper {
 			try {
 				$res->output($this->searchErrors($req['params'][':q'], @$_GET['offset']));
 			} catch (Exception $e) {
-				return new Response($e);
+				$res->output($e);
 			}
 		});
 
@@ -85,7 +85,7 @@ class ErrorLogger extends APIHelper {
 			try {
 				$res->output($this->deleteError($req['params'][':id']));
 			} catch (Exception $e) {
-				return new Response($e);
+				$res->output($e);
 			}
 		});
 	}
