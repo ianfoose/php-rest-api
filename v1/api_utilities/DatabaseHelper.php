@@ -10,11 +10,11 @@ require_once('APIHelper.php');
 require_once('Response.php');
 require_once('ErrorLogger.php');
 
-class DatabaseHelper extends APIHelper {
+class DatabaseHelper {
 	/**
 	* @var array $dbConfigs Database Configs
 	*/
-	private var $dbConfigs = array();
+	private $dbConfigs = array();
 	
 	/**
 	* @var int $insertID last inserted ID
@@ -38,20 +38,19 @@ class DatabaseHelper extends APIHelper {
 	* @return void
 	*/
 	public function __construct($configs) {
-		parent::_construct();
 		$errorMessage = '';
 		
 		if(!empty(@$configs)) {
-			if(!empty(@$configs['url']) && !empty(@$configs['user']) && !empty(@$configs['password'] && !empty(@$configs['db']) {
-				if(empty(@$configs['port'])
+			if(!empty(@$configs['url']) && !empty(@$configs['user']) && !empty(@$configs['password']) && !empty(@$configs['db'])) {
+				if(empty(@$configs['port']))
 				   $configs['port'] = 3306;
 				   
 				$this->dbConfigs = $configs;
 			} else {
-				throw new Exception($errorMessage, 500);	
+			 	throw new Exception($errorMessage, 500);	
 			}
 		} else {
-			throw new Exception($errorMessge, 500);
+			throw new Exception($errorMessage, 500);
 		}
 	}
 
@@ -344,7 +343,7 @@ class DatabaseHelper extends APIHelper {
 	* @param string $order MySQL Order
 	* @return string
 	*/
-	public static function getOffset($tbl, $id='id', $sinceID=0, $maxID=0, $deleted, $limit, $order='') {
+	public function getOffset($tbl, $id='id', $sinceID=0, $maxID=0, $deleted, $limit, $order='') {
 		$params = array();
 
 		// set db select limit
@@ -393,16 +392,18 @@ class DatabaseHelper extends APIHelper {
 		}
 
 		// order param
-		if(!empty(@$order)) {
+		if(!empty($order)) {
 			if($order == 'DESC' || $order == 'ASC') {
 				$q .= " ORDER BY id ".$order;
 			}
+		} else {
+			$q .= " ORDER BY id DESC";
 		}
 
 		if($limit != null) {
 			$q.= " LIMIT :limit";
 			$params[':limit'] = (int)$limit;
-		}
+		} 
 
 		return array($q,$params);
 	}
