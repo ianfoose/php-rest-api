@@ -58,7 +58,7 @@ class Router {
 	* @return void
 	*/
 	public static function all($n,$f,$v=false,$o=false) {
-		self::addRoute('ALL',$n,$f,$v);
+		self::addRoute('ALL',$n,$f,$v,$o);
 	}
 
 	/**
@@ -84,7 +84,7 @@ class Router {
 	* @return void
 	*/
 	public static function post($n,$f,$v=false,$o=false) {
-		self::addRoute('POST',$n,$f,$v);
+		self::addRoute('POST',$n,$f,$v,$o);
 	}
 
 	/**
@@ -97,7 +97,7 @@ class Router {
 	* @return void
 	*/
 	public static function patch($n,$f,$v=false,$o=false) {
-		self::addRoute('PATCH',$n,$f,$v);
+		self::addRoute('PATCH',$n,$f,$v,$o);
 	}
 
 	/**
@@ -110,7 +110,7 @@ class Router {
 	* @return void
 	*/
 	public static function put($n,$f,$v=false,$o=false) {
-		self::addRoute('PUT',$n,$f,$v);
+		self::addRoute('PUT',$n,$f,$v,$o);
 	}
 
 	/**
@@ -123,7 +123,7 @@ class Router {
 	* @return void
 	*/
 	public static function delete($n,$f,$v=false,$o=false) {
-		self::addRoute('DELETE',$n,$f,$v);
+		self::addRoute('DELETE',$n,$f,$v,$o);
 	}
 
 	/**
