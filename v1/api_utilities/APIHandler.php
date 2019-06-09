@@ -243,13 +243,13 @@ abstract class APIHandler extends APIHelper {
 					$this->req = new Request($params, @$body, $headers, $this->format);
 
 					// checks for custom auth function
-					if(isset($value['verify']) && !empty($value['verify']) && $value['verify']) {
+					if(isset($value['verify']) && !empty($value['verify'])) {
 						$valid = $this->authHandler($value['verify'], $this->req, $this->res);
 
 						if($valid === true) {
 							$value['function']($this->req, $this->res);
 						}
-						$this->res->output($valid);
+						$this->res->output('Invalid authentication', 401);
 					} else {
 						$value['function']($this->req, $this->res);
 					}
