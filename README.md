@@ -11,7 +11,9 @@ This REST API framework provides a fast and efficient way of getting a data driv
 - Email composing and subscriptions
 - Clean, RESTful URLs
 - Multiple Response formats, JSON, XML
-
+- Error Logging
+- Versioning
+- Centralized DB Scheme updates
 
 
 Refer to our wiki for more information on how to install and use.
