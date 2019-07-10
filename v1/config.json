@@ -10,18 +10,24 @@
 		"db": "sakila",
 		"limit": 40
 	},
-	"date": {
-		"timezone": "UTC"
-	},
-	"environment": "development",
-	"error_logging": {
+	"dev-database": {
 		"type": "mysql",
 		"url": "localhost",
 		"port": 3306,
 		"user": "root",
 		"password": "root",
-		"db": "sakila"
+		"db": "sakila",
+		"limit": 40
 	},
+	"date": {
+		"timezone": "UTC"
+	},
+	"environment": "development",
+	"development": {
+		"errors": true,
+		"display_warnings": false
+	},
+	"cors": "Access-Control-Allow-Origin: *",
 	"notifications": { },
 	"email": { },
 	"tokens": {

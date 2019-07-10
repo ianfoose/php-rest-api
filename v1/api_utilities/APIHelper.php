@@ -27,11 +27,6 @@ abstract class APIHelper {
 	public $tables = array();
 
 	/**
-	* var array $defaultTables Default DB Tables
-	*/
-	private $defaultTables = array();
-
-	/**
 	* var DataHelper $dataHelper Main DataHelper class for database interface
 	*/
 	public static $dataHelper;
@@ -55,9 +50,7 @@ abstract class APIHelper {
 		// database tables
 		if($this->configs['tables']) {
 			$this->tables = $this->configs['tables'];
-		} else { // fallback to defaults
-			$this->tables = $this->defaultTables;
-		}
+		} 
 
 		foreach ($this->tables as $key => $value) {
 			if(!defined(strtoupper($key)))
@@ -67,7 +60,7 @@ abstract class APIHelper {
 		// set error reporting
 		$errorReporting = 1;
 
-		if(!empty($this->configs['environment']) && $this->configs['environment'] == 'production' || $this->configs['development']['errors'] == false) {
+		if($this->configs['environment'] == 'production' || $this->configs['development']['errors'] == false || empty($this->configs['development']['display_warnings'])) {
 			$errorReporting = 0;
 		} else {
 			error_reporting(E_ALL); // Error Reporting 

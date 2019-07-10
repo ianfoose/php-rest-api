@@ -48,11 +48,19 @@ class DatabaseHelper {
 
 		if(!empty($configs) && !empty($configs['database'])) {
 			if($configs['environment'] == 'development' && !empty($configs['dev-database'])) {
-				$dbConfigs = $configs['dev-database'];
+				foreach ($configs['database'] as $key => $value) {
+					if(isset($configs['dev-database'][$key])) {
+						$dbConfigs[$key] = $configs['dev-database'][$key];
+					} else {
+						$dbConfigs[$key] = $value;
+					}
+				} 
+				//$dbConfigs = $configs['dev-database'];
+			} else { // no development environment specified
+				$dbConfigs = $configs['database'];
 			}
 
-			$dbConfigs = $configs['database'];
-
+			// check database config values
 			if(!empty($dbConfigs['url']) && !empty($dbConfigs['user']) && !empty($dbConfigs['password']) && !empty($dbConfigs['db'])) {
 				
 				if(empty($dbConfigs['port']))

@@ -55,7 +55,7 @@ CREATE TABLE `tokens` (
   PRIMARY KEY (`id`)
 ) ENGINE=InnoDB AUTO_INCREMENT=186 DEFAULT CHARSET=utf8;
 
-CREATE TABLE `traffic_logs` (
+CREATE TABLE `traffic` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
   `date` datetime DEFAULT CURRENT_TIMESTAMP,
   `ip` varchar(45) DEFAULT NULL,
