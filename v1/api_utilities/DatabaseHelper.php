@@ -2,8 +2,8 @@
 /**
 * DatabaseHelper
 *
-* @copyright Ian Foose - Foose Industries
-* @version 1.0
+* copyright Ian Foose - Foose Industries
+* version 1.0
 */
 
 require_once('APIHelper.php');
@@ -12,40 +12,54 @@ require_once('ErrorLogger.php');
 
 class DatabaseHelper {
 	/**
-	* @var array $dbConfigs Database Configs
+	* var array $dbConfigs Database Configs
 	*/
 	private $dbConfigs = array();
 	
 	/**
-	* @var int $insertID last inserted ID
+	*
+	* var array $configs API Global Configs
+	*/
+	private $configs = array();
+
+	/**
+	* var int $insertID last inserted ID
 	*/
 	public $insertID;
 
 	/**
-	* @var bool $transaction Database transaction flag
+	* var bool $transaction Database transaction flag
 	*/
 	private $transaction = false;
 	
 	/**
-	* @var Database Object $db Current database connection
+	* var Database Object $db Current database connection
 	*/
 	protected static $db;
 
 	/**
 	* Main Constructor
 	*
-	* @param array $configs Database connection properties
-	* @return void
+	* param array $configs Database connection properties
+	* return void
 	*/
 	public function __construct($configs) {
 		$errorMessage = '';
-		
-		if(!empty(@$configs)) {
-			if(!empty(@$configs['url']) && !empty(@$configs['user']) && !empty(@$configs['password']) && !empty(@$configs['db'])) {
-				if(empty(@$configs['port']))
-				   $configs['port'] = 3306;
+
+		if(!empty($configs) && !empty($configs['database'])) {
+			if($configs['environment'] == 'development' && !empty($configs['dev-database'])) {
+				$dbConfigs = $configs['dev-database'];
+			}
+
+			$dbConfigs = $configs['database'];
+
+			if(!empty($dbConfigs['url']) && !empty($dbConfigs['user']) && !empty($dbConfigs['password']) && !empty($dbConfigs['db'])) {
+				
+				if(empty($dbConfigs['port']))
+				   $dbConfigs['port'] = 3306;
 				   
-				$this->dbConfigs = $configs;
+				$this->configs = $configs;
+				$this->dbConfigs = $dbConfigs;
 			} else {
 			 	throw new Exception($errorMessage, 500);	
 			}
@@ -57,7 +71,7 @@ class DatabaseHelper {
 	/**
 	* Returns a database connection
 	*
-	* @return Database Connection | Bool
+	* return Database Connection | Bool
 	*/
 	public function getDB() {
 		if(self::$db != null) {
@@ -69,8 +83,8 @@ class DatabaseHelper {
 	/**
 	* Sets up a mysqli database connection
 	*
-	* @return Database Connection
-	* @throws Exception
+	* return Database Connection
+	* throws Exception
 	*/
 	public function connect() {
 		if(self::$db != null) {
@@ -92,10 +106,10 @@ class DatabaseHelper {
 	/**
 	* Queries the database
 	*
-	* @param string $query Query String
-	* @param bool $output Outputs the error
-	* @return MySQLi result
-	* @throws Exception
+	* param string $query Query String
+	* param bool $output Outputs the error
+	* return MySQLi result
+	* throws Exception
 	*/
 	public function query($query, $params=null, $useResult=false) {
 		if(!empty($query)) {
@@ -132,8 +146,8 @@ class DatabaseHelper {
 				}
 
 				if($this->transaction) { // auto rollback
-	               			self::rollback();
-	            		}
+	               	self::rollback();
+	            }
 
 				throw new Exception($errorMessage, 500);
 			} 
@@ -143,13 +157,13 @@ class DatabaseHelper {
 	/**
 	* Finds a data row
 	*
-	* @param string $keys Keys to be retrieved
-	* @param array $vals Values to check columns against
-	* @param string $tbl Table name to query
-	* @param string $message string Name of item being found, default 'item'
-	* @return Bool
+	* param string $keys Keys to be retrieved
+	* param array $vals Values to check columns against
+	* param string $tbl Table name to query
+	* param string $message string Name of item being found, default 'item'
+	* return Bool
 	*/
-	public function find($keys, $vals, $tbl, $message='item') {
+	public function find($keys, $vals, $tbl, $message='item', $output=false) {
 		if(!is_array($vals))
 			throw new Exception('Values must be in an array', 500);
 
@@ -174,6 +188,9 @@ class DatabaseHelper {
 				if($result->rowCount() == 1) {
 					return $result->fetch();
 				} else {
+					if($output) {
+						// TODO
+					}
 					return false;
 				}
 			}
@@ -185,16 +202,16 @@ class DatabaseHelper {
 	/**
 	* Logs an audit event for a piece of data, example is editing a user, store the event and who edited
 	*
-	* @param int $itemID Item being edited
-	* @param int $editingID Editor ID
-	* @param string $event Event being logged, example (changed, added, deleted)
+	* param int $itemID Item being edited
+	* param int $editingID Editor ID
+	* param string $event Event being logged, example (changed, added, deleted)
 	*
-	* @return String
-	* @throws Exception
+	* return String
+	* throws Exception
 	*/
-	public function saveAuditLog($itemID, $editingID, $event='changed') {
+	public function saveAuditLog($objectID, $editingID, $event='changed') {
 		try {
-			if(self::query("INSERT INTO ".$this->tables['audit_logs']." SET item_id=:id, event=:e, editor_id:eID",array(':id'=>$itemID,':eID'=>$editingID,':event'=>$event))) {
+			if(self::query("INSERT INTO ".AUDIT_LOGS." SET object_id=:id, event=:e, editor_id:eID",array(':id'=>$object,':eID'=>$editingID,':event'=>$event))) {
 				return 'Audit Saved';
 			}
 		} catch (Exception $e) {
@@ -205,13 +222,13 @@ class DatabaseHelper {
 	/**
 	* Gets an audit log by id
 	*
-	* @param int $id Audit Id
-	* @return Data Object
-	* @throws Exception
+	* param int $id Audit Id
+	* return Data Object
+	* throws Exception
 	*/
 	public function getAuditLog($id) {
 		try {
-			if($auditLog = self::find('*',array('id'=>$id),$this->tables['audit_logs'])) {
+			if($auditLog = self::find('*',array('id'=>$id),AUDIT_LOGS)) {
 				return $auditLog;
 			}
 		} catch (Exception $e) {
@@ -222,24 +239,24 @@ class DatabaseHelper {
 	/**
 	* Gets all audit logs
 	*
-	* @param int $sinceID
-	* @param int $maxID
-	* @param int $limit Fetch Limit
-	* @return array
-	* @throws Exception
+	* param int $sinceID
+	* param int $maxID
+	* param int $limit Fetch Limit
+	* return array
+	* throws Exception
 	*/
-	public function getAuditLogs($sinceID=0, $maxID=0, $limit=35) {
+	public function getAuditLogs($sinceID=0, $maxID=0, $limit=35, $mapping=null) {
 		try {
-			if($logs = self::query("SELECT * FROM ".$this->tables['audit_logs'])) {
+			if($results = self::query("SELECT * FROM ".AUDIT_LOGS)) {
 				$logs = array();
 
-				while($log = $logs->fetch()) {
-					$log['string_date'] = formateDate($log['date']);
+				while($log = $results->fetch()) {
+					//$log['string_date'] = $helper->formateDate($log['date']);
 
-					if(!empty(@$mapping)) {
-						// if($object = self::find('*','id',$log['object_id'], $this->tables[$mapping])) {
-						// 	$log['object'] = $object;
-						// }
+					if(!empty($mapping)) {
+						if($object = self::find('*',array('id'=>$log['object_id']), $this->configs['tables'][$mapping])) {
+							$log['object'] = $object;
+						}
 					}
 
 					$logs[] = $log;
@@ -255,8 +272,8 @@ class DatabaseHelper {
 	/**
 	* Begin a transaction
 	*
-	* @return void
-	* @throws Exception
+	* return void
+	* throws Exception
 	*/
 	public function beginTransaction() {
 		if($this->transaction) {
@@ -275,8 +292,8 @@ class DatabaseHelper {
 	/**
 	* Rollback a transaction
 	*
-	* @return void
-	* @throws Exception
+	* return void
+	* throws Exception
 	*/
 	public function rollback() {
 		try {
@@ -291,8 +308,8 @@ class DatabaseHelper {
 	/**
 	* Commit a transaction
 	*
-	* @return void
-	* @throws Exception
+	* return void
+	* throws Exception
 	*/
 	public function commit() {
 		try {
@@ -309,8 +326,8 @@ class DatabaseHelper {
 	*
 	*
 	*
-	* @param
-	* @return string
+	* param
+	* return string
 	*/
 	public static function returnDateQuery($col, $startDate, $endDate) {
 		if(!empty($startDate)) {
@@ -334,22 +351,22 @@ class DatabaseHelper {
 	/**
 	* Gets offset string for query
 	*
-	* @param string $tbl Table name
-	* @param string $id ID column name
-	* @param int $sinceID Since ID
-	* @param int $maxID Max ID
-	* @param string $deleted Deleted filter
-	* @param int $limit Limit
-	* @param string $order MySQL Order
-	* @return string
+	* param string $tbl Table name
+	* param string $id ID column name
+	* param int $sinceID Since ID
+	* param int $maxID Max ID
+	* param string $deleted Deleted filter
+	* param int $limit Limit
+	* param string $order MySQL Order
+	* return string
 	*/
-	public function getOffset($tbl, $id='id', $sinceID=0, $maxID=0, $deleted, $limit, $order='') {
+	public function getOffset($tbl, $id='id', $sinceID=0, $maxID=0, $deleted='', $limit=35, $order='') {
 		$params = array();
 
 		// set db select limit
-		if(empty(@$limit) || !isset($limit)) {
-			if(!empty(@$this->configs['database']['limit'])) {
-			 	$limit = @$this->configs['database']['limit'];
+		if(empty($limit) || !isset($limit)) {
+			if(!empty($this->configs['database']['limit'])) {
+			 	$limit = $this->configs['database']['limit'];
 			} else {
 			 	$limit = 30;
 			}
@@ -379,9 +396,9 @@ class DatabaseHelper {
 		}
 
 		// deleted
-		if(!empty(@$deleted)) {
+		if(!empty($deleted)) {
 			if(is_array($deleted)) {
-				if(!empty(@$deleted['key']) && !empty(@$deleted['value'])) {
+				if(!empty($deleted['key']) && !empty($deleted['value'])) {
 					$q .= " ".$deleted['key']."=:d";
 					$params[':d'] = $deleted;
 				} 
@@ -411,8 +428,8 @@ class DatabaseHelper {
 	/**
 	* Builds a query string on deleted parameter filter 
 	*
-	* @param string $deleted Deleted filter
-	* @return string
+	* param string $deleted Deleted filter
+	* return string
 	*/
 	public static function deletedQuery($deleted) {
 		$baseQueryString = ' deleted=';
@@ -427,8 +444,8 @@ class DatabaseHelper {
 	/**
 	* Parse Partial response string
 	*
-	* @param string $unparsed Input String
-	* @return array
+	* param string $unparsed Input String
+	* return array
 	*/
 	public function parsePartialResponse($unparsed) {
 	    $requestedFields = explode(',', trim($unparsed, '()'));
@@ -459,10 +476,10 @@ class DatabaseHelper {
 	/**
 	* Validates a partial response fields
 	*
-	* @param array $validFields Valid partial response fields
-	* @param array $fields Requested fields
-	* @return boolean | array 
-	* @throws Exception
+	* param array $validFields Valid partial response fields
+	* param array $fields Requested fields
+	* return boolean | array 
+	* throws Exception
 	*/
 	public function validateResponse($validFields, $fields) {
 		if(!empty($validFields) && !empty($fields)) {
@@ -500,11 +517,11 @@ class DatabaseHelper {
 	/**
 	* Validates partial response fields for a certain object and returns approriate fields
 	*
-	* @param array $fields Requested fields
-	* @param array $validFields Valid partial response fields
-	* @param string $name The name of the object to check
-	* @return boolean | array 
-	* @throws Exception
+	* param array $fields Requested fields
+	* param array $validFields Valid partial response fields
+	* param string $name The name of the object to check
+	* return boolean | array 
+	* throws Exception
 	*/
 	public function validator($fields, $validFields, $name) {
 		if(!empty($fields)) {
@@ -528,9 +545,9 @@ class DatabaseHelper {
 	/**
 	* Builds a query filter
 	*
-	* @param array $filters Query Filters
-	* @param boolean $query Strict search or general search
-	* @return array
+	* param array $filters Query Filters
+	* param boolean $query Strict search or general search
+	* return array
 	*/
 	public static function buildFilter($filters, $query=true) {
 		$q = '';

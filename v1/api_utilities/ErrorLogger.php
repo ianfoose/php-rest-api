@@ -2,7 +2,7 @@
 /**
 *	Error Logging Class
 *
-* @version 1.0
+* version 1.0
 */
 
 require_once('APIHelper.php');
@@ -11,30 +11,19 @@ class ErrorLogger extends APIHelper {
 	/**
 	* Main Constructor
 	*
-	* @return void
+	* return void
 	*/
 	public function __construct($expose=true) { 
 		parent::__construct();
 
-		if(!empty(@$this->configs['error_logging'])) {
-			$errorsCfg = $this->configs['error_logging'];
+		if(empty($this->tables['errors'])) {
+			$errorMsg = 'Errors table is not defined.';
 
-			if(!empty(@$errorsCfg['url']) && !empty(@$errorsCfg['username']) && !empty(@$errorsCfg['password'])) {
-
-				self::$dataHelper = new DatabaseHelper($errorsCfg['url'],@$errorsCfg['port'],$errorsCfg['username'],$errorsCfg['password'],@$errorsCfg['database']);
-			} else {
-				throw new Exception('Check Error Logging Configs', 500);
+			if($this->configs['environment'] == 'production') {
+				$errorMsg = 'Database Error';
 			}
-		} else { // default to regular credentials
-			if(!empty(@$configs['database'])) {
-				$dbConfigs = $this->configs['database'];
 
-				if(!empty(@$dbConfigs['url']) && !empty(@$dbConfigs['username']) && !empty(@$dbConfigs['password'])) {
-					self::$dataHelper = new DatabaseHelper($dbConfigs['url'],@$dbConfigs['port'],$dbConfigs['username'],$dbConfigs['password'],@$dbConfigs['database']);
-				}
-			} else {
-				throw new Exception('Check Error Logging Configs', 500);
-			}
+			throw new Exception($errorMsg, 500);
 		}
 
 		// expose API methods
@@ -46,40 +35,40 @@ class ErrorLogger extends APIHelper {
 	/**
 	* Exposes functions to the API
 	*
-	* @return void
+	* return void
 	*/
 	public function exposeAPI() {
 		Router::get('/errors', function($req, $res) {
 			try {
-			 	$res->output($this->getErrors(@$_GET['since_id'], @$_GET['max_id'], @$_GET['limit'], @$_GET['deleted']));
+			 	$res->output($this->getErrors($_GET['since_id'], $_GET['max_id'], $_GET['limit'], $_GET['deleted']));
 			} catch (Exception $e) {
 				$res->output($e);
 			}
-		});
+		}, 'errors');
 
 		Router::get('/error/:id', function($req, $res) {
 			try {
-				$res->output($this->getError(@$req['params']['id']));
+				$res->output($this->getError($req['params']['id']));
 			} catch (Exception $e) {
 				$res->output($e);
 			}
-		});
+		}, 'errors');
 
 		Router::get('/errors/count/number', function($req, $res) {
 			try {
-				$res->output($this->getNumberOfErrors(@$_GET['deleted']));
+				$res->output($this->getNumberOfErrors($_GET['deleted']));
 			} catch (Exception $e) {
 				$res->output($e);
 			}
-		});
+		}, 'errors');
 
 		Router::get('/errors/search/:query', function($req, $res) {
 			try {
-				$res->output($this->searchErrors($req['params'][':q'], @$_GET['offset']));
+				$res->output($this->searchErrors($req['params'][':q'], $_GET['offset']));
 			} catch (Exception $e) {
 				$res->output($e);
 			}
-		});
+		}, 'errors');
 
 		Router::delete('/error/:id', function($req, $res) {
 			try {
@@ -87,21 +76,21 @@ class ErrorLogger extends APIHelper {
 			} catch (Exception $e) {
 				$res->output($e);
 			}
-		});
+		}, 'errors');
 	}
 
 	/**
 	* Log an error
 	*
-	* @param string $errorCode Error Code
-	* @param string $errorDescription Error Description
-	* @return string
-	* @throws Exception
+	* param string $errorCode Error Code
+	* param string $errorDescription Error Description
+	* return string
+	* throws Exception
 	*/
 	public function logError($code,$description='',$message='') {
-		if(@$this->configs['log_error'] == true) {
+		if($this->configs['log_error'] == true) {
 			try {
-				if(self::$dataHelper->query("INSERT INTO ".$this->tables['errors']." SET code=:code,description=:description,message=:message",array(':code'=>$code,':description'=>$description,':message'=>$message), true)) {
+				if(self::$dataHelper->query("INSERT INTO ".ERRORS." SET code=:code,description=:description,message=:message",array(':code'=>$code,':description'=>$description,':message'=>$message), true)) {
 					return 'Error Logged';
 				} 
 			} catch (Excepetion $e) {
@@ -113,29 +102,28 @@ class ErrorLogger extends APIHelper {
 	/**
 	* Searches errors
 	*
-	* @param string $q Query string
-	* @return array
-	* @throws Exception
+	* param string $q Query string
+	* return array
+	* throws Exception
 	*/
 	public function searchErrors($q, $offset) {
 		try {
-			$queryString = "SELECT * FROM ".$this->tables['errors']." WHERE code LIKE CONCAT('%',:q,'%') OR message LIKE CONCAT('%',:a,'%') OR description LIKE CONCAT('%',:b,'%')";
+			$queryString = "SELECT * FROM ".ERRORS." WHERE code LIKE CONCAT('%',:q,'%') OR message LIKE CONCAT('%',:a,'%') OR description LIKE CONCAT('%',:b,'%')";
 			$params = array(':q'=>$q, ':a'=>$q, ':b'=>$q);
 
-			if(!empty(@$offset)) {
+			if(!empty($offset)) {
 				$queryString .= " OFFSET=:offset";
 				$params[':offset'] = $offset;
 			}
 
-			if($result = self::$dataHelper->query($queryString, $params)) {
-				$errors = array();
+			$result = self::$dataHelper->query($queryString, $params);
+			$errors = array();
 
-				while($error = $result->fetch()) {
-					$errors[] = self::getErrorData($error);
-				}
-
-				return $errors;
+			while($error = $result->fetch()) {
+				$errors[] = self::getErrorData($error);
 			}
+
+			return $errors;
 		} catch (Exception $e) {
 			throw $e;
 		}
@@ -144,13 +132,13 @@ class ErrorLogger extends APIHelper {
 	/**
 	* Gets the total number of errors
 	*
-	* @param string $deleted Deleted
-	* @return int
-	* @throws Exception
+	* param string $deleted Deleted
+	* return int
+	* throws Exception
 	*/
 	public function getNumberOfErrors($deleted=null) {
 		try {
-			$queryString = "SELECT id FROM ".$this->tables['errors'];
+			$queryString = "SELECT id FROM ".ERRORS;
 
 			$params = array();
 
@@ -159,9 +147,8 @@ class ErrorLogger extends APIHelper {
 				$params[':d'] = $deleted;
 			}
 
-			if($result = self::$dataHelper->query($queryString,$params)) {
-				return $result->rowCount();
-			}
+			$result = self::$dataHelper->query($queryString,$params);
+			return $result->rowCount();
 		} catch (Exception $e) {
 			throw $e;
 		}
@@ -170,27 +157,26 @@ class ErrorLogger extends APIHelper {
 	/**
 	* Gets errors
 	*
-	* @param int $startID Start ID
-	* @param int $maxID Max ID
-	* @param int $limit Limit
-	* @param array $filters Filters array
-	* @param string $deleted Deleted
-	* @return array
-	* @throws Exception
+	* param int $startID Start ID
+	* param int $maxID Max ID
+	* param int $limit Limit
+	* param array $filters Filters array
+	* param string $deleted Deleted
+	* return array
+	* throws Exception
 	*/
 	public function getErrors($sinceID=0, $maxID=0, $limit, $deleted) {
 		try {
-			$o = self::$dataHelper->getOffset($this->tables['errors'], 'id', $sinceID, $maxID, @$deleted, @$limit);
+			$o = self::$dataHelper->getOffset(ERRORS, 'id', $sinceID, $maxID, $deleted, $limit);
 
-			if($result = self::$dataHelper->query("SELECT * FROM ".$this->tables['errors']." WHERE".$o[0],$o[1],true)) {
-				$errors = array();
+			$result = self::$dataHelper->query("SELECT * FROM ".ERRORS." WHERE".$o[0],$o[1],true);
+			$errors = array();
 
-				while($error = $result->fetch()) {
-					$errors[] = self::getErrorData($error);
-				}
-
-				return $errors;
+			while($error = $result->fetch()) {
+				$errors[] = self::getErrorData($error);
 			}
+
+			return $errors;
 		} catch (Exception $e) {
 			throw $e;
 		}
@@ -199,17 +185,16 @@ class ErrorLogger extends APIHelper {
 	/**
 	* Deletes an error
 	*
-	* @param int $errorID Error ID
-	* @param int $userID User ID
-	* @return string
-	* @throws Exception
+	* param int $errorID Error ID
+	* param int $userID User ID
+	* return string
+	* throws Exception
 	*/
 	public function deleteError($errorID,$userID) {
 		try {
-			if(self::$dataHelper->find('id', array('id'=>@$errorID), $this->tables['errors'], 'Error')) {
-				if(self::$dataHelper->query("UPDATE ".$this->tables['errors']." SET deleted='1' WHERE id=:id", array(':id'=>$errorID))) {
-					return 'Error Deleted';
-				}
+			if(self::$dataHelper->find('id', array('id'=>$errorID), ERRORS, 'Error')) {
+				self::$dataHelper->query("UPDATE ".ERRORS." SET deleted='1' WHERE id=:id", array(':id'=>$errorID));
+				return 'Error Deleted';
 			}
 		} catch (Exception $e) {
 			throw $e;
@@ -219,14 +204,14 @@ class ErrorLogger extends APIHelper {
 	/**
 	* Gets an error
 	*
-	* @param int $errorID Error ID
-	* @param string $deleted Deleted
-	* @return object
-	* @throws Exception
+	* param int $errorID Error ID
+	* param string $deleted Deleted
+	* return object
+	* throws Exception
 	*/
 	public function getError($errorID) {
 		try {
-			if($result = self::$dataHelper->find('*', array('id'=>@$errorID), $this->tables['errors'],'Error')) {
+			if($result = self::$dataHelper->find('*', array('id'=>$errorID), ERRORS,'Error')) {
 				return self::getErrorData($result);
 			}
 		} catch (Exception $e) {
@@ -237,8 +222,8 @@ class ErrorLogger extends APIHelper {
 	/**
 	* Get error data
 	*
-	* @param Error Object $error 
-	* @return Error Object
+	* param Error Object $error 
+	* return Error Object
 	*/
 	private function getErrorData($error) {
 		if(!empty($error['date']))

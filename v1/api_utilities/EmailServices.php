@@ -2,7 +2,7 @@
 /**
 * Email Services Class
 *
-* @version 1.0
+* version 1.0
 */
 
 require_once('APIHelper.php');
@@ -12,8 +12,8 @@ class EmailServices extends APIHelper {
 	/**
 	* Constructor
 	*
-	* @param bool $expose Expose API functions
-	* @return void
+	* param bool $expose Expose API functions
+	* return void
 	*/
 	public function __construct($expose=false) {
 		parent::__construct();
@@ -26,7 +26,7 @@ class EmailServices extends APIHelper {
 	/**
 	* Exposes API functions
 	*
-	* @return void
+	* return void
 	*/
 	public function exposeAPI() {
 		// templates
@@ -40,7 +40,7 @@ class EmailServices extends APIHelper {
 
 		Router::get('/emails/templates/count/number', function($req, $res) {
 			try {
-				$res->output($this->getEmailTemplatesTotal(@$_GET['deleted']));
+				$res->output($this->getEmailTemplatesTotal($_GET['deleted']));
 			} catch (Exception $e) {
 				$res->output($e);
 			}
@@ -132,32 +132,26 @@ class EmailServices extends APIHelper {
 	/**
 	* Saves an email template
 	*
-	* @param string $name Template Name
-	* @param string $template Email Template
-	* @param int $userID User ID
-	* @return string
-	* @throws Exception
+	* param string $name Template Name
+	* param string $template Email Template
+	* param int $userID User ID
+	* return string
+	* throws Exception
 	*/
 	public function createTemplate($name, $template, $userID) {
 		try {
-			if(!empty(@$this->tables['email_templates'])) {
-				if(!self::$dataHelper->find('id', array('body'=>@$template,'name'=>@$name), $this->tables['email_templates'],'Email Template')) {
-					if(self::$dataHelper->query("INSERT INTO ".$this->tables['email_templates']." SET name=:n,body=:b,user_id=:uID",array(':n'=>$name,
-						':b'=>$template,
-						':uID'=>$userID))) {
+			if(!self::$dataHelper->find('id', array('body'=>$template,'name'=>$name), EMAIL_TEMPLATES,'Email Template')) {
+				self::$dataHelper->query("INSERT INTO ".EMAIL_TEMPLATES." SET name=:n,body=:b,user_id=:uID",array(':n'=>$name,
+				':b'=>$template,
+				':uID'=>$userID));
 
-						if(self::$dataHelper->query("INSERT INTO ".$this->tables['email_templates']." SET name=:n,body=:b,user_id=:uID,template_id=:tID", array(
-								':tID'=>self::$dataHelper->insertID,
-								':n'=>$name,
-								':b'=>$template,
-								':uID'=>$userID))) {
+				self::$dataHelper->query("INSERT INTO ".EMAIL_TEMPLATE_EDITS." SET name=:n,body=:b,user_id=:uID,template_id=:tID", array(
+					':tID'=>self::$dataHelper->insertID,
+					':n'=>$name,
+					':b'=>$template,
+					':uID'=>$userID));
 
-							return 'Template Created';
-						}
-					}
-				}
-			} else {
-				throw new Exception("Email Templates Table does not exist", 500);
+				return 'Template Created';
 			}
 		} catch (Exception $e) {
 			throw $e;
@@ -167,28 +161,24 @@ class EmailServices extends APIHelper {
 	/**
 	* Edits a template
 	*
-	* @param string $name Template Name
-	* @param string $template Email Template
-	* @param int $userID User ID
-	* @return string
-	* @throws Exception
+	* param string $name Template Name
+	* param string $template Email Template
+	* param int $userID User ID
+	* return string
+	* throws Exception
 	*/
 	public function editTemplate($templateID, $name, $template, $userID) {
 		try {
-			if(!empty(@$this->tables['email_template_edits']) && !empty(@$this->tables['email_templates'])) {
-				if(self::$dataHelper->beginTransaction()) {
-					if($r = self::$dataHelper->find('id', array('id'=>@$templateID), $this->tables['email_templates'],'Email Template')) {
-						if(self::$dataHelper->query("INSERT INTO ".$this->tables['email_template_edits']." SET user_id=:uID,body=:b,name=:n,template_id=:tID",array(':tID'=>$r['id'],':n'=>$name,':b'=>$template,':uID'=>$userID))) {
-							if(self::$dataHelper->query("UPDATE ".$this->tables['email_templates']." SET body=:b,name=:n WHERE id=:tID",array(':tID'=>$templateID,':n'=>$name,':b'=>$template))) {
-								if(self::$dataHelper->commit()) {
-									return 'Template Edited';
-								}
-							}
-						}
+			if(self::$dataHelper->beginTransaction()) {
+				if($r = self::$dataHelper->find('id', array('id'=>$templateID), EMAIL_TEMPLATES,'Email Template')) {
+					self::$dataHelper->query("INSERT INTO ".EMAIL_TEMPLATE_EDITS." SET user_id=:uID,body=:b,name=:n,template_id=:tID",array(':tID'=>$r['id'],':n'=>$name,':b'=>$template,':uID'=>$userID));
+
+					self::$dataHelper->query("UPDATE ".EMAIL_TEMPLATES." SET body=:b,name=:n WHERE id=:tID",array(':tID'=>$templateID,':n'=>$name,':b'=>$template));
+					
+					if(self::$dataHelper->commit()) {
+						return 'Template Edited';
 					}
 				}
-			} else {
-				throw new Exception("Email Templates or Email Template Edits Table does not exist", 500);
 			}
 		} catch (Exception $e) {
 			throw $e;
@@ -198,38 +188,33 @@ class EmailServices extends APIHelper {
 	/**
 	* Gets email template edots
 	*
-	* @param int $templateID Template ID
-	* @param int $sinceID Since ID
-	* @param int $maxID Max ID
-	* @param int $limit fetch Limit
-	* @param string $deleted Deleted Status
-	* @return array
-	* @throws Exception
+	* param int $templateID Template ID
+	* param int $sinceID Since ID
+	* param int $maxID Max ID
+	* param int $limit fetch Limit
+	* param string $deleted Deleted Status
+	* return array
+	* throws Exception
 	*/
 	public function getEmailTemplateEdits($templateID, $sinceID=0, $maxID=0, $limit, $deleted) {
 		try {
-			if(!empty(@$this->tables['email_template_edits'])) {
-				$o = self::$dataHelper->getOffset($this->tables['email_template_edits'], 'id', $sinceID, $maxID, @$deleted, @$limit);
+			$o = self::$dataHelper->getOffset(EMAIL_TEMPLATE_EDITS, 'id', $sinceID, $maxID, $deleted, $limit);
 				
-				$queryString = "SELECT * FROM ".$this->tables['email_template_edits'].' WHERE template_id=:tID AND ';
-				$params = array(':tID'=>$templateID);
+			$queryString = "SELECT * FROM ".EMAIL_TEMPLATE_EDITS.' WHERE template_id=:tID AND ';
+			$params = array(':tID'=>$templateID);
 
-				if($r = self::$dataHelper->query($queryString.$o[0],array_merge($params,$o[1]))) {
-					$templates = array();
+			$r = self::$dataHelper->query($queryString.$o[0],array_merge($params,$o[1]));
+			$templates = array();
 
-					while($t = $r->fetch()) {
-						try {
-							$templates[] = $this->getTemplateData($t);
-						} catch(Exception $e) {
-							throw $e;
-						}
-					}
-
-					return $templates;
+			while($t = $r->fetch()) {
+				try {
+					$templates[] = $this->getTemplateData($t);
+				} catch(Exception $e) {
+					throw $e;
 				}
-			} else {
-				throw new Exception("Email Template Edits Table does not exist", 500);
 			}
+
+			return $templates;
 		} catch (Exception $e) {
 			throw $e;
 		}
@@ -238,20 +223,15 @@ class EmailServices extends APIHelper {
 	/**
 	* Deletes an email template
 	*
-	* @param int $templateID Template id
-	* @return string
-	* @throws Exception
+	* param int $templateID Template id
+	* return string
+	* throws Exception
 	*/
 	public function deleteTemplate($templateID) {
 		try {
-			if(!empty(@$this->tables['email_templates'])) {
-				if(self::$dataHelper->find('*', array('id'=>@$templateID,'deleted'=>'0'), $this->tables['email_templates'],'Email Template')) {
-					if(self::$dataHelper->query("UPDATE ".$this->tables['email_templates']." SET deleted='1' WHERE id=:id",array(':id'=>$templateID))) {
-						return 'Template Deleted';
-					}
-				}
-			} else {
-				throw new Exception("Email Templates Table does not exist", 500);
+			if(self::$dataHelper->find('*', array('id'=>$templateID,'deleted'=>'0'), EMAIL_TEMPLATES,'Email Template')) {
+				self::$dataHelper->query("UPDATE ".EMAIL_TEMPLATES." SET deleted='1' WHERE id=:id",array(':id'=>$templateID));
+				return 'Template Deleted';
 			}
 		} catch (Exception $e) {
 			throw $e;
@@ -261,18 +241,14 @@ class EmailServices extends APIHelper {
 	/**
 	* Gets a template
 	*
-	* @param int $templateID Template ID
-	* @return object
-	* @throws Exception
+	* param int $templateID Template ID
+	* return object
+	* throws Exception
 	*/
 	public function getTemplate($templateID) {
 		try {
-			if(!empty(@$this->tables['email_templates'])) {
-				if($result = self::$dataHelper->find('*', array('id'=>@$templateID), $this->tables['email_templates'],'Email Template')) {
-					return $this->getTemplateData($result);
-				}
-			} else {
-				throw new Exception("Email Templates Table does not exist", 500);
+			if($result = self::$dataHelper->find('*', array('id'=>$templateID),EMAIL_TEMPLATES,'Email Template')) {
+				return $this->getTemplateData($result);
 			}
 		} catch (Exception $e) {
 			throw $e;
@@ -282,28 +258,23 @@ class EmailServices extends APIHelper {
 	/**
 	* Gets total number of email templates
 	*
-	* @param string $deleted Deleted Status
-	* @return int
-	* @throws Exception
+	* param string $deleted Deleted Status
+	* return int
+	* throws Exception
 	*/
 	public function getTotalEmailTemplates($deleted) {
 		try {
-			if(!empty(@$this->tables['email_templates'])) {
-				$queryString = "SELECT id FROM ".$this->tables['email_templates'];
+			$queryString = "SELECT id FROM ".EMAIL_TEMPLATES;
 
-				$params = array();
+			$params = array();
 
-				if(!empty(@$deleted)) {
-					$queryString .= " AND deleted=:d";
-					$params[':d'] = $deleted;
-				}
-
-				if($r = self::$dataHelper->query($queryString,$params)) {
-					return $r->rowCount();
-				}
-			} else {
-				throw new Exception("Email Templates Table does not exist", 500);
+			if(!empty($deleted)) {
+				$queryString .= " AND deleted=:d";
+				$params[':d'] = $deleted;
 			}
+
+			$r = self::$dataHelper->query($queryString,$params);
+			return $r->rowCount();
 		} catch (Exception $e) {
 			throw $e;
 		}
@@ -312,31 +283,26 @@ class EmailServices extends APIHelper {
 	/**
 	* Gets templates
 	*
-	* @param int $sinceID Since ID
-	* @param int $maxID Max ID
-	* @param string $deleted Deleted status
-	* @return array
-	* @throws Exception
+	* param int $sinceID Since ID
+	* param int $maxID Max ID
+	* param string $deleted Deleted status
+	* return array
+	* throws Exception
 	*/
 	public function getTemplates($sinceID=0, $maxID=0, $limit=35, $deleted='') {	
 		try {
-			if(!empty(@$this->tables['email_templates'])) {
-				$o = self::$dataHelper->getOffset($this->tables['email_templates'], 'id', $sinceID, $maxID, @$deleted, @$limit);
+			$o = self::$dataHelper->getOffset(EMAIL_TEMPLATES, 'id', $sinceID, $maxID, $deleted, $limit);
 			
-				$queryString = "SELECT * FROM ".$this->emailTemplates.' WHERE ';
+			$queryString = "SELECT * FROM ".$this->emailTemplates.' WHERE ';
 
-				if($result = self::$dataHelper->query($queryString.$o[0],$o[1])) {
-					$templates = array();
+			$result = self::$dataHelper->query($queryString.$o[0],$o[1]);
+			$templates = array();
 
-					while($temp = $result->fetch()) {
-						$templates[] = $this->getTemplateData($temp);
-					}
-
-					return $templates;
-				}
-			} else {
-				throw new Exception("Email Templates Table does not exist", 500);
+			while($temp = $result->fetch()) {
+				$templates[] = $this->getTemplateData($temp);
 			}
+
+			return $templates;
 		} catch (Exception $e) {
 			throw $e;
 		}
@@ -345,14 +311,14 @@ class EmailServices extends APIHelper {
 	/**
 	* Gets data for a template object
 	*
-	* @param object $template Email Template object
-	* @return object
+	* param object $template Email Template object
+	* return object
 	*/
 	public function getTemplateData($template) {
 		if(!empty($template['date']))
 			$template['string_date'] = formatDate($template['date']);
 
-		//if(!empty(@$template['body']))
+		//if(!empty($template['body']))
 			//$template['body'] = htmlspecialchars_decode($template['body'], ENT_QUOTES);
 
 		return $template;
@@ -361,13 +327,13 @@ class EmailServices extends APIHelper {
 	/**
 	* Fills out an email template with supplied tokens
 	*
-	* @param array $tokens Tokens to fill
-	* @param string $template Email template to fill out
-	* @return string
-	* @throws Exception 
+	* param array $tokens Tokens to fill
+	* param string $template Email template to fill out
+	* return string
+	* throws Exception 
 	*/
 	public static function fillTemplate($tokens, $template) {
-		if(!empty(@$tokens) && !empty(@$template)) {
+		if(!empty($tokens) && !empty($template)) {
 			$pattern = '{{%s}}';
 		
 			$map = array();
@@ -387,28 +353,22 @@ class EmailServices extends APIHelper {
 	/**
 	* Gets the total number of email subscribers
 	*
-	* @param string $unsubscribed Unsubscribe status
-	* @return int
-	* @throws Exception
+	* param string $unsubscribed Unsubscribe status
+	* return int
+	* throws Exception
 	*/
 	public function getEmailSubscriptionTotal($unsubscribed=null) {
 		try {
-			if(!empty(@$this->tables['email_subscriptions'])) {
-				$queryString = "SELECT id FROM ".$this->tables['email_subscriptions'];
+			$queryString = "SELECT id FROM ".EMAIL_SUBSCRIPTIONS;
 
-				if(!empty(@$unsubscribed)) {
-					if($unsubscribed == '1' || $unsubscribed == '0') {
-						$queryString .= ' WHERE subscriber='.$unsubscribed;
-					}
+			if(!empty($unsubscribed)) {
+				if($unsubscribed == '1' || $unsubscribed == '0') {
+					$queryString .= ' WHERE subscriber='.$unsubscribed;
 				}
-
-				if($r = self::$dataHelper->query($queryString)) {
-					return $r->rowCount();
-				}
-				
-			} else {
-				throw new Exception('Email subscriptions does not exist',500);
 			}
+
+			$r = self::$dataHelper->query($queryString);
+			return $r->rowCount();
 		} catch (Exception $e) {
 			throw $e;
 		}
@@ -417,31 +377,26 @@ class EmailServices extends APIHelper {
 	/**
 	* Gets email subscribers
 	*
-	* @param int $sinceID Since ID
-	* @param int $maxID Max ID
-	* @param string $deleted Deleted status
-	* @return array
-	* @throws Exception
+	* param int $sinceID Since ID
+	* param int $maxID Max ID
+	* param string $deleted Deleted status
+	* return array
+	* throws Exception
 	*/
 	public function getEmailSubscribers($sinceID=0, $maxID=0, $limit=35, $deleted='') {
 		try {
-			if(!empty(@$this->tables['email_subscriptions'])) {
-				$queryString = "SELECT * FROM ".$this->tables['email_subscriptions']." WHERE ";
+			$queryString = "SELECT * FROM ".EMAIL_SUBSCRIPTIONS." WHERE ";
 
-				$o = self::$dataHelper->getOffset($this->tables['email_subscriptions'], 'id', $sinceID, $maxID, @$deleted, @$limit);
+			$o = self::$dataHelper->getOffset(EMAIL_SUBSCRIPTIONS, 'id', $sinceID, $maxID, $deleted, $limit);
 
-				if($r = self::$dataHelper->query($queryString.$o[0],$o[1])) {
-					$subs = array();
+			$r = self::$dataHelper->query($queryString.$o[0],$o[1]);
+			$subs = array();
 
-					while($sub = $r->fetch()) {
-						$subs[] = $this->getSubscriptionData($sub);
-					}
-
-					return $subs;
-				}
-			} else {
-				throw new Exception('Email subscriptions does not exist',500);
+			while($sub = $r->fetch()) {
+				$subs[] = $this->getSubscriptionData($sub);
 			}
+
+			return $subs;
 		} catch (Exception $e) {
 			throw $e;
 		}
@@ -450,33 +405,28 @@ class EmailServices extends APIHelper {
 	/**
 	* Searches email subscribers
 	*
-	* @param string $query Search query
-	* @return array
-	* @throws Exception
+	* param string $query Search query
+	* return array
+	* throws Exception
 	*/
 	public function searchEmails($query, $offset=0) {
 		try {
-			if(!empty(@$this->tables['email_subscriptions'])) {
-				$queryString = "SELECT * FROM ".$this->tables['email_subscriptions']." WHERE email LIKE CONCAT('%',:q,'%')";
-				$params = array(':q'=>$query);
+			$queryString = "SELECT * FROM ".EMAIL_SUBSCRIPTIONS." WHERE email LIKE CONCAT('%',:q,'%')";
+			$params = array(':q'=>$query);
 
-				if(!empty(@$offset)) {
-					$queryString .= " OFFSET :offset";
-					$params = array(':offset'=>$offset);
-				}
-
-				if($results = self::$dataHelper->query($queryString, $params)) {
-					$emails = array();
-
-					while($email = $results->fetch()) {
-						$emails[] = $this->getSubscriptionData($email);			
-					}
-
-					return $emails;
-				}
-			} else {
-				throw new Exception("Email Subscriptions Table does not exist", 500);
+			if(!empty($offset)) {
+				$queryString .= " OFFSET :offset";
+				$params = array(':offset'=>$offset);
 			}
+
+			$results = self::$dataHelper->query($queryString, $params);
+			$emails = array();
+
+			while($email = $results->fetch()) {
+				$emails[] = $this->getSubscriptionData($email);			
+			}
+
+			return $emails;
 		} catch (Exception $e) {
 			throw $e;
 		}
@@ -485,8 +435,8 @@ class EmailServices extends APIHelper {
 	/**
 	* Gets subsciption data
 	*
-	* @param object $sub Subscription object
-	* @return object
+	* param object $sub Subscription object
+	* return object
 	*/
 	private function getSubscriptionData($sub) {
 		if(!empty($sub['date']))
@@ -498,22 +448,18 @@ class EmailServices extends APIHelper {
 	/**
 	* Adds a email subscriber
 	*
-	* @param string $email Email to add
-	* @return string
-	* @throws Exception
+	* param string $email Email to add
+	* return string
+	* throws Exception
 	*/
 	public function addSubscriber($email) {
 		try {
-			if(!empty(@$this->tables['email_subscriptions'])) {
-				if($r = self::$dataHelper->find('id', array('email'=>@$email), $this->tables['email_subscriptions'])) {
-					self::$dataHelper->query('UPDATE '.$this->tables['email_subscriptions']." SET subscriber='1' WHERE id=:id",array(':id'=>$r['id']));
-				} else {
-					self::$dataHelper->query("INSERT INTO ".$this->tables['email_subscriptions']." SET email=:e,subscriber=1",array(':e'=>$email));
-				}
-				return 'Subscribed';
+			if($r = self::$dataHelper->find('id', array('email'=>$email), EMAIL_SUBSCRIPTIONS)) {
+				self::$dataHelper->query('UPDATE '.EMAIL_SUBSCRIPTIONS." SET subscriber='1' WHERE id=:id",array(':id'=>$r['id']));
 			} else {
-				throw new Exception('Email subscriptions does not exist',500);
+				self::$dataHelper->query("INSERT INTO ".EMAIL_SUBSCRIPTIONS." SET email=:e,subscriber=1",array(':e'=>$email));
 			}
+			return 'Subscribed';
 		} catch (Exception $e) {
 			throw $e;
 		}
@@ -522,21 +468,15 @@ class EmailServices extends APIHelper {
 	/**
 	* Removes an email subscriber
 	*
-	* @param string $email Email to remove
-	* @return string
-	* @throws Exception
+	* param string $email Email to remove
+	* return string
+	* throws Exception
 	*/
 	public function removeSubscriber($email) {
 		try {
-			if(!empty(@$this->tables['email_subscriptions'])) {
-				if($r = self::$dataHelper->find('id', array('email'=>@$email), $this->tables['email_subscriptions'])) {
-					if(self::$dataHelper->query('UPDATE '.$this->tables['email_subscriptions']." SET subscriber='0' WHERE id=".$r['id'])) {
-						return 'Unsubscribed';
-					}
-				}
-				
-			} else {
-				throw new Exception('Email subscriptions table does not exist',500);
+			if($r = self::$dataHelper->find('id', array('email'=>$email), EMAIL_SUBSCRIPTIONS)) {
+				self::$dataHelper->query('UPDATE '.EMAIL_SUBSCRIPTIONS." SET subscriber='0' WHERE id=".$r['id']);
+				return 'Unsubscribed';
 			}
 		} catch (Exception $e) {
 			throw $e;

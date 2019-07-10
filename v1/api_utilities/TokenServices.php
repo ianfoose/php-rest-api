@@ -2,39 +2,39 @@
 /**
 * Token Services 
 *
-* @version 1.0
+* version 1.0
 */
 
 require_once('APIHelper.php');
 
 class TokenServices extends APIHelper {
 	/**
-	* @var string $prefix Token hash prefix
+	* var string $prefix Token hash prefix
 	*/
 	private $prefix;
 
 	/**
-	* @var string $secret Secret string for token hash
+	* var string $secret Secret string for token hash
 	*/
 	private $secret;
 
 	/**
 	* Main Constructor
 	*
-	* @param bool $expose Expose API functions
-	* @return void
+	* param bool $expose Expose API functions
+	* return void
 	*/
 	public function __construct($expose=true) {
 		parent::__construct();
 
-		if(!empty(@$this->tables['tokens'])) {
+		if(!empty($this->tables['tokens'])) {
 			$tokensConfig = $this->configs['tokens'];
 
-			if(!empty(@$tokensConfig['prefix'])) {
+			if(!empty($tokensConfig['prefix'])) {
 				$this->prefix = $tokensConfig['prefix'];
 			}
 
-			if(!empty(@$tokensConfig['secret'])) {
+			if(!empty($tokensConfig['secret'])) {
 				$this->secret = $tokensConfig['secret'];
 			}
 		} else {
@@ -50,13 +50,13 @@ class TokenServices extends APIHelper {
 	/**
 	* Expose methods to the API
 	*
-	* @return void
+	* return void
 	*/
 	public function exposeAPI() {
 		Router::post('/token/refresh', function($req, $res) {
 			try {
 				if(!empty($req->body['token'])) {
-					$res->output($this->refreshToken(@$req->body['token']));
+					$res->output($this->refreshToken($req->body['token']));
 				}
 				throw new Exception('Missing token', 404);
 			} catch (Exception $e) {
@@ -66,7 +66,7 @@ class TokenServices extends APIHelper {
 
 		Router::get('/tokens', function($req, $res) {
 			try {
-				$res->output($this->getTokens(@$_GET['since_id'], @$_GET['max_id'], @$_GET['limit'], @$_GET['deleted']));
+				$res->output($this->getTokens($_GET['since_id'], $_GET['max_id'], $_GET['limit'], $_GET['deleted']));
 			} catch (Exception $e) {
 				$res->output($e);
 			}
@@ -74,7 +74,7 @@ class TokenServices extends APIHelper {
 
 		Router::get('/token/:id', function($req, $res) {
 			try {
-				$res->output($this->getToken(@$req->params['id']));
+				$res->output($this->getToken($req->params['id']));
 			} catch (Exception $e) {
 				$res->output($e);
 			}
@@ -82,7 +82,7 @@ class TokenServices extends APIHelper {
 
 		Router::get('/token/unique/:id', function($req, $res) {
 			try {
-				$res->output($this->getTokenUnique(@$req->params['id']));
+				$res->output($this->getTokenUnique($req->params['id']));
 			} catch (Exception $e) {
 				$res->output($e);
 			}
@@ -92,8 +92,8 @@ class TokenServices extends APIHelper {
 	/**
 	* Decodes a token
 	*
-	* @param string $token Base64 Token
-	* @return array
+	* param string $token Base64 Token
+	* return array
 	*/
 	public function decodeToken($token) {
 		$token = base64_decode($token);
@@ -105,8 +105,8 @@ class TokenServices extends APIHelper {
 	/**
 	* validates a token, non database
 	*
-	* @param string $token Base64 Token
-	* @return Bool
+	* param string $token Base64 Token
+	* return Bool
 	*/
 	public function validate($token) {
 		if($this->checkTokenConfigs()) {
@@ -130,9 +130,9 @@ class TokenServices extends APIHelper {
 	/**
 	* Validates a refresh token
 	*
-	* @param string $rToken Refresh Token
-	* @return bool
-	* @throws Exception
+	* param string $rToken Refresh Token
+	* return bool
+	* throws Exception
 	*/
 	public function validateRefreshToken($rToken) {
 		if($this->checkTokenConfigs()) {
@@ -145,7 +145,7 @@ class TokenServices extends APIHelper {
 
 				if($today < $token['auth']['t']){
 				    try {
-				    	if(self::$dataHelper->find('id','token,revoked',$rToken.',0',$this->tables['tokens'],'Token')) {
+				    	if(self::$dataHelper->find('id',array('token'=>$rToken,'revoked'=>0), TOKENS, 'Token')) {
 				    		return true;
 				    	}
 				    } catch (Exception $e) {
@@ -162,18 +162,18 @@ class TokenServices extends APIHelper {
 	/**
 	* Refreshes a token
 	*
-	* @param string $rToken Refresh Token
-	* @return array
-	* @throws Exception
+	* param string $rToken Refresh Token
+	* return array
+	* throws Exception
 	*/
 	public function refreshToken($rToken) {
 		if($this->validateRefreshToken($rToken)) {
 			if($dToken = $this->decodeToken($rToken)) {
-				if(!empty(@$dToken['data']['id'])) {
+				if(!empty($dToken['data']['id'])) {
 					$userID = $dToken['data']['id'];
 
 					try {
-						if(self::$dataHelper->find('id', array('token'=>$rToken,'u_id'=>$userID,'revoked'=>0), $this->tables['tokens'],'Token')) {
+						if(self::$dataHelper->find('id', array('token'=>$rToken,'u_id'=>$userID,'revoked'=>0), TOKENS,'Token')) {
 							if(self::$dataHelper->beginTransaction()) {
 								try {
 									$newRToken = $this->createRefreshToken($userID,$dToken['data']);
@@ -200,9 +200,9 @@ class TokenServices extends APIHelper {
 	/**
 	* Creates a token
 	*
-	* @param string $id Unique ID 
-	* @param array $data body data array
-	* @return string
+	* param string $id Unique ID 
+	* param array $data body data array
+	* return string
 	*/
 	public function createToken($id, $data=null) {
 		return $this->create($id,$data);
@@ -210,10 +210,10 @@ class TokenServices extends APIHelper {
 
 	/**
 	* Creates a refresh token
-	* @param string $id Unique ID 
-	* @param array $data body data array
-	* @return string
-	* @throws Exception
+	* param string $id Unique ID 
+	* param array $data body data array
+	* return string
+	* throws Exception
 	*/
 	public function createRefreshToken($id, $data=null) {
 		$token = $this->create($id,$data,true);
@@ -229,10 +229,10 @@ class TokenServices extends APIHelper {
 	/**
 	* creates a token
 	*
-	* @param string $id Unique ID 
-	* @param array $data body data array
-	* @param bool $refresh Generate a refresh token
-	* @return string
+	* param string $id Unique ID 
+	* param array $data body data array
+	* param bool $refresh Generate a refresh token
+	* return string
 	*/
 	private function create($id, $data=null, $refresh=false) {
 		if($this->checkTokenConfigs()) {
@@ -262,22 +262,22 @@ class TokenServices extends APIHelper {
 	/**
 	* Saves a token
 	*
-	* @param int $uniqueID Unique Token ID
-	* @param object $token Token
-	* @return string
-	* @throws Exception
+	* param int $uniqueID Unique Token ID
+	* param object $token Token
+	* return string
+	* throws Exception
 	*/
 	public function save($uID, $token) {
 		try {
 			$dToken = $this->decodeToken($token);
 			
-			if(!empty(@$dToken['auth']['t'])) {
+			if(!empty($dToken['auth']['t'])) {
 				try {
-					/*if(self::$dataHelper->find('id', array('token'=>@$token), $this->tables['tokens'])) {
+					/*if(self::$dataHelper->find('id', array('token'=>$token), $this->tables['tokens'])) {
 						self::$dataHelper->query("UPDATE ".$this->tables['tokens']." SET revoked='1' WHERE u_id=:uID AND token=:t",array(':uID'=>$uID,':t'=>$token));
 					}*/
 
-					if(self::$dataHelper->query("INSERT INTO ".$this->tables['tokens']." SET token=:token,u_id=:uID,exp_date=:eDate",array(':token'=>$token,':uID'=>$uID,':eDate'=>$dToken['auth']['t']))) {
+					if(self::$dataHelper->query("INSERT INTO ".TOKENS." SET token=:token,u_id=:uID,exp_date=:eDate",array(':token'=>$token,':uID'=>$uID,':eDate'=>$dToken['auth']['t']))) {
 						return 'Saved';
 					} 	
 				} catch (Excpetion $e) {
@@ -294,16 +294,16 @@ class TokenServices extends APIHelper {
 	/**
 	* Revokes a token pair
 	*
-	* @param string $token Token
-	* @param int $id Unique ID
-	* @return bool
-	* @throws Exception
+	* param string $token Token
+	* param int $id Unique ID
+	* return bool
+	* throws Exception
 	*/
 	public function revoke($token) {
 		try {
 			if($this->dataHelper->beginTransaction()) {
-				if($this->dataHelper->find('id', array('token'=>@$token), $this->tables['tokens'])) {
-					if($this->dataHelper->query("UPDATE ".$this->tables['tokens']." SET revoked='1' WHERE token=':t'",array(':t'=>$token))) {
+				if($this->dataHelper->find('id', array('token'=>$token), TOKENS)) {
+					if($this->dataHelper->query("UPDATE ".TOKENS." SET revoked='1' WHERE token=':t'",array(':t'=>$token))) {
 						if($this->dataHelper->commit()) {
 							return 'Token Revoked';
 						}
@@ -318,13 +318,13 @@ class TokenServices extends APIHelper {
 	/**
 	* Gets a token for Unique ID
 	*
-	* @param int $id Unique ID
-	* @return Object
-	* @throws Exception 
+	* param int $id Unique ID
+	* return Object
+	* throws Exception 
 	*/
 	public function getTokenUnique($uID) {
 		try {
-			if($result = $this->dataHelper->find('*', array('u_id'=>@$uID), $this->tables['tokens'])) {
+			if($result = $this->dataHelper->find('*', array('u_id'=>$uID), TOKENS)) {
 				return $this->getTokenData($result);
 			}
 		} catch (Exception $e) {
@@ -335,13 +335,13 @@ class TokenServices extends APIHelper {
 	/**
 	* Gets a token for id
 	*
-	* @param int $id Token ID
-	* @return Object
-	* @throws Exception
+	* param int $id Token ID
+	* return Object
+	* throws Exception
 	*/
 	public function getToken($id) {
 		try {
-			if($result = self::$dataHelper->find('*', array('id'=>@$id), $this->tables['tokens'])) {
+			if($result = self::$dataHelper->find('*', array('id'=>$id), TOKENS)) {
 				return $this->getTokenData($result);
 			}
 		} catch (Exception $e) {
@@ -352,18 +352,18 @@ class TokenServices extends APIHelper {
  	/**
 	* Gets all tokens
 	*
-	* @param int $sinceID Since ID
-	* @param int $maxID Max ID
-	* @param int $limit Limit
-	* @param string $deleted Deleted
-	* @return array
-	* @throws Exception
+	* param int $sinceID Since ID
+	* param int $maxID Max ID
+	* param int $limit Limit
+	* param string $deleted Deleted
+	* return array
+	* throws Exception
 	*/
 	public function getTokens($sinceID=0, $maxID=0, $limit, $deleted) {
 		try {
-			$o = self::$dataHelper->getOffset($this->tables['tokens'], 'id', $sinceID, $maxID, $deleted, $limit);
+			$o = self::$dataHelper->getOffset(TOKENS, 'id', $sinceID, $maxID, $deleted, $limit);
 
-			if($results =self::$dataHelper->query("SELECT * FROM ".$this->tables['tokens']." WHERE ".$o[0],$o[1])) {
+			if($results =self::$dataHelper->query("SELECT * FROM ".TOKENS." WHERE ".$o[0],$o[1])) {
 				$tokens = array();
 
 				while($token = $results->fetch()) {
@@ -380,8 +380,8 @@ class TokenServices extends APIHelper {
 	/**
 	* Gets token data
 	*
-	* @param object $token Token
-	* @return Object
+	* param object $token Token
+	* return Object
 	*/
 	private function getTokenData($token) {
 		if(!empty($token['date'])) 
@@ -396,10 +396,10 @@ class TokenServices extends APIHelper {
 	/**
 	* Checks for mandatory token configs
 	*
-	* @return bool
+	* return bool
 	*/
 	private function checkTokenConfigs() {
-		if(!empty(@$this->prefix) && !empty(@$this->secret)) {
+		if(!empty($this->prefix) && !empty($this->secret)) {
 			return true;
 		}
 		return false;

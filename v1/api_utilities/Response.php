@@ -2,45 +2,45 @@
 /**
 * Response Class
 *
-* @copyright Foose Industries
-* @version 1.0
+* copyright Foose Industries
+* version 1.0
 */
 class Response {
     /**
-    * @var string $format Output format
+    * var string $format Output format
     */
     public $format = 'json';
 	
     /**
-    * @var int $httpStatus HTTP Status Code
+    * var int $httpStatus HTTP Status Code
     */
-    public var $httpStatus = 200;
+    public $httpStatus = 200;
 	
     /**
-    * @var array $errorArray Error Message for HTTP Status code 
+    * var array $errorArray Error Message for HTTP Status code 
     */
     public static $errorArray = array(
         200=>'OK',
-	201=>'Created',
-	204=>'No Content',
-	304=>'Not Modifed',
-	400=>'Bad Request',
-	401=>'Unauthorized',
-	403=>'Forbidden',
-	404=>'Not Found',
-	405=>'Method Not Allowed',
-	409=>'Conflict',
-	500=>'Internal Server Error'
+    	201=>'Created',
+    	204=>'No Content',
+    	304=>'Not Modifed',
+    	400=>'Bad Request',
+    	401=>'Unauthorized',
+    	403=>'Forbidden',
+    	404=>'Not Found',
+    	405=>'Method Not Allowed',
+    	409=>'Conflict',
+    	500=>'Internal Server Error'
     );
 
     /**
     * Main Constructor
     *
-    * @param string $format Response format
-    * @return void
+    * param string $format Response format
+    * return void
     */
     public function __construct($format) {
-        if(!empty(@$format)) {
+        if(!empty($format)) {
             $this->format = $format;
         }
     }
@@ -58,8 +58,8 @@ class Response {
     /**
     * Gets a messages for status code
     *
-    * @param int $status Response HTTP status
-    * @return string
+    * param int $status Response HTTP status
+    * return string
     */
     private function getMessage($status=200) {
         if(isset(self::$errorArray[$status])) {
@@ -70,10 +70,10 @@ class Response {
     /**
     * Outputs data in JSON
     *
-    * @param array $data Data array
-    * @param int $status Response HTTP status
-    * @param array $headers Output headers
-    * @return void
+    * param array $data Data array
+    * param int $status Response HTTP status
+    * param array $headers Output headers
+    * return void
     */
     public function output($data=null, $status=200, $headers=null) {
         // check if data is an exception
@@ -82,7 +82,7 @@ class Response {
             $data = array('result'=>$data->getMessage());
         }
 
-        $headerString = ('HTTP/1.1'.' '.$status.' '.$this->getMessage(@$status));
+        $headerString = ('HTTP/1.1'.' '.$status.' '.$this->getMessage($status));
 
         header($headerString);
         
@@ -122,9 +122,9 @@ class Response {
     * Converts an array to SimpleXML Element, can be a multi dimensional array, duplicate keys are NOT
     * allowed within same object
     *
-    * @param array $array Array to be converted
-    * @param object $xml XML element to append to
-    * @return SimpleXML Element 
+    * param array $array Array to be converted
+    * param object $xml XML element to append to
+    * return SimpleXML Element 
     */
     private function array_to_xml($array, &$xml) {
         foreach($array as $key => $value) {
@@ -144,8 +144,8 @@ class Response {
     /**
     * Takes in a filename and an array associative data array and outputs a csv file
     *
-    * @param string $fileName
-    * @param array $assocDataArray     
+    * param string $fileName
+    * param array $assocDataArray     
     */
     private function outputCsv($fileName, $assocDataArray) {
         header('Pragma: public');
@@ -162,13 +162,13 @@ class Response {
             }
             fclose($fp);
         }
-        @ob_flush();
+        ob_flush();
     }
 
     /**
     * Convert array to CSV format
     *
-    * @return 
+    * return 
     */
     private function convert_to_csv($input_array, $output_file_name, $delimiter) {
         $temp_memory = fopen('php://memory', 'w');

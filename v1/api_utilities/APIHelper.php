@@ -2,8 +2,8 @@
 /**
 * APIHelper Class
 *
-* @copyright Foose Industries
-* @version 1.0
+* copyright Foose Industries
+* version 1.0
 */
 
 require_once('DatabaseHelper.php');
@@ -17,45 +17,43 @@ require_once('TokenServices.php');
 
 abstract class APIHelper {
 	/**
-	* @var array $configs API configs array
+	* var array $configs API configs array
 	*/
 	public $configs = array();
 
 	/**
-	* @var array $tables DB Tables Array
+	* var array $tables DB Tables Array
 	*/
 	public $tables = array();
 
 	/**
-	* @var array $defaultTables Default DB Tables
+	* var array $defaultTables Default DB Tables
 	*/
 	private $defaultTables = array();
 
 	/**
-	* @var DataHelper $dataHelper Main DataHelper class for database interface
+	* var DataHelper $dataHelper Main DataHelper class for database interface
 	*/
 	public static $dataHelper;
 
 	/**
 	* Main Constructor
 	*
-	* @param string $configs Configs file path
-	* @return void
+	* param string $configs Configs file path
+	* return void
 	*/
-	public function __construct($configs='./config.json') {	
-		$this->getConfigs($configs);
-		
-		$this->configs['database']['environment'] = $this->configs['environment'];
+	public function __construct($configPath='./config.json') {	
+		$this->getConfigs($configPath);
 
 		// set timezone
-		if(@$this->configs['date']['timezone']) {
+		if($this->configs['date']['timezone']) {
 			date_default_timezone_set($this->configs['date']['timezone']);
 		} else {
 			date_default_timezone_set('UTC');
 		}
 
 		// database tables
-		if(@$this->configs['tables']) {
+		if($this->configs['tables']) {
 			$this->tables = $this->configs['tables'];
 		} else { // fallback to defaults
 			$this->tables = $this->defaultTables;
@@ -69,7 +67,7 @@ abstract class APIHelper {
 		// set error reporting
 		$errorReporting = 1;
 
-		if(!empty($this->configs['environment']) && $this->configs['environment'] == 'production') {
+		if(!empty($this->configs['environment']) && $this->configs['environment'] == 'production' || $this->configs['development']['errors'] == false) {
 			$errorReporting = 0;
 		} else {
 			error_reporting(E_ALL); // Error Reporting 
@@ -78,14 +76,14 @@ abstract class APIHelper {
 		ini_set('display_errors', $errorReporting); 
 
 		// default global datahelper
-		self::$dataHelper = new DatabaseHelper(@$this->configs['database']);
+		self::$dataHelper = new DatabaseHelper($this->configs);
 	}
 
 	/**
 	* Gets configs from file
 	*
-	* @return void
-	* @throws Exception
+	* return void
+	* throws Exception
 	*/
 	private function getConfigs($path) {
 		try {
@@ -98,9 +96,9 @@ abstract class APIHelper {
 	/**
 	* Check if data exists
 	*
-	* @param string $data String data
-	* @return boolean
-	* @throws Exception
+	* param string $data String data
+	* return boolean
+	* throws Exception
 	*/
 	public function checkIfDataExists($data) {
 		$emptyKeys = array();
@@ -115,7 +113,7 @@ abstract class APIHelper {
 				throw new Exception(implode(',',$emptyKeys).' cannot be empty', 404);
 			} 
 		} else { // error
-			if(empty(@$data)) {
+			if(empty($data)) {
 				throw new Exception('Data is empty', 404);
 			}
 		}
@@ -125,9 +123,9 @@ abstract class APIHelper {
 	/**
 	* Formats date
 	*
-	* @param string $date String version of a date
-	* @param string $format String date format can be left empty for default conversion
-	* @return string
+	* param string $date String version of a date
+	* param string $format String date format can be left empty for default conversion
+	* return string
 	*/
 	public function formatDate($date, $format = null) { 
 		if($format == null) {
@@ -163,8 +161,8 @@ abstract class APIHelper {
 	/**
 	* Formats a database time 
 	*
-	* @param string $time Time String
-	* @return string
+	* param string $time Time String
+	* return string
 	*/
 	public function formatTime($time) {
 		return date('g:i A,', strtotime($time));
@@ -173,9 +171,9 @@ abstract class APIHelper {
 	/**
 	* Formats a number to decimal places with an optional suffix
 	*
-	* @param int $number The number being formated
-	* @param boolean $suffix Determines wheather to output a suffix
-	* @return int | string 
+	* param int $number The number being formated
+	* param boolean $suffix Determines wheather to output a suffix
+	* return int | string 
 	*/
 	public function formatNumber($number, $suffix = true) {
 		$ending = '';
@@ -199,9 +197,9 @@ abstract class APIHelper {
 	/**
 	* Formats file size
 	*
-	* @param int $bytes The number of bytes at the lowest level
-	* @param boolean $suffix Determines wheater to print the suffix
-	* @return string
+	* param int $bytes The number of bytes at the lowest level
+	* param boolean $suffix Determines wheater to print the suffix
+	* return string
 	*/
 	public function formatSize($bytes, $suffix=true) {
 	    if ($bytes == 0) {
@@ -220,8 +218,8 @@ abstract class APIHelper {
 	/**
 	* Turns unicode into an emoji
 	* 
-	* @param string $input String to be processed 
-	* @return string
+	* param string $input String to be processed 
+	* return string
 	*/
 	public function processEmoji($input) {
 		return preg_replace("/\\\\u([0-9A-F]{2,5})/i", "&#x$1;", $input);
@@ -230,10 +228,10 @@ abstract class APIHelper {
 	/**
 	* Zips a file
 	*
-	* @param string $name File name 
-	* @param array $files Files to zip
+	* param string $name File name 
+	* param array $files Files to zip
 
-	* @return void
+	* return void
 	*/
 	public function zipFile($name, $files) {
 		$zip = new ZipArchive();

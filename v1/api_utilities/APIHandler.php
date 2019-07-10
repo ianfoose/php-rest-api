@@ -2,8 +2,8 @@
 /**
 * APIHandler Class
 *
-* @copyright Foose Industries
-* @version 1.0
+* copyright Foose Industries
+* version 1.0
 */
 
 require_once('APIHelper.php');
@@ -11,35 +11,34 @@ require_once('Router.php');
 
 abstract class APIHandler extends APIHelper {
 	/**
-	* @var Request $req Request Object
+	* var Request $req Request Object
 	*/ 
 	public $req;
 
 	/**
-	* @var Response $res Response Object
+	* var Response $res Response Object
 	*/
 	public $res;
 
 	/**
-	* @var string $format Response Format, json, xml, etc...
+	* var string $format Response Format, json, xml, etc...
 	*/
 	private $format;
 
 	/**
-	* @var array $authHandlers Handlers for authentication by type
+	* var array $authHandlers Handlers for authentication by type
 	*/
 	private $authHandlers = array();
 
 	/**
 	* Main constructor
 	*
-	* @return void
+	* return void
 	*/
 	public function __construct() {
-		// set CORS
-		$this->setCorsPolicy(); 
-		
 		parent::__construct();
+
+		$this->setCorsPolicy($this->configs['cors']); 
 
 		$this->format = $this->getFormat($this->getAPIEndpoint());
 		$this->res = new Response($this->format);
@@ -48,23 +47,23 @@ abstract class APIHandler extends APIHelper {
 	/**
 	* Gets the API endpoint from URL 
 	*
-	* @return void
+	* return void
 	*/
 	private function getAPIEndpoint($format=false) {
 		$endpoint = '/';
 
-		if(!empty(@$this->configs['base_url'])) {
+		if(!empty($this->configs['base_url'])) {
 			$baseURL = $this->configs['base_url'];
 		} else {
 			$baseURL = str_replace('/'.basename($_SERVER['SCRIPT_FILENAME']), '', $_SERVER['SCRIPT_NAME']);
 		}
 
-		if(!empty(@$_SERVER['PATH_INFO'])) {
+		if(!empty($_SERVER['PATH_INFO'])) {
 			$endpoint = $_SERVER['PATH_INFO'];
 		}
 
 		// for htaccess rewrite
-		if(!empty(@$_SERVER['REQUEST_URI'])) {
+		if(!empty($_SERVER['REQUEST_URI'])) {
 			$endpoint = strtok(str_replace($baseURL, '', $_SERVER['REQUEST_URI']),'?');
 		}
 
@@ -78,7 +77,7 @@ abstract class APIHandler extends APIHelper {
 	/**
 	* Formats the API endpoint for route matching
 	*
-	* @return void
+	* return void
 	*/
 	private function formatAPIEndpoint($endpoint='/') {
 		// remove format extension from endpoint (ex. .xml, .json)
@@ -88,7 +87,7 @@ abstract class APIHandler extends APIHelper {
 			$pendpoint = end($endpoint);
 			$pendpoint = explode('.',$pendpoint);
 
-			if(!empty(@$pendpoint[1])) {
+			if(!empty($pendpoint[1])) {
 				$endpoint[count($endpoint)-1] = $pendpoint[0];
 				$endpoint = implode('/', $endpoint);
 			}
@@ -99,8 +98,8 @@ abstract class APIHandler extends APIHelper {
 	/**
 	* Returns the format specified
 	*
-	* @param string $function The input function
-	* @return string
+	* param string $function The input function
+	* return string
 	*/
 	public function getFormat($function) {
 		$formatSuffix = explode('.',$function);
@@ -116,19 +115,26 @@ abstract class APIHandler extends APIHelper {
 	/**
 	* Function used to set CORS Policy, overridable
 	*
-	* @return void
+	* param array | string $headers An array or string of header(s) 
+	* return void
 	*/
-	public function setCorsPolicy() {
-		header("Access-Control-Allow-Origin: *");
+	public function setCorsPolicy($headers) {
+		if(is_array($headers)) {
+			foreach ($headers as $value) {
+				header($value);
+			}
+		} else {
+			header('Access-Control-Allow-Origin: *');
+		}
 	}
 
 	/**
 	* Function used for Authentication, overridable
 	*
-	* @param string $name route name
-	* @param function $handler Auth handler for named route
+	* param string $name route name
+	* param function $handler Auth handler for named route
 	*
-	* @return void
+	* return void
 	*/
 	public function addAuthHandler($names, $handler) {
 		if(is_array($names)) {
@@ -143,8 +149,8 @@ abstract class APIHandler extends APIHelper {
 	/**
 	* Handle authorization by method
 	*
-	* @param string $method Handler name or true for default
-	* @return method Handler function
+	* param string $method Handler name or true for default
+	* return method Handler function
 	*/
 	private function authHandler($method=true, $req, $res) {
 		if($method === true) {
@@ -163,7 +169,7 @@ abstract class APIHandler extends APIHelper {
 	/**
 	* Runs the API
 	*
-	* @return void
+	* return void
 	*/
 	public function run() {
 		$method = $_SERVER['REQUEST_METHOD'];
@@ -231,7 +237,7 @@ abstract class APIHandler extends APIHelper {
 					$body = array();
 					parse_str(file_get_contents('php://input'),$body);
 
-					if(!empty(trim(@$_SERVER['HTTP_IF_NONE_MATCH']))) {
+					if(!empty(trim($_SERVER['HTTP_IF_NONE_MATCH']))) {
 						$body['etag'] = $_SERVER['HTTP_IF_NONE_MATCH'];
 					}
 
@@ -240,7 +246,7 @@ abstract class APIHandler extends APIHelper {
 					
 					$headers = array_merge($_SERVER, getallheaders());
 
-					$this->req = new Request($params, @$body, $headers, $this->format);
+					$this->req = new Request($params, $body, $headers, $this->format);
 
 					// checks for custom auth function
 					if(isset($value['verify']) && !empty($value['verify'])) {
