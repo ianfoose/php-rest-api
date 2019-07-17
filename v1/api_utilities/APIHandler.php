@@ -244,6 +244,19 @@ abstract class APIHandler extends APIHelper {
 					$params = array_merge($params, $_GET);
 					$body = array_merge($body, $_POST); 
 					
+					// for nginx
+					if(!function_exists('getallheaders')) {
+						function getallheaders() {
+							$headers = array();
+							
+							foreach($_SERVER as $name => $value) {
+								$headers[$name] = $value;
+							}
+							
+							return $headers;
+						}
+					}
+					
 					$headers = array_merge($_SERVER, getallheaders());
 
 					$this->req = new Request($params, $body, $headers, $this->format);
