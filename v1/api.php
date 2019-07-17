@@ -11,7 +11,8 @@ class API extends APIHandler {
 		});
 
 		$this->addAuthHandler('default', function($req, $res) {
-			return true;
+			// defaults to `false` for security to disallow any connection
+			return false;
 		});
 	}
 }
