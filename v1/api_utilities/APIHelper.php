@@ -46,17 +46,7 @@ abstract class APIHelper {
 		} else {
 			date_default_timezone_set('UTC');
 		}
-
-		// database tables
-		if($this->configs['tables']) {
-			$this->tables = $this->configs['tables'];
-		} 
-
-		foreach ($this->tables as $key => $value) {
-			if(!defined(strtoupper($key)))
-				define(strtoupper($key), $value);
-		}
-
+		
 		// set error reporting
 		$errorReporting = 1;
 
@@ -70,6 +60,36 @@ abstract class APIHelper {
 
 		// default global datahelper
 		self::$dataHelper = new DatabaseHelper($this->configs);
+
+		// database tables
+		// if($this->configs['tables']) {
+		// 	$this->tables = $this->configs['tables'];
+		// } 
+
+		// foreach ($this->tables as $key => $value) {
+			// $this->tables[$key] = $value;
+			
+		// 	if(!defined(strtoupper($key)))
+		// 		define(strtoupper($key), $value);
+		// }
+
+		// get tables from DB
+		if(!empty($this->configs['database']['db'])) {
+			if($results = self::$dataHelper->query("SELECT table_name FROM information_schema.tables where table_schema='".$this->configs['database']['db']."'")) {
+				
+				while($tblName = $results->fetch()) {
+					$tblName = $tblName['table_name'];
+
+					// check for exception
+					if(!in_array($tblName, $this->configs['table_exceptions'])) {
+						$this->tables[] = $tblName;
+
+						if(!defined(strtoupper($tblName)))
+							define(strtoupper($tblName), $tblName);
+					} 
+				}
+			}
+		}
 	}
 
 	/**
@@ -80,7 +100,22 @@ abstract class APIHelper {
 	*/
 	private function getConfigs($path) {
 		try {
-			$this->configs = json_decode(file_get_contents($path), true);
+			$configs = json_decode(file_get_contents($path), true);
+
+			// get database configs, development or production
+			if(!empty($configs) && !empty($configs['database'])) {
+				if($configs['environment'] == 'development' && !empty($configs['dev-database'])) {
+					foreach ($configs['database'] as $key => $value) {
+						if(isset($configs['dev-database'][$key])) {
+							$configs['database'][$key] = $configs['dev-database'][$key];
+						} else {
+							$configs['database'][$key] = $value;
+						}
+					} 
+				} 
+			} 
+	
+			$this->configs = $configs;
 		} catch(Exception $e) {
 			throw new Exception('Config values not set, maybe the file does not exist?');
 		}

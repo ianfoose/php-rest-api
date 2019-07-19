@@ -44,36 +44,8 @@ class DatabaseHelper {
 	* return void
 	*/
 	public function __construct($configs) {
-		$errorMessage = '';
-
-		if(!empty($configs) && !empty($configs['database'])) {
-			if($configs['environment'] == 'development' && !empty($configs['dev-database'])) {
-				foreach ($configs['database'] as $key => $value) {
-					if(isset($configs['dev-database'][$key])) {
-						$dbConfigs[$key] = $configs['dev-database'][$key];
-					} else {
-						$dbConfigs[$key] = $value;
-					}
-				} 
-				//$dbConfigs = $configs['dev-database'];
-			} else { // no development environment specified
-				$dbConfigs = $configs['database'];
-			}
-
-			// check database config values
-			if(!empty($dbConfigs['url']) && !empty($dbConfigs['user']) && !empty($dbConfigs['password']) && !empty($dbConfigs['db'])) {
-				
-				if(empty($dbConfigs['port']))
-				   $dbConfigs['port'] = 3306;
-				   
-				$this->configs = $configs;
-				$this->dbConfigs = $dbConfigs;
-			} else {
-			 	throw new Exception($errorMessage, 500);	
-			}
-		} else {
-			throw new Exception($errorMessage, 500);
-		}
+		$this->configs = $configs;
+		$this->dbConfigs = $configs['database'];
 	}
 
 	/**
@@ -99,14 +71,25 @@ class DatabaseHelper {
 			return self::$db;
 		} else {
 			try {
-				self::$db = new PDO("mysql:host=".$this->dbConfigs['url'].":".$this->dbConfigs['port'].";dbname=".$this->dbConfigs['db'].";",$this->dbConfigs['user'],$this->dbConfigs['password']);
+				$dbConfigs = $this->configs['database'];
+
+				// check database config values
+				if(!empty($this->dbConfigs['url']) && !empty($this->dbConfigs['user']) && !empty($this->dbConfigs['password']) && !empty($this->dbConfigs['db'])) {
+					
+					if(empty($dbConfigs['port']))
+					   $dbConfigs['port'] = 3306;
+				} else {
+				 	throw new Exception('Invalid Database Config Values', 500);	
+				}
+
+				self::$db = new PDO("mysql:host=".$dbConfigs['url'].":".$dbConfigs['port'].";dbname=".$dbConfigs['db'].";",$dbConfigs['user'],$dbConfigs['password']);
 				self::$db->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
 				self::$db->setAttribute(PDO::ATTR_DEFAULT_FETCH_MODE, PDO::FETCH_ASSOC);
 				self::$db->setAttribute( PDO::ATTR_EMULATE_PREPARES, false );
 
 				return self::$db;
 			} catch(Exception $e) {
-				throw new Exception('Unable to connect to DB',500);
+				throw new Exception('Unable to connect to DB ',500);
 			} 
 		}
 	}
@@ -128,9 +111,9 @@ class DatabaseHelper {
 
 			
 					$statement = $this->connect()->prepare($query);
-           				$statement->execute($params);
+           			$statement->execute($params);
 
-           				$this->insertID = self::$db->lastInsertId();
+           			$this->insertID = self::$db->lastInsertId();
 
 					return $statement;
 				}
@@ -138,16 +121,16 @@ class DatabaseHelper {
 				$errorMessage = 'Query Error';
 				
 				if($this->configs['environment'] == 'development') {
-					$errorMessage = 'Query Error: '.$e->getMessage();	
+					$errorMessage = 'Query Error: '.$e->getMessage().' ';	
 				}
 				
 				// log error
 				try {
 					$errorLogger = new ErrorLogger();	
-					$errorLogger->logError(500,'Query Error: '.$e->getMessage());
+					$errorLogger->logError(500,$errorMessage);
 				} catch(Exception $logError) {
 					if($this->configs['environment'] == 'development') {
-						$errorMessage .= 'Log Error: '.$logError->getMessage();	
+						$errorMessage .= 'Log Error: '.$logError->getMessage().' ';	
 					}
 					
 					throw new Exception($errorMessage, 500);
@@ -175,16 +158,16 @@ class DatabaseHelper {
 		if(!is_array($vals))
 			throw new Exception('Values must be in an array', 500);
 
-		$queryString = "SELECT ".$keys." FROM ".$tbl." WHERE ";
+		$queryString = 'SELECT '.$keys.' FROM '.$tbl.' WHERE ';
 		$params = array();
 
 		$j = 0;
 		foreach ($vals as $key => $value) {
-			$queryString .= $key."=:".$j;
+			$queryString .= $key.'=:'.$j;
 			$params[':'.$j] = $vals[$key];
 
 			if($j < count($vals)-1) {
-				$queryString .= " AND ";
+				$queryString .= ' AND ';
 			}
 
 			$j++;

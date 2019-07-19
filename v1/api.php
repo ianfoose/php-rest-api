@@ -10,6 +10,10 @@ class API extends APIHandler {
 			$res->output('My API');
 		});
 
+		Router::all('/ian', function($req, $res) {
+			$res->output(EMPLOYEES);
+		});
+
 		$this->addAuthHandler('default', function($req, $res) {
 			return true;
 		});

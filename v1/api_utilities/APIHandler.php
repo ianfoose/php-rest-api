@@ -237,9 +237,9 @@ abstract class APIHandler extends APIHelper {
 					$body = array();
 					parse_str(file_get_contents('php://input'),$body);
 
-					if(!empty(trim($_SERVER['HTTP_IF_NONE_MATCH']))) {
+					/*if(!empty(trim($_SERVER['HTTP_IF_NONE_MATCH']))) {
 						$body['etag'] = $_SERVER['HTTP_IF_NONE_MATCH'];
-					}
+					}*/
 
 					$params = array_merge($params, $_GET);
 					$body = array_merge($body, $_POST); 
