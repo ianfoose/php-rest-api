@@ -53,10 +53,6 @@ abstract class APIHelper {
 		} 
 
 		foreach ($this->tables as $key => $value) {
-			if(!empty($this->configs['table-compatibility']) && array_key_exists($key, $this->configs['table-compatibility'])) {
-				$value = $this->configs['table-compatibility'][$key];
-			}
-			
 			if(!defined(strtoupper($key)))
 				define(strtoupper($key), $value);
 		}
