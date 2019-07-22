@@ -68,7 +68,21 @@ class Response {
     }
 
     /**
-    * Outputs data in JSON
+    * sends data to client
+    * This function calls the soon to be 
+    *
+    * param array $data Data array
+    * param int $status Response HTTP status
+    * param array $headers Output headers
+    * return void
+    */
+    public function send($data=null, $status=200, $headers=null) {
+        $this->output($data, $status, $headers);
+    }
+	
+    /**
+    * Outputs data
+    * sends data to client, soon to be deprecated
     *
     * param array $data Data array
     * param int $status Response HTTP status
