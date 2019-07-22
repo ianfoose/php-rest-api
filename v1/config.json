@@ -9,6 +9,14 @@
 		"db": "sakila",
 		"limit": 40
 	},
+	"dev-database": {
+		"type": "mysql",
+		"url": "localhost",
+		"user": "root",
+		"password": "root",
+		"db": "sakila",
+		"limit": 40
+	},
 	"date": {
 		"timezone": "UTC"
 	},
