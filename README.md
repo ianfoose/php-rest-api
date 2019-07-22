@@ -1,11 +1,20 @@
 ### PHP REST API Framework
 
-A REST API framework for PHP
+This REST API framework provides a fast and efficient way of getting a data driven API up and running quickly and securely.
 
-# Table of Contents
-1. Install
-2.
-3.
+## Features:
+
+- Database Connector
+- Token Based Authentication
+- Notification Handling (iOS, Google, Microsoft, Email)
+- Traffic Logging
+- Email composing and subscriptions
+- Clean, RESTful URLs
+- Multiple Response formats, JSON, XML
+- Error Logging
+- Versioning
+- Centralized DB Scheme updates
+
 
 Refer to our wiki for more information on how to install and use.
 

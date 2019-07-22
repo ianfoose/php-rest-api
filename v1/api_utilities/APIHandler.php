@@ -188,7 +188,7 @@ abstract class APIHandler extends APIHelper {
 					$purl = explode('/',trim($value['route'],'/')); // indexed route
 					$route = explode('/',trim($endpoint,'/')); // requested routes
 
-					if(count($purl) == count($route)) { // number of paths matches route
+					if(count($purl) == count($route)) { // number of paths that match route
 						$k = 0;
 
 						// get any params in path
@@ -243,6 +243,19 @@ abstract class APIHandler extends APIHelper {
 
 					$params = array_merge($params, $_GET);
 					$body = array_merge($body, $_POST); 
+					
+					// for nginx
+					if(!function_exists('getallheaders')) {
+						function getallheaders() {
+							$headers = array();
+							
+							foreach($_SERVER as $name => $value) {
+								$headers[$name] = $value;
+							}
+							
+							return $headers;
+						}
+					}
 					
 					$headers = array_merge($_SERVER, getallheaders());
 

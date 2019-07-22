@@ -138,9 +138,6 @@ class Router {
 	*/
 	private static function addRoute($m,$n,$f,$v=false,$o=false) {	
 		$newRoute = array('method'=>$m,'route'=>$n,'function'=>$f,'verify'=>$v,'override'=>$o);
-		
-		//if($n == '/group/:id')
-			//echo "string";
 
 		// route overriding
 		if(sizeof(self::getInstance()->routes) == 0) {
@@ -148,10 +145,9 @@ class Router {
 		} else {
 			if($routes = self::getInstance()->routes) {
 				foreach($routes as $key => $route) {
-					if($route['route'] == $n && $m == $route['method']) {
+					if($route['route'] == $n && $m == $route['method'] || $route['method'] == 'ALL') {
 						if($o == true && $route['override'] == false) {
 							self::getInstance()->routes[$key] = $newRoute;
-							break;
 						}
 						break;
 					} else {

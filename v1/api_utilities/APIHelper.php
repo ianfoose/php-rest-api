@@ -46,11 +46,11 @@ abstract class APIHelper {
 		} else {
 			date_default_timezone_set('UTC');
 		}
-		
+
 		// set error reporting
 		$errorReporting = 1;
 
-		if($this->configs['environment'] == 'production' || $this->configs['development']['errors'] == false || empty($this->configs['development']['display_warnings'])) {
+		if($this->configs['environment'] == 'production' || $this->configs['development']['errors'] == false || empty($this->configs['development']['warnings'])) {
 			$errorReporting = 0;
 		} else {
 			error_reporting(E_ALL); // Error Reporting 
@@ -61,34 +61,28 @@ abstract class APIHelper {
 		// default global datahelper
 		self::$dataHelper = new DatabaseHelper($this->configs);
 
-		// database tables
-		// if($this->configs['tables']) {
-		// 	$this->tables = $this->configs['tables'];
-		// } 
+		// get tables dynamically from DB
+		try {
+			if(!empty($this->configs['database']['db']) && self::$dataHelper->connect()) {
+				if($results = self::$dataHelper->query("SELECT table_name FROM information_schema.tables where table_schema='".$this->configs['database']['db']."'")) {
+					
+					while($tblName = $results->fetch()) {
+						$tblName = $tblName['table_name'];
 
-		// foreach ($this->tables as $key => $value) {
-			// $this->tables[$key] = $value;
-			
-		// 	if(!defined(strtoupper($key)))
-		// 		define(strtoupper($key), $value);
-		// }
+						// check for table exceptions
+						if($this->configs['table_exceptions'] && in_array($tblName, $this->configs['table_exceptions'])) {
+							continue;
+						} 
 
-		// get tables from DB
-		if(!empty($this->configs['database']['db'])) {
-			if($results = self::$dataHelper->query("SELECT table_name FROM information_schema.tables where table_schema='".$this->configs['database']['db']."'")) {
-				
-				while($tblName = $results->fetch()) {
-					$tblName = $tblName['table_name'];
-
-					// check for exception
-					if(!in_array($tblName, $this->configs['table_exceptions'])) {
 						$this->tables[] = $tblName;
 
 						if(!defined(strtoupper($tblName)))
 							define(strtoupper($tblName), $tblName);
-					} 
+					}
 				}
 			}
+		} catch (Exception $e) {
+			// todo
 		}
 	}
 
