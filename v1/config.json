@@ -1,0 +1,36 @@
+{
+	"name": "My API",
+	"log_errors": true,
+	"database": {
+		"type": "mysql",
+		"url": "localhost",
+		"user": "root",
+		"password": "root",
+		"db": "sakila",
+		"limit": 40
+	},
+	"dev-database": {
+		"type": "mysql",
+		"url": "localhost",
+		"user": "root",
+		"password": "root",
+		"db": "foose_industries_admin",
+		"limit": 40
+	},
+	"date": {
+		"timezone": "UTC"
+	},
+	"environment": "development",
+	"development": {
+		"errors": true,
+		"warnings": false
+	},
+	"cors": "Access-Control-Allow-Origin: *",
+	"notifications": { },
+	"email": { },
+	"tokens": {
+		"prefix": "api-token",
+		"secret": "api123456"
+	},
+	"format": "json"
+}
