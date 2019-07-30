@@ -124,33 +124,33 @@ class NotificationServices extends APIHelper {
 			try {
 				$this->sendNotification($req->body['payload'],$req->body['users'], $req->body['platforms']);
 			} catch (Exception $e) {
-				$res->output($e);
+				$res->send($e);
 			}
 		});
 
 		Router::get('/push/token/user/:id', function($req, $res) {
 			try {
-				$res->output($this->getPushTokenForUser($req->params['id']));
+				$res->send($this->getPushTokenForUser($req->params['id']));
 			} catch (Exception $e) {
-				$res->output($e);
+				$res->send($e);
 			}
 		}, 'get_push_token_user');
 
 		Router::delete('/push/token/:token', function($req, $res) {
 			try {
-				$res->output($this->deletePushToken($req->params['token'], $req->body['user_id']));
+				$res->send($this->deletePushToken($req->params['token'], $req->body['user_id']));
 			} catch (Exception $e) {
-				$res->output($e);
+				$res->send($e);
 			}
 		}, 'delete_push_token');
 
 		Router::put('/push/token', function($req, $res) {
 			try {
 				if($this->checkIfDataExists(array('token'=>$req->body['token'], 'user_id'=>$req->body['user_id'], 'platform'=>$req->body['platform']))) {
-					$res->output($this->savePushToken($req->body['user_id'], $req->body['token'], $req->body['platform']));
+					$res->send($this->savePushToken($req->body['user_id'], $req->body['token'], $req->body['platform']));
 				}
 			} catch (Exception $e) {
-				$res->output($e);
+				$res->send($e);
 			}
 		}, 'save_push_token');
 	}
@@ -466,7 +466,7 @@ class NotificationServices extends APIHelper {
     */
     public function getPushTokenForUser($userID) {
 	    try {
-		    $result = self::$db->query("SELECT * FROM ".PUSH_UUID." WHERE user_id=:uID",array(':uID'=>$userID));	
+		    $result = self::$db->query("SELECT * FROM ".PUSH_UUID." WHERE user_id=:uID",array(':uID'=>$userID));
 		    $tokens = array();
 		
 		    while($token = $result->fetch()) {

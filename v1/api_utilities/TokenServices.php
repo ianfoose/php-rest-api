@@ -56,35 +56,35 @@ class TokenServices extends APIHelper {
 		Router::post('/token/refresh', function($req, $res) {
 			try {
 				if(!empty($req->body['token'])) {
-					$res->output($this->refreshToken($req->body['token']));
+					$res->send($this->refreshToken($req->body['token']));
 				}
 				throw new Exception('Missing token', 404);
 			} catch (Exception $e) {
-				$res->output($e);
+				$res->send($e);
 			}
 		});
 
 		Router::get('/tokens', function($req, $res) {
 			try {
-				$res->output($this->getTokens($_GET['since_id'], $_GET['max_id'], $_GET['limit'], $_GET['deleted']));
+				$res->send($this->getTokens($_GET['since_id'], $_GET['max_id'], $_GET['limit'], $_GET['deleted']));
 			} catch (Exception $e) {
-				$res->output($e);
+				$res->send($e);
 			}
 		}, 'get_tokens');
 
 		Router::get('/token/:id', function($req, $res) {
 			try {
-				$res->output($this->getToken($req->params['id']));
+				$res->send($this->getToken($req->params['id']));
 			} catch (Exception $e) {
-				$res->output($e);
+				$res->send($e);
 			}
 		}, 'get_token');
 
 		Router::get('/token/unique/:id', function($req, $res) {
 			try {
-				$res->output($this->getTokenUnique($req->params['id']));
+				$res->send($this->getTokenUnique($req->params['id']));
 			} catch (Exception $e) {
-				$res->output($e);
+				$res->send($e);
 			}
 		}, 'get_token_unique');
 	}

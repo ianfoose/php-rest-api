@@ -7,29 +7,15 @@ class API extends APIHandler {
 		parent::__construct(); 
 
 		Router::all('/',function($req, $res) {
-			$res->output('My API');
+			$res->send($this->configs['name']);
 		});
 
 		$this->addAuthHandler('default', function($req, $res) {
 			// defaults to `false` for security to disallow any connection
 			return false;
 		});
-
-		Router::get('/test', function($req, $res) {
-			$res->send($this->saveAuditLog(32,'user',2, 'edited'));
-		});
-
-		router::get('/test2', function($req, $res) {
-			try {
-				$res->send($this->getAuditLogs(null,null,null,USERS));
-			} catch(Exception $e) {
-				$res->send($e);
-			}
-		});
 	}
 }
-
-new NotificationServices(null,true);
 
 // start the api
 $api = new API();

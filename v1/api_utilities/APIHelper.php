@@ -144,7 +144,7 @@ abstract class APIHelper {
 		return true;
 	}
 
-		/**
+	/**
 	* Logs an audit event for a piece of data, example is editing a user, store the event and who edited
 	*
 	* param int $itemID Item being edited

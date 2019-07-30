@@ -64,7 +64,7 @@ class Response {
     }
 
     /**
-    * sends data to the client
+    * sends data to the client LEGACY SUPPORT
     *
     * param array $data Data array
     * param int $status Response HTTP status

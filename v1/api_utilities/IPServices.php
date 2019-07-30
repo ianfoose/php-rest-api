@@ -30,6 +30,7 @@ class IPServices extends APIHelper {
 	public function exposeAPI() {
 		Router::get('/traffic', function($req, $res) {
 			try {
+
 				$res->send($this->getVisitors($_GET['since_id'], $_GET['max_id'], $_GET['limit'], $_GET['deleted']));
 			} catch (Exception $e) {
 				$res->send($e);
@@ -38,6 +39,7 @@ class IPServices extends APIHelper {
 
 		Router::get('/traffic/count/number', function($req, $res) {
 			try {
+
 				$res->send($this->getTotalNumberOfVisits($_GET['deleted']));
 			} catch (Exception $e) {
 				$res->send($e);

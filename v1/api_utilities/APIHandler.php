@@ -193,7 +193,7 @@ abstract class APIHandler extends APIHelper {
 	public function run() {
 		$method = $_SERVER['REQUEST_METHOD'];
 		$endpoint = $this->getAPIEndpoint(true);
-		
+
 		$routes = Router::getInstance()->routes;
 
 		$this->req = new Request();
