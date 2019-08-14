@@ -261,7 +261,6 @@ class DatabaseHelper {
 	}
 
 	/**
->>>>>>> 257d6930320df4e9081e84407e37f6474ea2ba33
 	* Begin a transaction
 	*
 	* return void
@@ -420,7 +419,7 @@ class DatabaseHelper {
 		// 	$q .= 'OFFSET '.$offset;
 		// }
 
-		return array($q,$params);
+		return array(0=>$q,1=>$params,'query'=>$q,'params'=>$params);
 	}
 
 	/**
