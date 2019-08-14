@@ -85,17 +85,21 @@ class Response {
     */
     public function send($data=null, $status=200, $headers=null) {
         // check if data is an exception
-        if(!empty($data) && $data instanceof Exception) {
-            if(!empty($data->getCode())) {
-                $status = $data->getCode();
-            }
+       if($data instanceof Exception) {
+              $status = $data->getCode();
+  
+              $msg = null;
+  
+              if(array_key_exists($status, $this->errorArray)) {
+                  $msg = $this->errorArray[$status];
+              }
+  
+              if($data->getMessage() != null) {
+                  $msg .= $data->getMessage();
+              }
+              $data = array('result'=>$msg);
+       }
 
-            $msg = $this->errorArray[$status];
-            if(!empty($data->getMessage()))
-                $msg = $data->getMessage();
-
-            $data = array('result'=>$msg);
-        }
 
         $headerString = ('HTTP/1.1'.' '.$status.' '.$this->getMessage($status));
 
