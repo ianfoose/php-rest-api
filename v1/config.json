@@ -7,7 +7,8 @@
 		"user": "root",
 		"password": "root",
 		"db": "sakila",
-		"limit": 40
+		"limit": 40,
+		"charset": "utf8"
 	},
 	"dev-database": {
 		"type": "mysql",
@@ -15,7 +16,8 @@
 		"user": "root",
 		"password": "root",
 		"db": "sakila",
-		"limit": 40
+		"limit": 40,
+		"charset": "utf8"
 	},
 	"date": {
 		"timezone": "UTC"
