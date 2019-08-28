@@ -109,6 +109,10 @@ abstract class APIHelper {
 						}
 					} 
 				} 
+				
+				if(!isset($configs['database']['charset'])) {
+					$configs['database']['charset'] = 'utf8';
+				}
 			} 
 	
 			$this->configs = $configs;
