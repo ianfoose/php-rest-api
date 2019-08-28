@@ -82,7 +82,7 @@ class DatabaseHelper {
 				 	throw new Exception('Invalid Database Config Values', 500);	
 				}
 
-				self::$db = new PDO("mysql:host=".$dbConfigs['url'].":".$dbConfigs['port'].";dbname=".$dbConfigs['db'].";",$dbConfigs['user'],$dbConfigs['password']);
+				self::$db = new PDO("mysql:host=".$dbConfigs['url'].":".$dbConfigs['port'].";dbname=".$dbConfigs['db'].";charset=".$dbConfigs['charset'].";",$dbConfigs['user'],$dbConfigs['password']);
 				self::$db->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
 				self::$db->setAttribute(PDO::ATTR_DEFAULT_FETCH_MODE, PDO::FETCH_ASSOC);
 				self::$db->setAttribute( PDO::ATTR_EMULATE_PREPARES, false );
