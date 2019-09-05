@@ -86,13 +86,15 @@ class Response {
     public function send($data=null, $status=200, $headers=null) {
         // check if data is an exception
         if(!empty($data) && $data instanceof Exception) {
-            if(!empty($data->getCode())) {
-                $status = $data->getCode();
-            }
-
-            $msg = $this->errorArray[$status];
-            if(!empty($data->getMessage()))
-                $msg = $data->getMessage();
+           if($data->getCode() != null) {
+              $status = $data->getCode();
+            }   
+  
+            if($data->getMessage() != null) {
+                $msg = $data->getMessage().' '; 
+            }   
+  
+            $msg .= $this->errorArray[$status];
 
             $data = array('result'=>$msg);
         }
