@@ -7,17 +7,17 @@
 */
 class Response {
     /**
-    * var string $format Output format
+    * @var string $format Output format
     */
     public $format = 'text';
 	
     /**
-    * var int $httpStatus HTTP Status Code
+    * @var int $httpStatus HTTP Status Code
     */
     public $httpStatus = 200;
 	
     /**
-    * var array $errorArray Error Message for HTTP Status code 
+    * @var array $errorArray Error Message for HTTP Status code 
     */
     public static $errorArray = array(
         200=>'OK',
@@ -36,8 +36,8 @@ class Response {
     /**
     * Main Constructor
     *
-    * param string $format Response format
-    * return void
+    * @param string $format Response format
+    * @return void
     */
     public function __construct($format='json', $errorArray=null) {
         $this->format = $format;
@@ -54,8 +54,8 @@ class Response {
     /**
     * Gets a messages for status code
     *
-    * param int $status Response HTTP status
-    * return string
+    * @param int $status Response HTTP status
+    * @return string
     */
     private function getMessage($status=200) {
         if(isset(self::$errorArray[$status])) {
@@ -66,10 +66,10 @@ class Response {
     /**
     * sends data to the client LEGACY SUPPORT
     *
-    * param array $data Data array
-    * param int $status Response HTTP status
-    * param array $headers Output headers
-    * return void
+    * @param array $data Data array
+    * @param int $status Response HTTP status
+    * @param array $headers Output headers
+    * @return void
     */
     public function output($data=null, $status=200, $headers=null) {
         $this->send($data, $status, $headers);
@@ -78,28 +78,24 @@ class Response {
     /**
     * sends data to the client
     *
-    * param array $data Data array
-    * param int $status Response HTTP status
-    * param array $headers Output headers
-    * return void
+    * @param array $data Data array
+    * @param int $status Response HTTP status
+    * @param array $headers Output headers
+    * @return void
     */
     public function send($data=null, $status=200, $headers=null) {
         // check if data is an exception
-       if($data instanceof Exception) {
-              $status = $data->getCode();
-  
-              $msg = null;
-  
-              if(array_key_exists($status, $this->errorArray)) {
-                  $msg = $this->errorArray[$status];
-              }
-  
-              if($data->getMessage() != null) {
-                  $msg .= $data->getMessage();
-              }
-              $data = array('result'=>$msg);
-       }
+        if(!empty($data) && $data instanceof Exception) {
+            if(!empty($data->getCode())) {
+                $status = $data->getCode();
+            }
 
+            $msg = $this->errorArray[$status];
+            if(!empty($data->getMessage()))
+                $msg = $data->getMessage();
+
+            $data = array('result'=>$msg);
+        }
 
         $headerString = ('HTTP/1.1'.' '.$status.' '.$this->getMessage($status));
 
@@ -141,9 +137,9 @@ class Response {
     * Converts an array to SimpleXML Element, can be a multi dimensional array, duplicate keys are NOT
     * allowed within same object
     *
-    * param array $array Array to be converted
-    * param object $xml XML element to append to
-    * return SimpleXML Element 
+    * @param array $array Array to be converted
+    * @param object $xml XML element to append to
+    * @return SimpleXML Element 
     */
     private function array_to_xml($array, &$xml) {
         foreach($array as $key => $value) {
@@ -163,8 +159,9 @@ class Response {
     /**
     * Takes in a filename and an array associative data array and outputs a csv file
     *
-    * param string $fileName
-    * param array $assocDataArray     
+    * @param string $fileName
+    * @param array $assocDataArray 
+    * @return void    
     */
     private function outputCsv($fileName, $assocDataArray) {
         header('Pragma: public');
@@ -187,7 +184,7 @@ class Response {
     /**
     * Convert array to CSV format
     *
-    * return 
+    * @return void
     */
     private function convert_to_csv($input_array, $output_file_name, $delimiter) {
         $temp_memory = fopen('php://memory', 'w');

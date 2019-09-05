@@ -11,7 +11,7 @@ class ErrorLogger extends APIHelper {
 	/**
 	* Main Constructor
 	*
-	* return void
+	* @return void
 	*/
 	public function __construct($expose=true) { 
 		parent::__construct();
@@ -35,12 +35,12 @@ class ErrorLogger extends APIHelper {
 	/**
 	* Exposes functions to the API
 	*
-	* return void
+	* @return void
 	*/
 	public function exposeAPI() {
 		Router::get('/errors', function($req, $res) {
 			try {
-			 	$res->send($this->getErrors($_GET['since_id'], $_GET['max_id'], $_GET['limit'], $_GET['deleted']));
+			 	$res->send($this->getErrors($_GET['since_id'], $_GET['max_id'], $_GET['offset'], $_GET['limit'], $_GET['deleted']));
 			} catch (Exception $e) {
 				$res->send($e);
 			}
@@ -64,7 +64,7 @@ class ErrorLogger extends APIHelper {
 
 		Router::get('/errors/search/:query', function($req, $res) {
 			try {
-				$res->send($this->searchErrors($req['params'][':q'], $_GET['offset']));
+				$res->send($this->searchErrors($req['params'][':q'], $_GET['offset'], $_GET['offset']));
 			} catch (Exception $e) {
 				$res->send($e);
 			}
@@ -82,10 +82,10 @@ class ErrorLogger extends APIHelper {
 	/**
 	* Log an error
 	*
-	* param string $errorCode Error Code
-	* param string $errorDescription Error Description
-	* return string
-	* throws Exception
+	* @param string $errorCode Error Code
+	* @param string $errorDescription Error Description
+	* @return string
+	* @throws Exception
 	*/
 	public function logError($code,$description='',$message='') {
 		if($this->configs['log_error'] == true) {
@@ -102,21 +102,16 @@ class ErrorLogger extends APIHelper {
 	/**
 	* Searches errors
 	*
-	* param string $q Query string
-	* return array
-	* throws Exception
+	* @param string $q Query string
+	* @return array
+	* @throws Exception
 	*/
-	public function searchErrors($q, $offset) {
+	public function searchErrors($q, $offset=0) {
 		try {
 			$queryString = "SELECT * FROM ".ERRORS." WHERE code LIKE CONCAT('%',:q,'%') OR message LIKE CONCAT('%',:a,'%') OR description LIKE CONCAT('%',:b,'%')";
-			$params = array(':q'=>$q, ':a'=>$q, ':b'=>$q);
+			$params = array(':q'=>$q, ':a'=>$q, ':b'=>$q,':limit'=>$this->getRowLimit(), ':offset'=>$offset);
 
-			if(!empty($offset)) {
-				$queryString .= " OFFSET=:offset";
-				$params[':offset'] = $offset;
-			}
-
-			$result = self::$db->query($queryString, $params);
+			$result = self::$db->query($queryString.' LIMIT :offset,:limit', $params);
 			$errors = array();
 
 			while($error = $result->fetch()) {
@@ -132,9 +127,9 @@ class ErrorLogger extends APIHelper {
 	/**
 	* Gets the total number of errors
 	*
-	* param string $deleted Deleted
-	* return int
-	* throws Exception
+	* @param string $deleted Deleted
+	* @return int
+	* @throws Exception
 	*/
 	public function getNumberOfErrors($deleted=null) {
 		try {
@@ -157,19 +152,23 @@ class ErrorLogger extends APIHelper {
 	/**
 	* Gets errors
 	*
-	* param int $startID Start ID
-	* param int $maxID Max ID
-	* param int $limit Limit
-	* param array $filters Filters array
-	* param string $deleted Deleted
-	* return array
-	* throws Exception
+	* @param int $startID Start ID
+	* @param int $maxID Max ID
+	* @param int $limit Limit
+	* @param array $filters Filters array
+	* @param string $deleted Deleted
+	* @return array
+	* @throws Exception
 	*/
-	public function getErrors($sinceID=0, $maxID=0, $limit, $deleted) {
+	public function getErrors($sinceID=0, $maxID=0, $offset=0, $limit=40, $deleted='') {
 		try {
-			$o = self::$db->getOffset(ERRORS, 'id', $sinceID, $maxID, $deleted, $limit);
+			$o = self::$db->getOffsetRange(ERRORS, $sinceID, $maxID);
 
-			$result = self::$db->query("SELECT * FROM ".ERRORS." WHERE".$o[0],$o[1],true);
+			$params = array(':limit'=>$limit,':offset'=>$offset);
+
+			$params = array_merge($o['params'], $params);
+
+			$result = self::$db->query("SELECT * FROM ".ERRORS." WHERE".$o['query'].' LIMIT :offset,:limit',$params,true);
 			$errors = array();
 
 			while($error = $result->fetch()) {
@@ -185,10 +184,10 @@ class ErrorLogger extends APIHelper {
 	/**
 	* Deletes an error
 	*
-	* param int $errorID Error ID
-	* param int $userID User ID
-	* return string
-	* throws Exception
+	* @param int $errorID Error ID
+	* @param int $userID User ID
+	* @return string
+	* @throws Exception
 	*/
 	public function deleteError($errorID,$userID) {
 		try {
@@ -204,10 +203,10 @@ class ErrorLogger extends APIHelper {
 	/**
 	* Gets an error
 	*
-	* param int $errorID Error ID
-	* param string $deleted Deleted
-	* return object
-	* throws Exception
+	* @param int $errorID Error ID
+	* @param string $deleted Deleted
+	* @return object
+	* @throws Exception
 	*/
 	public function getError($errorID) {
 		try {

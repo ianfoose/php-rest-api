@@ -8,67 +8,67 @@ require_once('APIHelper.php');
 */
 class NotificationServices extends APIHelper {
 	/**
-	* var string $API_ACCESS_KEY (Android)API access key from Google API's Console.
+	* @var string $API_ACCESS_KEY (Android)API access key from Google API's Console.
 	*/
 	private static $API_ACCESS_KEY = '';
 
 	/**
-	* var string $gcmURL (Android) GCM URL, defaults to firebase
+	* @var string $gcmURL (Android) GCM URL, defaults to firebase
 	*/
 	private static $gcmURL = 'https://fcm.googleapis.com/fcm/send';
 	
 	/**
-	* var string $ssl iOS Push SSL cert
+	* @var string $ssl iOS Push SSL cert
 	*/
 	private static $ssl;
 
 	/**
-	* var string $passphrase (iOS) Private key's passphrase.
+	* @var string $passphrase (iOS) Private key's passphrase.
 	*/
 	private static $passphrase = '';
 
 	/**
-	* var string $apnsURL (iOS) APNS URL, defaults to sandbox
+	* @var string $apnsURL (iOS) APNS URL, defaults to sandbox
 	*/
 	private static $apnsURL = 'ssl://gateway.sandbox.push.apple.com:2195';
 	
 	/**
-	* var string $channelName (Windows Phone 8) The name of our push channel.
+	* @var string $channelName (Windows Phone 8) The name of our push channel.
 	*/
-    	private static $channelName = '';
+    private static $channelName = '';
 	
 	/**
-	* var string $emailPort Email Server port
+	* @var string $emailPort Email Server port
 	*/
-    	private static $emailPort = '465';
+    private static $emailPort = '465';
 
-    	/**
-	* var string $emailServer Email Server
+    /**
+	* @var string $emailServer Email Server
 	*/
-    	private static $emailServer = '';
+    private static $emailServer = '';
 
-    	/**
-	* var string $emailSSL Email Server Use SSL
+    /**
+	* @var string $emailSSL Email Server Use SSL
 	*/
-    	private static $emailSSL = '';
+    private static $emailSSL = '';
 
-    	/**
-	* var string $emailUsername Email Server username
+    /**
+	* @var string $emailUsername Email Server username
 	*/
-    	private static $emailUsername = '';
+    private static $emailUsername = '';
 
-    	/**
-	* var string $emailPassword Email Server Password
+    /**
+	* @var string $emailPassword Email Server Password
 	*/
-    	private static $emailPassword = ''; 
+    private static $emailPassword = ''; 
 
-    	/**
-    	* Main Constructor
-    	*
-    	* param array $configs Notification configs
-    	* param bool $expose Expose API functions
-    	* return void
-    	*/
+    /**
+    * Main Constructor
+    *
+    * @param array $configs Notification configs
+    * @param bool $expose Expose API functions
+    * @return void
+    */
 	public function __construct($configs=null, $expose=false) {
 		if(!empty($email)) {
 			self::$emailSSL = $email['ssl'];
@@ -117,7 +117,7 @@ class NotificationServices extends APIHelper {
 	/**
 	* Expose functions to API
 	*
-	* return void
+	* @return void
 	*/
 	private function exposeAPI() {
 		Router::post('/notification/send', function($req, $res) {
@@ -158,12 +158,11 @@ class NotificationServices extends APIHelper {
 	/**
 	* Sends a notifcation to user or all users on a specific platform
 	*
-	* param array $notificaion Notification Data
-	* param int $userID User ID to send to, leave empty to send to all Users
-	* param string $platform Platform to send on, leave blank to send to all
-	*
-	* return string
-	* throws Exception
+	* @param array $notificaion Notification Data
+	* @param int $userID User ID to send to, leave empty to send to all Users
+	* @param string $platform Platform to send on, leave blank to send to all
+	* @return string
+	* @throws Exception
 	*/
 	public function sendNotification($payload, $userID=null, $platform=null) {
 		if(!empty($notification)) {
@@ -249,9 +248,9 @@ class NotificationServices extends APIHelper {
 	/**
 	* Sends Push's toast notification for Windows Phone 8 users
 	*
-	* param array $data Notification Data
-	* param string $uri URL for sending the notification
-	* return string Send Result
+	* @param array $data Notification Data
+	* @param string $uri URL for sending the notification
+	* @return string Send Result
 	*/
 	public function WP($data, $uri) {
 		$delay = 2;
@@ -287,10 +286,10 @@ class NotificationServices extends APIHelper {
 	/**
 	* Sends Push notification for iOS users
 	*
-	* param array $data Notifiction Data
-	* param string $devicetoken Device Token
-	* return string Send Result
-	* throws Exception
+	* @param array $data Notifiction Data
+	* @param string $devicetoken Device Token
+	* @return string Send Result
+	* @throws Exception
 	*/
 	public function iOS($data, $devicetoken) {
 		$deviceToken = $devicetoken;
@@ -359,10 +358,10 @@ class NotificationServices extends APIHelper {
 	/**
 	* CURL Request
 	*
-	* param string $url URL to request
-	* param array $headers Headers to send
-	* param array $fields Body fields to send
-	* return object
+	* @param string $url URL to request
+	* @param array $headers Headers to send
+	* @param array $fields Body fields to send
+	* @return object
 	*/
 	private static function useCurl($url, $headers, $fields = null) {
 	    // Open connection
@@ -396,12 +395,11 @@ class NotificationServices extends APIHelper {
     /**
     * Sends a notification to a specific device on a specific platform
     *
-    * param array $data Notification Payload
-    * param string $token Device Token
-    * param string $platform Notification Platform
-    *
-    * return array or string if response is just text
-    * throws Exception
+    * @param array $data Notification Payload
+    * @param string $token Device Token
+    * @param string $platform Notification Platform
+    * @return array or string if response is just text
+    * @throws Exception
     */
     public function sendNotificationToPlatform($data, $token, $platform) {
     	if($platform == 'apple') {
@@ -417,11 +415,10 @@ class NotificationServices extends APIHelper {
     /**
     * Saves a push notification token for a user
     *
-    * param string or int $userID User ID 
-    * param string $token Push Token
-    *
-    * return bool
-    * throws Exception
+    * @param string or int $userID User ID 
+    * @param string $token Push Token
+    * @return bool
+    * @throws Exception
     */
     public function savePushToken($userID, $token, $platform) {
     	try {
@@ -437,11 +434,10 @@ class NotificationServices extends APIHelper {
     /**
     * Deletes a push notification token for a user
     *
-    * param string | int $userID User ID 
-    * param string $token Push Token
-    *
-    * return bool
-    * throws Exception
+    * @param string | int $userID User ID 
+    * @param string $token Push Token
+    * @return bool
+    * @throws Exception
     */
     public function deletePushToken($token, $userID) {
     	try {
@@ -458,11 +454,10 @@ class NotificationServices extends APIHelper {
     /**
     * Gets push notification tokens for a user
     *
-    * param string or int $userID User ID 
-    * param string $token Push Token
-    *
-    * return bool
-    * throws Exception
+    * @param string or int $userID User ID 
+    * @param string $token Push Token
+    * @return bool
+    * @throws Exception
     */
     public function getPushTokenForUser($userID) {
 	    try {
@@ -482,12 +477,11 @@ class NotificationServices extends APIHelper {
     /**
 	* Sends an email
 	*
-	* param string $to Email Reciever
-	* param string $from Email Sender
-	* param string $subject Email Subject
-	* param string $body Email body
-	*
-	* return bool
+	* @param string $to Email Reciever
+	* @param string $from Email Sender
+	* @param string $subject Email Subject
+	* @param string $body Email body
+	* @return bool
 	*/
 	public function sendEmail($to,$from,$fromName,$subject,$body,$html=false) {
 		require_once('swift_mailer/swift_required.php');

@@ -12,7 +12,7 @@ class IPServices extends APIHelper {
 	/**
 	* Main Constructor
 	*
-	* return void
+	* @return void
 	*/
 	public function __construct($expose=true) {
 		parent::__construct();
@@ -25,13 +25,13 @@ class IPServices extends APIHelper {
 	/**
 	* Exposes functions to the API
 	*
-	* return void
+	* @return void
 	*/
 	public function exposeAPI() {
 		Router::get('/traffic', function($req, $res) {
 			try {
 
-				$res->send($this->getVisitors($_GET['since_id'], $_GET['max_id'], $_GET['limit'], $_GET['deleted']));
+				$res->send($this->getVisitors($_GET['since_id'], $_GET['max_id'], $_GET['offset'], $_GET['limit'], $_GET['deleted']));
 			} catch (Exception $e) {
 				$res->send($e);
 			}
@@ -56,7 +56,7 @@ class IPServices extends APIHelper {
 
 		Router::get('/traffic/search/:query', function($req, $res) {
 			try {
-				$res->send($this->searchVisitors($req->params['query']));
+				$res->send($this->searchVisitors($req->params['query'], $_GET['offset']));
 			} catch (Exception $e) {
 				$res->send($e);
 			}
@@ -75,7 +75,7 @@ class IPServices extends APIHelper {
 	/**
 	* Get IP address of a user
 	*
-	* return string
+	* @return string
 	*/
 	public static function getIP() {
 		$ipRemote = $_SERVER['REMOTE_ADDR'];
@@ -92,7 +92,7 @@ class IPServices extends APIHelper {
 	/**
 	* Get web client
 	*
-	* return string
+	* @return string
 	*/
 	public static function getClient() { 
 		return $_SERVER['HTTP_USER_AGENT']; 
@@ -101,8 +101,8 @@ class IPServices extends APIHelper {
 	/**
 	* Logs a visitor
 	*
-	* return string
-	* throws Exception
+	* @return string
+	* @throws Exception
 	*/
 	public function logVistitor() {
 		try {
@@ -119,9 +119,9 @@ class IPServices extends APIHelper {
 	/**
 	* Gets a visitor by ID
 	*
-	* param int $id Visitor ID
-	* return object
-	* throws Exception
+	* @param int $id Visitor ID
+	* @return object
+	* @throws Exception
 	*/
 	public function getVisitor($id) {
 		try {
@@ -136,17 +136,20 @@ class IPServices extends APIHelper {
 	/**
 	* Gets visistors
 	*
-	* param int $sinceID Since ID
-	* param int $maxID Max ID
-	* param int $limit Limit
-	* return array
-	* throws Exception
+	* @param int $sinceID Since ID
+	* @param int $maxID Max ID
+	* @param int $limit Limit
+	* @return array
+	* @throws Exception
 	*/
-	public function getVisitors($sinceID=0, $maxID=0, $limit=35) {
+	public function getVisitors($sinceID=0, $maxID=0, $offset=0, $limit=40) {
 		try {
-			$o = self::$db->getOffset(TRAFFIC, 'id', $sinceID, $maxID, null, $limit);
+			$o = self::$db->getOffsetRange(TRAFFIC, $sinceID, $maxID);
 
-			$result = self::$db->query("SELECT * FROM ".TRAFFIC." WHERE ".$o[0],$o[1]);
+			$params = array(':limit'=>$limit,':offset'=>$offset);
+			$params = array_merge($o['params'], $params);
+
+			$result = self::$db->query("SELECT * FROM ".TRAFFIC." WHERE ".$o['query'].' LIMIT :offset,:limit',$params);
 			$visits = array();
 
 			while($visit = $result->fetch()) {
@@ -162,14 +165,14 @@ class IPServices extends APIHelper {
 	/**
 	* Searches site visitors
 	*
-	* param string $query Search query
-	* param int $offset Search offset
-	* return array
-	* throws Exception
+	* @param string $query Search query
+	* @param int $offset Search offset
+	* @return array
+	* @throws Exception
 	*/
 	public function searchVisitors($query, $offset=0) {
 		try {
-			$results = self::$db->query("SELECT * FROM ".TRAFFIC." WHERE ip LIKE CONCAT('%',:ip,'%') OR client LIKE CONCAT('%',:c,'%')",array(':ip'=>$query,':c'=>$query));
+			$results = self::$db->query("SELECT * FROM ".TRAFFIC." WHERE ip LIKE CONCAT('%',:ip,'%') OR client LIKE CONCAT('%',:c,'%') LIMIT :offset,:limit",array(':ip'=>$query,':c'=>$query,':offset'=>$offset,':limit'=>$this->getRowLimit()));
 			
 			$logs = array();
 
@@ -186,8 +189,8 @@ class IPServices extends APIHelper {
 	/**
 	* Gets visitor data
 	*
-	* param object $item Visitor Object 
-	* return object
+	* @param object $item Visitor Object 
+	* @return object
 	*/
 	public function getVisitorData($item) {
 		if(!empty($item['date']))
@@ -199,8 +202,8 @@ class IPServices extends APIHelper {
 	/**
 	* Gets total number of visitors
 	*
-	* return int
-	* throws Exception
+	* @return int
+	* @throws Exception
 	*/
 	public function getTotalNumberOfVisits() {
 		try {

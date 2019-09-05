@@ -72,9 +72,9 @@ abstract class APIHelper {
 						$tblName = $tblName['table_name'];
 
 						// check for table exceptions
-						if($this->configs['table_exceptions'] && in_array($tblName, $this->configs['table_exceptions'])) {
+						if(array_key_exists('table_exceptions', $this->configs) && in_array($tblName, $this->configs['table_exceptions'])) { 
 							continue;
-						} 
+						}
 
 						$this->tables[] = $tblName;
 
@@ -109,7 +109,7 @@ abstract class APIHelper {
 						}
 					} 
 				} 
-				
+
 				if(!isset($configs['database']['charset'])) {
 					$configs['database']['charset'] = 'utf8';
 				}
@@ -148,19 +148,21 @@ abstract class APIHelper {
 		return true;
 	}
 
+	// Auditing
+
 	/**
 	* Logs an audit event for a piece of data, example is editing a user, store the event and who edited
 	*
-	* param int $itemID Item being edited
-	* param int $editingID Editor ID
-	* param string $event Event being logged, example (changed, added, deleted)
+	* @param int $itemID Item being edited
+	* @param int $editingID Editor ID
+	* @param string $event Event being logged, example (changed, added, deleted)
 	*
-	* return String
-	* throws Exception
+	* @return String
+	* @throws Exception
 	*/
-	public function saveAuditLog($objectID, $objectType, $editingID, $event='changed') {
+	public function saveAuditLog($objectID, $rowID, $objectType, $editingID, $event='changed') {
 		try {
-			if(self::$db->query("INSERT INTO ".AUDIT_LOGS." SET object_id=:id, type=:t, event=:e, editor_id=:eID",array(':id'=>$objectID,':t'=>$objectType, ':eID'=>$editingID,':e'=>$event))) {
+			if(self::$db->query("INSERT INTO ".AUDIT_LOGS." SET object_id=:id, type=:t, row_id=:rID, event=:e, editor_id=:eID",array(':id'=>$objectID,':t'=>$objectType, ':rID'=>$rowId, ':eID'=>$editingID,':e'=>$event))) {
 				return 'Audit Saved';
 			}
 		} catch (Exception $e) {
@@ -175,10 +177,10 @@ abstract class APIHelper {
 	* return Data Object
 	* throws Exception
 	*/
-	public function getAuditLog($id, $mapping=null) {
+	public function getAuditLog($id, $mapping=null, $formatFunc=null) {
 		try {
 			if($auditLog = self::$db->find('*',array('id'=>$id),AUDIT_LOGS)) {
-				return $this->getAuditLogData($auditLog, $mapping);
+				return $this->getAuditLogData($auditLog, $mapping, $formatFunc);
 			}
 		} catch (Exception $e) {
 			throw $e;
@@ -188,19 +190,19 @@ abstract class APIHelper {
 	/**
 	* Gets all audit logs
 	*
-	* param int $sinceID
-	* param int $maxID
-	* param int $limit Fetch Limit
-	* return array
-	* throws Exception
+	* @param int $sinceID
+	* @param int $maxID
+	* @param int $limit Fetch Limit
+	* @return array
+	* @throws Exception
 	*/
-	public function getAuditLogs($sinceID=0, $maxID=0, $limit=35, $mapping=null) {
+	public function getAuditLogs($sinceID=0, $maxID=0, $limit=35, $mapping=null, $formatFunc=null) {
 		try {
 			if($results = self::$db->query("SELECT * FROM ".AUDIT_LOGS)) {
 				$logs = array();
 
 				while($log = $results->fetch()) {
-					$logs[] = $this->getAuditLogData($log, $mapping);
+					$logs[] = $this->getAuditLogData($log, $mapping, $formatFunc);
 				}
 
 				return $logs;
@@ -210,17 +212,42 @@ abstract class APIHelper {
 		}
 	}
 
-	private function getAuditLogData($log=null, $mapping=null) {
+	/**
+	* Gets an audit logs data and formats it
+	* 
+	* @param
+	* @param
+	* @param
+	* @return 
+	* @throws Exception
+	*/
+	private function getAuditLogData($log=null, $mapping=null, $formatFunc=null) {
 		if(isset($log['date']))
 			$log['string_date'] = $this->formatDate($log['date']);
 
-		if(!empty($mapping)) {
-			if($object = self::$db->find('*',array('id'=>$log['object_id']), $mapping)) {
-				$log['object'] = $object;
-			}
-		}
+		// if(!empty($mapping)) {
+		// 	if($object = self::$db->find('*',array('id'=>$log['row_id']), $mapping)) {
+		// 		if($formatFunc) {
+		// 			$log['object'] = $formatFunc($log['object']);
+		// 		} else {
+		// 			$log['object'] = $object;
+		// 		}
+		// 	}
+		// }
 
 		return $log;
+	}
+
+	/**
+	* Gets the row fetch limit, defaults to config value or 40 if missing.
+	*
+	* @return int
+	*/
+	public function getRowLimit() {
+		if(empty($_GET['limit'])) {
+			return $this->configs['database']['limit'];
+		}
+		return $_GET['limit'];
 	}
 
 	/**

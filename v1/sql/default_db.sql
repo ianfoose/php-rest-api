@@ -1,6 +1,7 @@
 CREATE TABLE IF NOT EXISTS `audit_logs` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
   `object_id` int(11) DEFAULT NULL,
+  `row_id` int(11) DEFAULT NULL,
   `editor_id` int(11) DEFAULT NULL,
   `type` varchar(45) DEFAULT NULL,
   `event` varchar(45) DEFAULT 'changed',

@@ -12,36 +12,36 @@ require_once('ErrorLogger.php');
 
 class DatabaseHelper {
 	/**
-	* var array $dbConfigs Database Configs
+	* @var array $dbConfigs Database Configs
 	*/
 	private $dbConfigs = array();
 	
 	/**
 	*
-	* var array $configs API Global Configs
+	* @var array $configs API Global Configs
 	*/
 	private $configs = array();
 
 	/**
-	* var int $insertID last inserted ID
+	* @var int $insertID last inserted ID
 	*/
 	public $insertID;
 
 	/**
-	* var bool $transaction Database transaction flag
+	* @var bool $transaction Database transaction flag
 	*/
 	private $transaction = false;
 	
 	/**
-	* var Database Object $db Current database connection
+	* @var Database Object $db Current database connection
 	*/
 	protected static $db;
 
 	/**
 	* Main Constructor
 	*
-	* param array $configs Database connection properties
-	* return void
+	* @param array $configs Database connection properties
+	* @return void
 	*/
 	public function __construct($configs) {
 		$this->configs = $configs;
@@ -51,7 +51,7 @@ class DatabaseHelper {
 	/**
 	* Returns a database connection
 	*
-	* return Database Connection | Bool
+	* @return Database Connection | Bool
 	*/
 	public function getDB() {
 		if(self::$db != null) {
@@ -63,8 +63,8 @@ class DatabaseHelper {
 	/**
 	* Sets up a mysqli database connection
 	*
-	* return Database Connection
-	* throws Exception
+	* @return Database Connection
+	* @throws Exception
 	*/
 	public function connect() {
 		if(self::$db != null) {
@@ -97,10 +97,10 @@ class DatabaseHelper {
 	/**
 	* Queries the database
 	*
-	* param string $query Query String
-	* param bool $output Outputs the error
-	* return MySQLi result
-	* throws Exception
+	* @param string $query Query String
+	* @param bool $output Outputs the error
+	* @return MySQLi result
+	* @throws Exception
 	*/
 	public function query($query, $params=null, $useResult=false) {
 		if(!empty($query)) {
@@ -148,11 +148,11 @@ class DatabaseHelper {
 	/**
 	* Finds a data row
 	*
-	* param string $keys Keys to be retrieved
-	* param array $vals Values to check columns against
-	* param string $tbl Table name to query
-	* param string $message string Name of item being found, default 'item'
-	* return Bool
+	* @param string $keys Keys to be retrieved
+	* @param array $vals Values to check columns against
+	* @param string $tbl Table name to query
+	* @param string $message string Name of item being found, default 'item'
+	* @return Bool
 	*/
 	public function find($keys, $vals, $tbl, $message='item', $output=false) {
 		if(!is_array($vals))
@@ -193,12 +193,11 @@ class DatabaseHelper {
 	/**
 	* Logs an audit event for a piece of data, example is editing a user, store the event and who edited
 	*
-	* param int $itemID Item being edited
-	* param int $editingID Editor ID
-	* param string $event Event being logged, example (changed, added, deleted)
-	*
-	* return String
-	* throws Exception
+	* @param int $itemID Item being edited
+	* @param int $editingID Editor ID
+	* @param string $event Event being logged, example (changed, added, deleted)
+	* @return String
+	* @throws Exception
 	*/
 	public function saveAuditLog($objectID, $editingID, $event='changed') {
 		try {
@@ -213,9 +212,9 @@ class DatabaseHelper {
 	/**
 	* Gets an audit log by id
 	*
-	* param int $id Audit Id
-	* return Data Object
-	* throws Exception
+	* @param int $id Audit Id
+	* @return Data Object
+	* @throws Exception
 	*/
 	public function getAuditLog($id) {
 		try {
@@ -230,11 +229,11 @@ class DatabaseHelper {
 	/**
 	* Gets all audit logs
 	*
-	* param int $sinceID
-	* param int $maxID
-	* param int $limit Fetch Limit
-	* return array
-	* throws Exception
+	* @param int $sinceID
+	* @param int $maxID
+	* @param int $limit Fetch Limit
+	* @return array
+	* @throws Exception
 	*/
 	public function getAuditLogs($sinceID=0, $maxID=0, $limit=35, $mapping=null) {
 		try {
@@ -263,8 +262,8 @@ class DatabaseHelper {
 	/**
 	* Begin a transaction
 	*
-	* return void
-	* throws Exception
+	* @return void
+	* @throws Exception
 	*/
 	public function beginTransaction() {
 		if($this->transaction) {
@@ -283,8 +282,8 @@ class DatabaseHelper {
 	/**
 	* Rollback a transaction
 	*
-	* return void
-	* throws Exception
+	* @return void
+	* @throws Exception
 	*/
 	public function rollback() {
 		try {
@@ -299,8 +298,8 @@ class DatabaseHelper {
 	/**
 	* Commit a transaction
 	*
-	* return void
-	* throws Exception
+	* @return void
+	* @throws Exception
 	*/
 	public function commit() {
 		try {
@@ -316,8 +315,6 @@ class DatabaseHelper {
 	* Builds a date filter query string
 	*
 	*
-	*
-	* param
 	* return string
 	*/
 	public static function returnDateQuery($col, $startDate, $endDate) {
@@ -342,34 +339,21 @@ class DatabaseHelper {
 	/**
 	* Gets offset string for query
 	*
-	* param string $tbl Table name
-	* param string $id ID column name
-	* param int $sinceID Since ID
-	* param int $maxID Max ID
-	* param string $deleted Deleted filter
-	* param int $limit Limit
-	* param string $order MySQL Order
-	* return string
+	* @param string $tbl Table name
+	* @param int $sinceID Since ID
+	* @param int $maxID Max ID
+	* @param string $id ID column name
+	* @return string
 	*/
-	public function getOffset($tbl, $id='id', $sinceID=0, $maxID=0, $deleted='', $limit=35, $order='') {
+	public function getOffsetRange($tbl, $sinceID=0, $maxID=0, $id='id') {
 		$params = array();
-
-		// set db select limit
-		if(empty($limit) || !isset($limit)) {
-			if(!empty($this->configs['database']['limit'])) {
-			 	$limit = $this->configs['database']['limit'];
-			} else {
-			 	$limit = 30;
-			}
-		}
-
 		$q = " $id <=(SELECT MAX($tbl.$id) FROM $tbl)";
-		
+			
 		if($sinceID != 0 && $maxID == 0) {
-			$q = " $id < :sinceID";
+			$q .= " AND $id < :sinceID";
 			$params[':sinceID'] = $sinceID;
 		} else if($maxID != 0 && $sinceID == 0) { 
-			$q = " $id > :maxID";
+			$q .= " AND $id > :maxID";
 			$params[':maxID'] = $maxID;
 		} else {
 			if($maxID != 0 && $sinceID != 0) {
@@ -378,71 +362,22 @@ class DatabaseHelper {
 					$params[':maxID'] = $maxID;
 
 					if($sinceID > $maxID) { // up
-						$q = " $id > :maxID AND $id < :sinceID";
+						$q .= " AND $id > :maxID AND $id < :sinceID";
 					} else { // down
-						$q = " $id < :maxID AND $id > :sinceID";
+						$q .= " AND $id < :maxID AND $id > :sinceID";
 					}
 				}
 			} 
 		}
 
-		// deleted
-		if(!empty($deleted)) {
-			if(is_array($deleted)) {
-				if(!empty($deleted['key']) && !empty($deleted['value'])) {
-					$q .= " ".$deleted['key']."=:d";
-					$params[':d'] = $deleted;
-				} 
-			} else {
-				$q .= " deleted=:d";
-				$params[':d'] = $deleted;
-			}
-		}
-
-		// order by
-		if(!empty($order)) {
-			if($order == 'DESC' || $order == 'ASC') {
-				$q .= ' ORDER BY id '.$order;
-			}
-		} else {
-			$q .= ' ORDER BY id DESC';
-		}
-
-		// limit
-		if($limit != null) {
-			$q.= " LIMIT :limit";
-			$params[':limit'] = (int)$limit;
-		} 
-
-		// TODO: offset
-		// if(!empty($offset)) {
-		// 	$q .= 'OFFSET '.$offset;
-		// }
-
-		return array(0=>$q,1=>$params,'query'=>$q,'params'=>$params);
-	}
-
-	/**
-	* Builds a query string on deleted parameter filter 
-	*
-	* param string $deleted Deleted filter
-	* return string
-	*/
-	public static function deletedQuery($deleted) {
-		$baseQueryString = ' deleted=';
-		if($deleted == 'true') { // deleted
-			return $baseQueryString .= "'1'";
-		} else if($deleted == 'false') { // not deleted
-			return $baseQueryString .= "'0'";
-		} 
-		return ''; // mixed
+		return array('query'=>$q,'params'=>$params);
 	}
 
 	/**
 	* Parse Partial response string
 	*
-	* param string $unparsed Input String
-	* return array
+	* @param string $unparsed Input String
+	* @return array
 	*/
 	public function parsePartialResponse($unparsed) {
 	    $requestedFields = explode(',', trim($unparsed, '()'));
@@ -473,10 +408,10 @@ class DatabaseHelper {
 	/**
 	* Validates a partial response fields
 	*
-	* param array $validFields Valid partial response fields
-	* param array $fields Requested fields
-	* return boolean | array 
-	* throws Exception
+	* @param array $validFields Valid partial response fields
+	* @param array $fields Requested fields
+	* @return boolean | array 
+	* @throws Exception
 	*/
 	public function validateResponse($validFields, $fields) {
 		if(!empty($validFields) && !empty($fields)) {
@@ -514,11 +449,11 @@ class DatabaseHelper {
 	/**
 	* Validates partial response fields for a certain object and returns approriate fields
 	*
-	* param array $fields Requested fields
-	* param array $validFields Valid partial response fields
-	* param string $name The name of the object to check
-	* return boolean | array 
-	* throws Exception
+	* @param array $fields Requested fields
+	* @param array $validFields Valid partial response fields
+	* @param string $name The name of the object to check
+	* @return boolean | array 
+	* @throws Exception
 	*/
 	public function validator($fields, $validFields, $name) {
 		if(!empty($fields)) {
@@ -537,39 +472,6 @@ class DatabaseHelper {
 			}
 		}
 		return '*';
-	}
-
-	/**
-	* Builds a query filter
-	*
-	* param array $filters Query Filters
-	* param boolean $query Strict search or general search
-	* return array
-	*/
-	public static function buildFilter($filters, $query=true) {
-		$q = '';
-		$i = 0;
-
-		foreach ($filters as $key => $value) {
-			if($query) {
-				$q .= " $key LIKE CONCAT('%', :value, '%')";
-			} else {
-				$q .= " $key=:value";
-			}
-
-			$p[":value"] = $value;
-
-			if($i != count($filters) - 1) {
-				if($query) {
-					$q .= " OR";
-				} else {
-					$q .= " AND";
-				}
-				$i++;
-			}
-		}
-
-		return array($q,$p);
 	}
 }
 ?>
