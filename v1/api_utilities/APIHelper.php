@@ -177,9 +177,14 @@ abstract class APIHelper {
 	* return Data Object
 	* throws Exception
 	*/
-	public function getAuditLog($id, $mapping=null, $formatFunc=null) {
+	public function getAuditLog($id, $filter='id', $mapping=null, $formatFunc=null) {
 		try {
-			if($auditLog = self::$db->find('*',array('id'=>$id),AUDIT_LOGS)) {
+			$filters = array('id','object_id','row_id','editor_id');
+			if(!in_array($filter, $filters)) {
+				throw new Exception('Filter is not valid, acceptable filters are, id,row_id,object_id and editor_id', 500);
+			}
+
+			if($auditLog = self::$db->find('*',array($filter=>$id),AUDIT_LOGS)) {
 				return $this->getAuditLogData($auditLog, $mapping, $formatFunc);
 			}
 		} catch (Exception $e) {
@@ -196,17 +201,31 @@ abstract class APIHelper {
 	* @return array
 	* @throws Exception
 	*/
-	public function getAuditLogs($sinceID=0, $maxID=0, $limit=35, $mapping=null, $formatFunc=null) {
+	public function getAuditLogs($filter=null, $filterID=null, $sinceID=0, $maxID=0, $limit=40, $offset=0, $mapping=null, $formatFunc=null) {
 		try {
-			if($results = self::$db->query("SELECT * FROM ".AUDIT_LOGS)) {
-				$logs = array();
+			$query = 'SELECT * FROM '.AUDIT_LOGS;
+			$params = array(':limit'=>$limit,':offset'=>$offset);
 
-				while($log = $results->fetch()) {
-					$logs[] = $this->getAuditLogData($log, $mapping, $formatFunc);
+			if($filter != null && $filterID != null) {
+				$filters = array('id','object_id','row_id','editor_id');
+				if(!in_array($filter, $filters)) {
+					throw new Exception('Filter is not valid, acceptable filters are, id,row_id,object_id and editor_id', 500);
 				}
 
-				return $logs;
+				$query .= (' WHERE '.$filter.'=:id');
+				$params[':id'] = $filterID;
 			}
+
+			$query .= ' LIMIT :offset,:limit';
+
+			$results = self::$db->query($query, $params);
+			$logs = array();
+
+			while($log = $results->fetch()) {
+				$logs[] = $this->getAuditLogData($log, $mapping, $formatFunc);
+			}
+
+			return $logs;
 		} catch(Exception $e) {
 			throw $e;
 		}
