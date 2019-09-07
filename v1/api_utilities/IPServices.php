@@ -149,7 +149,7 @@ class IPServices extends APIHelper {
 			$params = array(':limit'=>$limit,':offset'=>$offset);
 			$params = array_merge($o['params'], $params);
 
-			$result = self::$db->query("SELECT * FROM ".TRAFFIC." WHERE ".$o['query'].' LIMIT :offset,:limit',$params);
+			$result = self::$db->query("SELECT * FROM ".TRAFFIC." WHERE ".$o['query'].' ORDER BY id DESC LIMIT :offset,:limit',$params);
 			$visits = array();
 
 			while($visit = $result->fetch()) {
