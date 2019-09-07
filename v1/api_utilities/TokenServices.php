@@ -27,7 +27,7 @@ class TokenServices extends APIHelper {
 	public function __construct($expose=true) {
 		parent::__construct();
 
-		if(!empty($this->tables['tokens'])) {
+		if(defined('TOKENS')) {
 			$tokensConfig = $this->configs['tokens'];
 
 			if(!empty($tokensConfig['prefix'])) {
@@ -367,7 +367,7 @@ class TokenServices extends APIHelper {
 			$params = array(':limit'=>$limit,':offset'=>$offset,':deleted'=>$deleted);
 			$params = array_merge($o['params'], $params);
 
-			if($results =self::$db->query("SELECT * FROM ".TOKENS." WHERE ".$o['query'].' AND deleted=:deleted LIMIT :offset,:limit',$params)) {
+			if($results =self::$db->query("SELECT * FROM ".TOKENS." WHERE ".$o['query'].' AND deleted=:deleted ORDER BY id DESC LIMIT :offset,:limit',$params)) {
 				$tokens = array();
 
 				while($token = $results->fetch()) {
