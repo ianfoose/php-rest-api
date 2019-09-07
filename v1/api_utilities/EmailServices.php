@@ -203,7 +203,7 @@ class EmailServices extends APIHelper {
 				
 			$params = array(':limit'=>$limit,':tID'=>$templateID,':deleted'=>$deleted,':offset'=>$offset);
 
-			$r = self::$db->query($queryString.$o['query'].' AND deleted=:deleted LIMIT :offset,:limit',array_merge($o['params'], $params));
+			$r = self::$db->query($queryString.$o['query'].' AND deleted=:deleted ORDER BY id DESC LIMIT :offset,:limit',array_merge($o['params'], $params));
 			$templates = array();
 
 			while($t = $r->fetch()) {
@@ -296,7 +296,7 @@ class EmailServices extends APIHelper {
 			
 			$params = array(':limit'=>$limit,':deleted'=>$deleted,':offset'=>$offset);
 
-			$result = self::$db->query($queryString.$o['query'].' AND deleted=:deleted LIMIT :offset,:limit',array_merge($o['params'], $params));
+			$result = self::$db->query($queryString.$o['query'].' AND deleted=:deleted ORDER BY id DESC LIMIT :offset,:limit',array_merge($o['params'], $params));
 			$templates = array();
 
 			while($temp = $result->fetch()) {
@@ -397,7 +397,7 @@ class EmailServices extends APIHelper {
 				}
 			}
 
-			$r = self::$db->query($queryString.$o['query'].' AND deleted=:deleted LIMIT :offset,:limit',array_merge($o['params'], $params));
+			$r = self::$db->query($queryString.$o['query'].' AND deleted=:deleted ORDER BY id DESC LIMIT :offset,:limit',array_merge($o['params'], $params));
 			$subs = array();
 
 			while($sub = $r->fetch()) {
