@@ -168,7 +168,7 @@ class ErrorLogger extends APIHelper {
 
 			$params = array_merge($o['params'], $params);
 
-			$result = self::$db->query("SELECT * FROM ".ERRORS." WHERE".$o['query'].' LIMIT :offset,:limit',$params,true);
+			$result = self::$db->query("SELECT * FROM ".ERRORS." WHERE".$o['query'].' ORDER BY id DESC LIMIT :offset,:limit',$params,true);
 			$errors = array();
 
 			while($error = $result->fetch()) {
