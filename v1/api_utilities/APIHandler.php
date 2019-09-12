@@ -41,7 +41,13 @@ abstract class APIHandler extends APIHelper {
 		$this->setCorsPolicy($this->configs['cors']); 
 
 		$this->format = $this->getFormat($this->getAPIEndpoint());
-		$this->res = new Response($this->format, $this->configs['status_responses']);
+		
+		$responses = null;
+		if(array_key_exists('status_responses', $this->configs)) {
+			$responses = $this->configs['status_responses'];
+		}
+
+		$this->res = new Response($this->format, $responses);
 	}
 
 	/**
