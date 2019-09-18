@@ -66,7 +66,7 @@ class TokenServices extends APIHelper {
 
 		Router::get('/tokens', function($req, $res) {
 			try {
-				$res->send($this->getTokens($_GET['since_id'], $_GET['max_id'], $_GET['offset'], $_GET['limit'], $_GET['deleted']));
+				$res->send($this->getTokens($_GET['offset'], $_GET['deleted'], $_GET['limit']));
 			} catch (Exception $e) {
 				$res->send($e);
 			}
@@ -360,14 +360,11 @@ class TokenServices extends APIHelper {
 	* @return array
 	* @throws Exception
 	*/
-	public function getTokens($sinceID=0, $maxID=0, $offset=0, $limit=40, $deleted='') {
+	public function getTokens($offset=0, $deleted='', $limit=40) {
 		try {
-			$o = self::$db->getOffsetRange(TOKENS, $sinceID, $maxID);
+			$params = array(':limit'=>$limit, ':offset'=>$offset, ':deleted'=>$deleted);
 
-			$params = array(':limit'=>$limit,':offset'=>$offset,':deleted'=>$deleted);
-			$params = array_merge($o['params'], $params);
-
-			if($results =self::$db->query("SELECT * FROM ".TOKENS." WHERE ".$o['query'].' AND deleted=:deleted ORDER BY id DESC LIMIT :offset,:limit',$params)) {
+			if($results =self::$db->query("SELECT * FROM ".TOKENS.' WHERE deleted=:deleted ORDER BY id DESC LIMIT :offset,:limit',$params)) {
 				$tokens = array();
 
 				while($token = $results->fetch()) {

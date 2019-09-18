@@ -14,7 +14,7 @@
 		"url": "localhost",
 		"user": "root",
 		"password": "root",
-		"db": "foose_industries_admin",
+		"db": "sakila",
 		"limit": 40
 	},
 	"date": {

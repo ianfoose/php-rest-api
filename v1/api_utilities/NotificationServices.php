@@ -122,7 +122,7 @@ class NotificationServices extends APIHelper {
 	private function exposeAPI() {
 		Router::post('/notification/send', function($req, $res) {
 			try {
-				$this->sendNotification($req->body['payload'],$req->body['users'], $req->body['platforms']);
+				$this->sendNotification($req->body['payload'], $req->body['users'], $req->body['platforms']);
 			} catch (Exception $e) {
 				$res->send($e);
 			}

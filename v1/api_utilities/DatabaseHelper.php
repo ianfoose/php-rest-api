@@ -61,7 +61,7 @@ class DatabaseHelper {
 	}
 
 	/**
-	* Sets up a mysqli database connection
+	* Sets up a database connection
 	*
 	* @return Database Connection
 	* @throws Exception

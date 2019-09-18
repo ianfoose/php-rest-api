@@ -40,7 +40,7 @@ class ErrorLogger extends APIHelper {
 	public function exposeAPI() {
 		Router::get('/errors', function($req, $res) {
 			try {
-			 	$res->send($this->getErrors($_GET['since_id'], $_GET['max_id'], $_GET['offset'], $_GET['limit'], $_GET['deleted']));
+			 	$res->send($this->getErrors($_GET['offset'], $_GET['deleted'], $_GET['limit']));
 			} catch (Exception $e) {
 				$res->send($e);
 			}
@@ -64,7 +64,7 @@ class ErrorLogger extends APIHelper {
 
 		Router::get('/errors/search/:query', function($req, $res) {
 			try {
-				$res->send($this->searchErrors($req['params'][':q'], $_GET['offset'], $_GET['offset']));
+				$res->send($this->searchErrors($req->params['q'], $_GET['offset']));
 			} catch (Exception $e) {
 				$res->send($e);
 			}
@@ -72,7 +72,7 @@ class ErrorLogger extends APIHelper {
 
 		Router::delete('/error/:id', function($req, $res) {
 			try {
-				$res->send($this->deleteError($req['params'][':id']));
+				$res->send($this->deleteError($req->params['id']));
 			} catch (Exception $e) {
 				$res->send($e);
 			}
@@ -131,7 +131,7 @@ class ErrorLogger extends APIHelper {
 	* @return int
 	* @throws Exception
 	*/
-	public function getNumberOfErrors($deleted=null) {
+	public function getNumberOfErrors($deleted='') {
 		try {
 			$queryString = "SELECT id FROM ".ERRORS;
 
@@ -160,15 +160,11 @@ class ErrorLogger extends APIHelper {
 	* @return array
 	* @throws Exception
 	*/
-	public function getErrors($sinceID=0, $maxID=0, $offset=0, $limit=40, $deleted='') {
+	public function getErrors($offset=0, $deleted='', $limit=40) {
 		try {
-			$o = self::$db->getOffsetRange(ERRORS, $sinceID, $maxID);
+			$params = array('deleted'=>$deleted, ':limit'=>$limit, ':offset'=>$offset);
 
-			$params = array(':limit'=>$limit,':offset'=>$offset);
-
-			$params = array_merge($o['params'], $params);
-
-			$result = self::$db->query("SELECT * FROM ".ERRORS." WHERE".$o['query'].' ORDER BY id DESC LIMIT :offset,:limit',$params,true);
+			$result = self::$db->query("SELECT * FROM ".ERRORS.' WHERE deleted=:deleted ORDER BY id DESC LIMIT :offset,:limit',$params,true);
 			$errors = array();
 
 			while($error = $result->fetch()) {

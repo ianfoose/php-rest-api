@@ -31,7 +31,7 @@ class IPServices extends APIHelper {
 		Router::get('/traffic', function($req, $res) {
 			try {
 
-				$res->send($this->getVisitors($_GET['since_id'], $_GET['max_id'], $_GET['offset'], $_GET['limit'], $_GET['deleted']));
+				$res->send($this->getVisitors($_GET['offset'],  $_GET['deleted'], $_GET['limit']));
 			} catch (Exception $e) {
 				$res->send($e);
 			}
@@ -48,7 +48,7 @@ class IPServices extends APIHelper {
 
 		Router::get('/traffic/:id', function($req, $res) {
 			try {
-				$res->send($this->getVisitor($req['params']['id']));
+				$res->send($this->getVisitor($req->params['id']));
 			} catch (Exception $e) {
 				$res->send($e);
 			}
@@ -142,14 +142,11 @@ class IPServices extends APIHelper {
 	* @return array
 	* @throws Exception
 	*/
-	public function getVisitors($sinceID=0, $maxID=0, $offset=0, $limit=40) {
+	public function getVisitors($offset=0, $deleted='', $limit=40) {
 		try {
-			$o = self::$db->getOffsetRange(TRAFFIC, $sinceID, $maxID);
+			$params = array(':deleted'=>$deleted, ':limit'=>$limit, ':offset'=>$offset);
 
-			$params = array(':limit'=>$limit,':offset'=>$offset);
-			$params = array_merge($o['params'], $params);
-
-			$result = self::$db->query("SELECT * FROM ".TRAFFIC." WHERE ".$o['query'].' ORDER BY id DESC LIMIT :offset,:limit',$params);
+			$result = self::$db->query("SELECT * FROM ".TRAFFIC.' WHERE deleted=:deleted ORDER BY id DESC LIMIT :offset,:limit',$params);
 			$visits = array();
 
 			while($visit = $result->fetch()) {

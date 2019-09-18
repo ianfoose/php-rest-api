@@ -32,7 +32,7 @@ class EmailServices extends APIHelper {
 		// templates
 		Router::get('/email/templates', function($req, $res) {
 			try {
-				$res->send($this->getTemplates($_GET['since_id'], $_GET['max_id'], $_GET['offset'], $_GET['limit'], $_GET['deleted']));
+				$res->send($this->getTemplates($_GET['offset'], $_GET['deleted'], $_GET['limit']));
 			} catch (Exception $e) {
 				$res->send($e);
 			}
@@ -64,7 +64,7 @@ class EmailServices extends APIHelper {
 
 		Router::put('/email/template', function($req, $res) {
 			try {
-				$res->send($this->createTemplate());
+				$res->send($this->createTemplate($req->body['name'], $req->body['template'], $req->body['user_id']));
 			} catch (Exception $e) {
 				$res->send($e);
 			}
@@ -98,7 +98,7 @@ class EmailServices extends APIHelper {
 
 		Router::get('/email/subscriptions', function($req, $res) {
 			try {
-				$res->send($this->getEmailSubscribers($_GET['since_id'], $_GET['max_id'], $_GET['limit'], $_GET['offset']));
+				$res->send($this->getEmailSubscribers($_GET['limit'], $_GET['offset']));
 			} catch (Exception $e) {
 				$res->send($e);
 			}
@@ -196,14 +196,12 @@ class EmailServices extends APIHelper {
 	* return array
 	* throws Exception
 	*/
-	public function getEmailTemplateEdits($templateID, $sinceID=0, $maxID=0, $offset=0, $limit=40, $deleted='') {
+	public function getEmailTemplateEdits($offset=0, $limit=40) {
 		try {
 			$queryString = "SELECT * FROM ".EMAIL_TEMPLATE_EDITS.' WHERE template_id=:tID AND ';
-			$o = self::$db->getOffsetRange(EMAIL_TEMPLATE_EDITS, $sinceID, $maxID);
-				
-			$params = array(':limit'=>$limit,':tID'=>$templateID,':deleted'=>$deleted,':offset'=>$offset);
+			$params = array(':limit'=>$limit,':tID'=>$templateID,':offset'=>$offset);
 
-			$r = self::$db->query($queryString.$o['query'].' AND deleted=:deleted ORDER BY id DESC LIMIT :offset,:limit',array_merge($o['params'], $params));
+			$r = self::$db->query($queryString.' ORDER BY id DESC LIMIT :offset,:limit', $params);
 			$templates = array();
 
 			while($t = $r->fetch()) {
@@ -289,14 +287,12 @@ class EmailServices extends APIHelper {
 	* return array
 	* throws Exception
 	*/
-	public function getTemplates($sinceID=0, $maxID=0, $offset=0, $limit=40, $deleted='') {	
+	public function getTemplates($offset=0, $deleted='', $limit=40) {
 		try {
 			$queryString = "SELECT * FROM ".$this->emailTemplates.' WHERE ';
-			$o = self::$db->getOffsetRange(EMAIL_TEMPLATES, $sinceID, $maxID);
-			
-			$params = array(':limit'=>$limit,':deleted'=>$deleted,':offset'=>$offset);
+			$params = array(':deleted'=>$deleted, ':limit'=>$limit, ':offset'=>$offset);
 
-			$result = self::$db->query($queryString.$o['query'].' AND deleted=:deleted ORDER BY id DESC LIMIT :offset,:limit',array_merge($o['params'], $params));
+			$result = self::$db->query($queryString.' AND deleted=:deleted ORDER BY id DESC LIMIT :offset,:limit', $params);
 			$templates = array();
 
 			while($temp = $result->fetch()) {
@@ -384,7 +380,7 @@ class EmailServices extends APIHelper {
 	* return array
 	* throws Exception
 	*/
-	public function getEmailSubscribers($sinceID=0, $maxID=0, $offset=0, $limit=40, $subscribed='') {
+	public function getEmailSubscribers($offset=0, $limit=40, $subscribed='') {
 		try {
 			$queryString = "SELECT * FROM ".EMAIL_SUBSCRIPTIONS." WHERE ";
 			$o = self::$db->getOffsetRange(EMAIL_SUBSCRIPTIONS, $sinceID, $maxID);
@@ -397,7 +393,7 @@ class EmailServices extends APIHelper {
 				}
 			}
 
-			$r = self::$db->query($queryString.$o['query'].' AND deleted=:deleted ORDER BY id DESC LIMIT :offset,:limit',array_merge($o['params'], $params));
+			$r = self::$db->query($queryString.' AND deleted=:deleted ORDER BY id DESC LIMIT :offset,:limit', $params);
 			$subs = array();
 
 			while($sub = $r->fetch()) {
@@ -420,7 +416,7 @@ class EmailServices extends APIHelper {
 	public function searchEmails($query, $offset=0) {
 		try {
 			$queryString = "SELECT * FROM ".EMAIL_SUBSCRIPTIONS." WHERE email LIKE CONCAT('%',:q,'%')";
-			$params = array(':q'=>$query,':limit'=>$this->getRowLimit(),':offset'=>$offset);
+			$params = array(':q'=>$query, ':limit'=>$this->getRowLimit(), ':offset'=>$offset);
 
 			$results = self::$db->query($queryString.' LIMIT :offset,:limit', $params);
 			$emails = array();
