@@ -35,7 +35,7 @@ class Request {
 	/**
 	* @var array $token Decoded token data for authentication
 	*/
-	public $token;
+	public $token = null;
 
 	/**
 	* Main Constructor
