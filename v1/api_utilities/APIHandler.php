@@ -38,7 +38,7 @@ abstract class APIHandler extends APIHelper {
 	public function __construct() {
 		parent::__construct();
 
-		$this->setCorsPolicy($this->configs['cors']); 
+		$this->setCorsPolicy($this->configs['cors']);
 
 		$this->format = $this->getFormat($this->getAPIEndpoint());
 		
@@ -129,14 +129,20 @@ abstract class APIHandler extends APIHelper {
 	* param array | string $headers An array or string of header(s) 
 	* return void
 	*/
-	public function setCorsPolicy($headers) {
-		if(is_array($headers)) {
-			foreach ($headers as $value) {
-				header($value);
-			}
-		} else {
-			header('Access-Control-Allow-Origin: *');
-		}
+	public function setCorsPolicy($policy=null) {
+	    if(empty($policy)) {
+		    if($headers = array_key_exists('cors', $this->configs)) {
+                if(is_array($headers)) {
+                    foreach ($headers as $value) {
+                        header($value);
+                    }
+                } else {
+                    header($headers);
+                }
+            }
+        } else {
+            header($policy);
+        }
 	}
 
 	/**
