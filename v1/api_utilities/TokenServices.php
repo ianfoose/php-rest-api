@@ -274,10 +274,6 @@ class TokenServices extends APIHelper {
 			
 			if(!empty($dToken['auth']['t'])) {
 				try {
-					/*if(self::$dataHelper->find('id', array('token'=>$token), $this->tables['tokens'])) {
-						self::$dataHelper->query("UPDATE ".$this->tables['tokens']." SET revoked='1' WHERE u_id=:uID AND token=:t",array(':uID'=>$uID,':t'=>$token));
-					}*/
-
 					if(self::$db->query("INSERT INTO ".TOKENS." SET token=:token,u_id=:uID,exp_date=:eDate",array(':token'=>$token,':uID'=>$uID,':eDate'=>$dToken['auth']['t']))) {
 						return 'Saved';
 					} 	
