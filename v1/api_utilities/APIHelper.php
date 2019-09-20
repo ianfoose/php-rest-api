@@ -208,12 +208,21 @@ abstract class APIHelper {
 
 			if($filter != null && $filterID != null) {
 				$filters = array('id','object_id','row_id','editor_id');
-				if(!in_array($filter, $filters)) {
-					throw new Exception('Filter is not valid, acceptable filters are, id,row_id,object_id and editor_id', 500);
-				}
+				
+				if(is_array($filter)) {
+					foreach ($filter as $key => $value) {
+						if(!in_array($filter, $filters)) {
+							throw new Exception('Filter is not valid, acceptable filters are, '.implode(',', $filters), 500);
+						}
 
-				$query .= (' WHERE '.$filter.'=:id');
-				$params[':id'] = $filterID;
+						$paramID = ':id'.$key;
+
+						$query .= (' WHERE '.$key.'='.$paramID);
+						$params[$paramID] = $value;	
+					}
+				} else {
+					throw new Exception('Filter must be an array', 500);
+				}
 			}
 
 			$query .= ' LIMIT :offset,:limit';
