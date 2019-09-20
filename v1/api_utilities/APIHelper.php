@@ -206,19 +206,25 @@ abstract class APIHelper {
 			$query = 'SELECT * FROM '.AUDIT_LOGS;
 			$params = array(':limit'=>$limit,':offset'=>$offset);
 
-			if($filter != null && $filterID != null) {
-				$filters = array('id','object_id','row_id','editor_id');
+			if($filters != null) {
+				$validFilters = array('id','object_id','row_id','editor_id', 'type');
 				
-				if(is_array($filter)) {
-					foreach ($filter as $key => $value) {
-						if(!in_array($filter, $filters)) {
-							throw new Exception('Filter is not valid, acceptable filters are, '.implode(',', $filters), 500);
+				if(is_array($filters)) {
+					$query .= ' WHERE ';
+
+					foreach ($filters as $key => $value) {
+						if(!in_array($key, $validFilters)) {
+							throw new Exception('Filter is not valid, acceptable filters are, '.implode(',', $validFilters), 500);
 						}
 
 						$paramID = ':id'.$key;
 
-						$query .= (' WHERE '.$key.'='.$paramID);
+						$query .= $key.'='.$paramID;
 						$params[$paramID] = $value;	
+
+						if($value != end($filters)) {
+							$query .= ' AND ';
+						}
 					}
 				} else {
 					throw new Exception('Filter must be an array', 500);
