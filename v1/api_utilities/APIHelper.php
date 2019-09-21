@@ -201,7 +201,7 @@ abstract class APIHelper {
 	* @return array
 	* @throws Exception
 	*/
-	public function getAuditLogs($filter=null, $filterID=null, $sinceID=0, $maxID=0, $limit=40, $offset=0, $mapping=null, $formatFunc=null) {
+	public function getAuditLogs($filter=null, $sinceID=0, $maxID=0, $limit=40, $offset=0, $mapping=null, $formatFunc=null) {
 		try {
 			$query = 'SELECT * FROM '.AUDIT_LOGS;
 			$params = array(':limit'=>$limit,':offset'=>$offset);
