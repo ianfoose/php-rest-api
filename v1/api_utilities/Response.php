@@ -94,7 +94,7 @@ class Response {
                 $msg = $data->getMessage().' '; 
             }   
   
-            $msg .= $this->errorArray[$status];
+            $msg .= self::$errorArray[$status];
 
             $data = array('result'=>$msg);
         }
