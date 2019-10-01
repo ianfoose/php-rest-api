@@ -7,60 +7,25 @@ require_once('APIHelper.php');
 * version 1.0
 */
 class NotificationServices extends APIHelper {
-	/**
-	* @var string $API_ACCESS_KEY (Android)API access key from Google API's Console.
-	*/
-	private static $API_ACCESS_KEY = '';
-
-	/**
-	* @var string $gcmURL (Android) GCM URL, defaults to firebase
-	*/
-	private static $gcmURL = 'https://fcm.googleapis.com/fcm/send';
-	
-	/**
-	* @var string $ssl iOS Push SSL cert
-	*/
-	private static $ssl;
-
-	/**
-	* @var string $passphrase (iOS) Private key's passphrase.
-	*/
-	private static $passphrase = '';
-
-	/**
-	* @var string $apnsURL (iOS) APNS URL, defaults to sandbox
-	*/
-	private static $apnsURL = 'ssl://gateway.sandbox.push.apple.com:2195';
-	
-	/**
-	* @var string $channelName (Windows Phone 8) The name of our push channel.
-	*/
-    private static $channelName = '';
-	
-	/**
-	* @var string $emailPort Email Server port
-	*/
-    private static $emailPort = '465';
+    /**
+    * @var array $windowsConfigs Windows notification configs
+    */
+    private $windowsConfigs = array('channel'=>'');
 
     /**
-	* @var string $emailServer Email Server
-	*/
-    private static $emailServer = '';
+    * @var array $googleConfigs Google notification configs
+    */
+    private $googleConfigs = array('url'=>'https://fcm.googleapis.com/fcm/send', 'api-key'=>'');
+
+   /**
+    * @var array $iosConfigs iOS notification configs
+    */
+    private $iosConfigs = array('url'=>'ssl://gateway.sandbox.push.apple.com:2195', 'passpahrase'=>'', 'ssl'=> '');
 
     /**
-	* @var string $emailSSL Email Server Use SSL
-	*/
-    private static $emailSSL = '';
-
-    /**
-	* @var string $emailUsername Email Server username
-	*/
-    private static $emailUsername = '';
-
-    /**
-	* @var string $emailPassword Email Server Password
-	*/
-    private static $emailPassword = ''; 
+    * @var array $emailConfigs Email notification configs
+    */
+    private $emailConfigs = array('port'=>465, 'username'=>'', 'password'=>'', 'ssl'=>false, 'server'=>'');
 
     /**
     * Main Constructor
@@ -69,44 +34,34 @@ class NotificationServices extends APIHelper {
     * @param bool $expose Expose API functions
     * @return void
     */
-	public function __construct($configs=null, $expose=false) {
-		if(!empty($email)) {
-			self::$emailSSL = $email['ssl'];
-			self::$emailUsername = $email['username'];
-			self::$emailPassword = $email['password'];
-			self::$emailServer = $email['server'];
-			self::$emailPort = $email['port'];
-		} else {
-			self::$emailSSL = $this->configs['notifications']['email']['ssl'];
-			self::$emailUsername = $this->configs['notifications']['email']['username'];
-			self::$emailPassword = $this->configs['notifications']['email']['password'];
-			self::$emailServer = $this->configs['notifications']['email']['server'];
-			self::$emailPort = $this->configs['notifications']['email']['port'];
-		}
+	public function __construct($configs=array(), $expose=false) {
+	    // email notifications
+	    $this->emailConfigs = array_merge($this->configs['notifications']['email']);
 
-		if(!empty($ios)) {
-			self::$ssl = $ios['ssl-key'];
-			self::$passphrase = $ios['passphrase'];
-			self::$apnsURL = $ios['url'];
-		} else {
-			self::$ssl = $this->configs['notifications']['ios']['ssl-key'];
-			self::$passphrase = $this->configs['notifications']['ios']['passpahrase'];
-			self::$apnsURL = $this->configs['notifications']['ios']['url'];
-		}
+        if(array_key_exists($configs['email'])) {
+            $this->emailConfigs = array_merge($configs['email']);
+        }
 
-		if(!empty($android)) {
-			self::$API_ACCESS_KEY = $android['api-key'];
-			self::$gcmURL = $android['url'];
-		} else {
-			self::$API_ACCESS_KEY = $this->configs['notifications']['android']['api-key'];
-			self::$gcmURL = $this->configs['notifications']['android']['url'];
-		}
+        // iOS notifications
+        $this->iosConfigs = array_merge($this->configs['notifications']['ios']);
 
-		if(!empty($windows)) {
-			self::$channelName = $windows['channel'];
-		} else {
-			self::$channelName = $this->configs['notifications']['windows']['channel'];
-		}
+        if(array_key_exists($configs['ios'])) {
+            $this->iosConfigs = array_merge($configs['ios']);
+        }
+
+        // google notifications
+        $this->googleConfigs = array_merge($this->configs['notifications']['google']);
+
+        if(array_key_exists($configs['google'])) {
+            $this->googleConfigs = array_merge($configs['google']);
+        }
+
+	    // windows notifications
+        $this->windowsConfigs = array_merge($this->configs['notifications']['windows']);
+
+        if(array_key_exists($configs['windows'])) {
+            $this->windowsConfigs = array_merge($configs['windows']);
+        }
 
 		// expose API
 		if($expose) {
@@ -128,9 +83,9 @@ class NotificationServices extends APIHelper {
 			}
 		});
 
-		Router::get('/push/token/user/:id', function($req, $res) {
+		Router::get('/push/tokens/user/:id', function($req, $res) {
 			try {
-				$res->send($this->getPushTokenForUser($req->params['id']));
+				$res->send($this->getPushTokenForUser($req->params['id'], $_GET['offset'], $_GET['limit']));
 			} catch (Exception $e) {
 				$res->send($e);
 			}
@@ -156,9 +111,9 @@ class NotificationServices extends APIHelper {
 	}
 
 	/**
-	* Sends a notifcation to user or all users on a specific platform
+	* Sends a notification to user or all users on a specific platform
 	*
-	* @param array $notificaion Notification Data
+	* @param array $notification Notification Data
 	* @param int $userID User ID to send to, leave empty to send to all Users
 	* @param string $platform Platform to send on, leave blank to send to all
 	* @return string
@@ -217,7 +172,7 @@ class NotificationServices extends APIHelper {
 	    );
 	        
 	    $headers = array(
-	       	'Authorization: key=' .self::$API_ACCESS_KEY,
+	       	'Authorization: key=' .$this->googleConfigs['api-key'],
 	        'Content-Type: application/json'
 	    );
 
@@ -236,7 +191,7 @@ class NotificationServices extends APIHelper {
 	    	}
 	    }
 	
-	    $result = self::useCurl(self::$gcmURL, $headers, json_encode($fields)); 
+	    $result = self::useCurl($this->googleConfigs['url'], $headers, json_encode($fields));
 
 	    if($result['success'] == 0 && $result['failure'] == 1 && PUSH_UUID) {
 	    	self::deletePushToken($reg_id);
@@ -286,7 +241,7 @@ class NotificationServices extends APIHelper {
 	/**
 	* Sends Push notification for iOS users
 	*
-	* @param array $data Notifiction Data
+	* @param array $data Notification Data
 	* @param string $devicetoken Device Token
 	* @return string Send Result
 	* @throws Exception
@@ -294,16 +249,16 @@ class NotificationServices extends APIHelper {
 	public function iOS($data, $devicetoken) {
 		$deviceToken = $devicetoken;
 
-		if(!empty($this->ssl)) {
+		if($this->iosConfigs['ssl']) {
 			$ctx = stream_context_create();
 			// ck.pem is your certificate file
 			stream_context_set_option($ctx, 'ssl', 'verify_peer', false); # for sandboxing only
-			stream_context_set_option($ctx, 'ssl', 'local_cert', $this->ssl);
-			stream_context_set_option($ctx, 'ssl', 'passphrase', $this->passphrase);
+			stream_context_set_option($ctx, 'ssl', 'local_cert', $this->iosConfigs['ssl']);
+			stream_context_set_option($ctx, 'ssl', 'passphrase', $this->iosConfigs['passpharse']);
 
 			// Open a connection to the APNS server 2195
 			$fp = stream_socket_client(
-				$this->apnsURL, $err,
+				$this->iosConfigs['url'], $err,
 				$errstr, 60, STREAM_CLIENT_CONNECT|STREAM_CLIENT_PERSISTENT, $ctx);
 
 			if (!$fp)
@@ -454,14 +409,16 @@ class NotificationServices extends APIHelper {
     /**
     * Gets push notification tokens for a user
     *
-    * @param string or int $userID User ID 
-    * @param string $token Push Token
+    * @param string or int $userID User ID
+    * @param int offset offset
+	* @param int $limit fetch limit
     * @return bool
     * @throws Exception
     */
-    public function getPushTokenForUser($userID) {
+    public function getPushTokenForUser($userID, $offset=0, $limit=40) {
 	    try {
-		    $result = self::$db->query("SELECT * FROM ".PUSH_UUID." WHERE user_id=:uID",array(':uID'=>$userID));
+	        $params = array(':uID'=>$userID, ':offset'=>$offset, ':limit'=>$limit);
+		    $result = self::$db->query("SELECT * FROM ".PUSH_UUID.' WHERE user_id=:uID LIMIT :offset,:limit', $params);
 		    $tokens = array();
 		
 		    while($token = $result->fetch()) {
@@ -477,37 +434,45 @@ class NotificationServices extends APIHelper {
     /**
 	* Sends an email
 	*
-	* @param string $to Email Reciever
+	* @param string $to Email Receiver
 	* @param string $from Email Sender
 	* @param string $subject Email Subject
 	* @param string $body Email body
 	* @return bool
 	*/
 	public function sendEmail($to,$from,$fromName,$subject,$body,$html=false) {
-		require_once('swift_mailer/swift_required.php');
+		try {
+            require_once('swift_mailer/swift_required.php');
 
-		if(!empty($to) && !empty($from) && !empty($fromName) && !empty($subject) && !empty($body) && !empty(self::$emailUsername) && !empty(self::$emailPassword) && !empty(self::$emailServer)) {
-			$transport = Swift_SmtpTransport::newInstance(self::$emailServer, self::$emailPort, self::$emailSSL)
-			->setUsername(self::$emailUsername) 
-			->setPassword(self::$emailPassword); 
+            if(empty($fromName)) {
+                $fromName = $from;
+            }
 
-			$mailer = Swift_Mailer::newInstance($transport);
+            if(!empty($to) && !empty($from) && !empty($subject) && !empty($body)) {
+                $transport = Swift_SmtpTransport::newInstance($this->emailConfigs['server'], $this->emailConfigs['port'], $this->emailConfigs['ssl'])
+                ->setUsername($this->emailConfigs['username'])
+                ->setPassword($this->emailConfigs['password']);
 
-			$message = Swift_Message::newInstance($subject)
-			->setFrom(array($from => $fromName))
-			->setTo(array($to))
-			->setBody($body);
+                $mailer = Swift_Mailer::newInstance($transport);
 
-			if($html) 
-				$message->setContentType("text/html");
+                $message = Swift_Message::newInstance($subject)
+                ->setFrom(array($from => $fromName))
+                ->setTo(array($to))
+                ->setBody($body);
 
-			$result = $mailer->send($message);
-													
-			if($result == 1) {
-				return true;
-			} 
-		}
-		return false;
+                if($html)
+                    $message->setContentType("text/html");
+
+                $result = $mailer->send($message);
+
+                if($result == 1) {
+                    return true;
+                }
+            }
+            throw new Exception('Check email fileds, to, from, subject and body cannot be Null ', 404);
+        } catch (Exception $e) {
+            throw $e;
+        }
 	}  
 }
 ?>
