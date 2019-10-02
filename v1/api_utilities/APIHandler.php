@@ -306,10 +306,12 @@ abstract class APIHandler extends APIHelper {
 
 					break;
 				} 
-			} 
-		}
+			}
 
-		$this->res->send('Endpoint: '.$endpoint.' does not exist', 400);
+			if($key == (count($routes) - 1)) {
+		        $this->res->send('Endpoint: '.$endpoint.' does not exist', 400);
+			}
+		}
 	}
 }
 ?>
