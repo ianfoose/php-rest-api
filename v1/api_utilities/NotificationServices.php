@@ -233,8 +233,6 @@ class NotificationServices extends APIHelper {
 		        $result[$tab[0]] = trim($tab[1]);
 		}
 
-		// todo windows 
-
 		return $result;
 	}
 	
