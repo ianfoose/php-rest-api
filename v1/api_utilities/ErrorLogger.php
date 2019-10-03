@@ -23,7 +23,9 @@ class ErrorLogger extends APIHelper {
 				$errorMsg = 'Database Error';
 			}
 
-			throw new Exception($errorMsg, 500);
+            if($this->configs['log_errors'] == true) {
+			    throw new Exception($errorMsg, 500);
+			}
 		}
 
 		// expose API methods
@@ -88,7 +90,7 @@ class ErrorLogger extends APIHelper {
 	* @throws Exception
 	*/
 	public function logError($code,$description='',$message='') {
-		if($this->configs['log_error'] == true) {
+		if($this->configs['log_errors'] == true) {
 			try {
 				if(self::$db->query("INSERT INTO ".ERRORS." SET code=:code,description=:description,message=:message",array(':code'=>$code,':description'=>$description,':message'=>$message), true)) {
 					return 'Error Logged';
