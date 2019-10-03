@@ -151,7 +151,7 @@ class NotificationServices extends APIHelper {
 		throw new Exception('Must provide a notification object', 404);
 	}
 
-    /**
+        /**
 	* Sends Push notification for Android users
 	*
 	*
@@ -316,7 +316,7 @@ class NotificationServices extends APIHelper {
 	* @param array $fields Body fields to send
 	* @return object
 	*/
-	private static function useCurl($url, $headers, $fields = null) {
+	private function useCurl($url, $headers, $fields = null) {
 	    // Open connection
 	    $ch = curl_init();
 	    if ($url) {
