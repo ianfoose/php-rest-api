@@ -74,15 +74,23 @@ class DatabaseHelper {
 				$dbConfigs = $this->configs['database'];
 
 				// check database config values
-				if(!empty($this->dbConfigs['url']) && !empty($this->dbConfigs['user']) && !empty($this->dbConfigs['password']) && !empty($this->dbConfigs['db'])) {
-					
-					if(empty($dbConfigs['port']))
-					   $dbConfigs['port'] = 3306;
-				} else {
-				 	throw new Exception('Invalid Database Config Values', 500);	
+				if(empty($this->dbConfigs['url']) && !empty($this->dbConfigs['user']) && !empty($this->dbConfigs['password']) && !empty($this->dbConfigs['db'])) {
+			        	$msg = 'Database Connection Error';
+
+			        	if($this->configs['environment'] == 'development') {
+			            		$msg = 'Invalid Database Config Values';
+			        	}
+
+			        	throw new Exception($msg, 500);
 				}
 
-				self::$db = new PDO("mysql:host=".$dbConfigs['url'].":".$dbConfigs['port'].";dbname=".$dbConfigs['db'].";charset=".$dbConfigs['charset'].";",$dbConfigs['user'],$dbConfigs['password']);
+                		$dbURL = $dbConfigs['url'];
+
+                		if(!empty($dbConfigs['port'])) {
+                    			$dbURL .= ':'.$dbConfigs['port'];
+               			}
+
+				self::$db = new PDO("mysql:host=".$dbURL.";dbname=".$dbConfigs['db'].";charset=".$dbConfigs['charset'].";",$dbConfigs['user'],$dbConfigs['password']);
 				self::$db->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
 				self::$db->setAttribute(PDO::ATTR_DEFAULT_FETCH_MODE, PDO::FETCH_ASSOC);
 				self::$db->setAttribute( PDO::ATTR_EMULATE_PREPARES, false );
