@@ -162,46 +162,53 @@ class Response {
     * Takes in a filename and an array associative data array and outputs a csv file
     *
     * @param string $fileName
-    * @param array $assocDataArray 
+    * @param array $data Array to write to CSV
     * @return void    
     */
-    private function outputCsv($fileName, $assocDataArray) {
+    private function outputCsv($fileName, $data) {
         header('Pragma: public');
         header('Expires: 0');
         header('Cache-Control: must-revalidate, post-check=0, pre-check=0');
         header('Cache-Control: private', false);
         header('Content-Type: text/csv');
-        header('Content-Disposition: attachment;filename=' . $fileName);    
-        if(isset($assocDataArray['0'])){
-            $fp = fopen('php://output', 'w');
-            fputcsv($fp, array_keys($assocDataArray['0']));
-            foreach($assocDataArray as $values){
-                fputcsv($fp, $values);
+        header('Content-Disposition: attachment;filename='.$fileName);
+
+        if(!is_array($data)) {
+            $data = array('result'=>$data);
+        }
+
+        $fp = fopen('php://output', 'w');
+
+        // header rows
+        $headerObj = $data;
+
+        if(!empty($data[0])) {
+            $headerObj = $data[0];
+        }
+
+        if(!is_array($headerObj)) {
+            $headerObj = array('result');
+        }
+
+        $headerRows = array_keys($headerObj);
+        fputcsv($fp, $headerRows);
+
+        foreach($data as $row) {
+            if(!is_array($row)) {
+                $row = array('result'=>$row);
             }
-            fclose($fp);
+
+            foreach($row as $key => $_row) {
+                if(is_array($_row)) {
+                    $row[$key] = implode(',', $row[$key]);
+                }
+            }
+
+            fputcsv($fp, $row);
         }
+
+        fclose($fp);
         ob_flush();
-    }
-
-    /**
-    * Convert array to CSV format
-    *
-    * @return void
-    */
-    private function convert_to_csv($input_array, $output_file_name, $delimiter) {
-        $temp_memory = fopen('php://memory', 'w');
-        // loop through the array
-        foreach ($input_array as $line) {
-        // use the default csv handler
-        fputcsv($temp_memory, $line, $delimiter);
-        }
-
-        fseek($temp_memory, 0);
-        // modify the header to be CSV format
-        header('Content-Type: application/csv');
-        header('Content-Disposition: attachement; filename="' . $output_file_name . '";');
-        // output the file to be downloaded
-        fpassthru($temp_memory);
     }
 }
 ?>
