@@ -89,7 +89,13 @@ class DatabaseHelper {
 
 				return self::$db;
 			} catch(Exception $e) {
-				throw new Exception('Unable to connect to DB ',500);
+				$msg = '';
+			    
+				if($this->configs['environment'] == 'development') {
+			   	    $msg .= ', Error: '.$e->getMessage();
+			   	}
+			    
+				throw new Exception($msg,500);
 			} 
 		}
 	}
