@@ -82,7 +82,7 @@ class EmailServices extends APIHelper {
 
 		Router::put('/email/subscribe/:email', function($req, $res) {
 			try {
-				$res->send($this->addSubscriber($req->params['email']));
+				$res->send($this->addSubscriber($req->params['email'], $req->body['group']));
 			} catch (Exception $e) {
 				$res->send($e);
 			}
@@ -90,7 +90,7 @@ class EmailServices extends APIHelper {
 
 		Router::delete('/email/unsubscribe/:email', function($req, $res) {
 			try {
-				$res->send($this->removeSubscriber($req->params['email']));
+				$res->send($this->removeSubscriber($req->params['email'], $req->body['group']));
 			} catch (Exception $e) {
 				$res->send($e);
 			}
@@ -98,7 +98,8 @@ class EmailServices extends APIHelper {
 
 		Router::get('/email/subscriptions', function($req, $res) {
 			try {
-				$res->send($this->getEmailSubscribers($_GET['limit'], $_GET['offset']));
+			    $filters = array('group'=>$req->body['group'], 'subscriber'=>$req->body['subscriber'],'deleted'=>$req->body['deleted']);
+				$res->send($this->getEmailSubscribers($filters, $_GET['limit'], $_GET['offset']));
 			} catch (Exception $e) {
 				$res->send($e);
 			}
@@ -114,7 +115,8 @@ class EmailServices extends APIHelper {
 
 		Router::get('/email/subscriptions/search/:query', function($req, $res) {
 			try {
-				$res->send($this->searchEmails($req->params['query'], $_GET['offset'], $_GET['subscribed'])); 
+			    $filters = array('group'=>$req->body['group'], 'subscriber'=>$req->body['subscriber'],'deleted'=>$req->body['deleted']);
+				$res->send($this->searchEmails($req->params['query'], $filters, $_GET['offset']));
 			} catch (Exception $e) {
 				$res->send($e);
 			}
@@ -122,7 +124,8 @@ class EmailServices extends APIHelper {
 
 		Router::get('/email/subscriptions/count/number', function($req, $res) {
 			try {
-				$res->send($this->getEmailSubscriptionTotal($_GET['subscribed']));
+			    $filters = array('group'=>$req->body['group'], 'subscriber'=>$req->body['subscriber'],'deleted'=>$req->body['deleted']);
+				$res->send($this->getEmailSubscriptionTotal($filters));
 			} catch (Exception $e) {
 				$res->send($e);
 			}
@@ -354,15 +357,23 @@ class EmailServices extends APIHelper {
 	* return int
 	* throws Exception
 	*/
-	public function getEmailSubscriptionTotal($unsubscribed=null) {
+	public function getEmailSubscriptionTotal($filters=array()) {
 		try {
 			$queryString = "SELECT id FROM ".EMAIL_SUBSCRIPTIONS;
+            $params = array();
 
-			if(!empty($unsubscribed)) {
-				if($unsubscribed == '1' || $unsubscribed == '0') {
-					$queryString .= ' WHERE subscriber='.$unsubscribed;
-				}
-			}
+            foreach($filters as $key => $value) {
+                if($key == 'group') {
+                    $queryString .= ' AND group=:group';
+                    $params[':group'] = $value;
+                } else if ($key ==' subscriber') {
+                    $queryString .= ' AND subscriber=:subscriber';
+                    $params[':subscriber'] = $value;
+                } else if ($key == 'deleted') {
+                    $queryString .= ' AND deleted=:deleted';
+                    $params[':deleted'] = $value;
+                }
+            }
 
 			$r = self::$db->query($queryString);
 			return $r->rowCount();
@@ -380,20 +391,25 @@ class EmailServices extends APIHelper {
 	* return array
 	* throws Exception
 	*/
-	public function getEmailSubscribers($offset=0, $limit=40, $subscribed='') {
+	public function getEmailSubscribers($filters=array(), $offset=0, $limit=40) {
 		try {
 			$queryString = "SELECT * FROM ".EMAIL_SUBSCRIPTIONS." WHERE ";
-			$o = self::$db->getOffsetRange(EMAIL_SUBSCRIPTIONS, $sinceID, $maxID);
-			$params = array(':limit'=>$limit,':deleted'=>$deleted,':offset'=>$offset);
+			$params = array(':deleted'=>$deleted, ':limit'=>$limit, ':offset'=>$offset);
 
-			if(!empty($subscribed)) {
-				if($subscribed == '1' || $subscribed == '0') {
-					$params[':subscriber'] = $subscribed;
-					$queryString .= ' subscriber='.$subscribed;
-				}
-			}
+			 foreach($filters as $key => $value) {
+                if($key == 'group') {
+                    $queryString .= ' AND group=:group';
+                    $params[':group'] = $value;
+                } else if ($key ==' subscriber') {
+                    $queryString .= ' AND subscriber=:subscriber';
+                    $params[':subscriber'] = $value;
+                } else if ($key == 'deleted') {
+                    $queryString .= ' AND deleted=:deleted';
+                    $params[':deleted'] = $value;
+                }
+            }
 
-			$r = self::$db->query($queryString.' AND deleted=:deleted ORDER BY id DESC LIMIT :offset,:limit', $params);
+        	$r = self::$db->query($queryString.'ORDER BY id DESC LIMIT :offset,:limit', $params);
 			$subs = array();
 
 			while($sub = $r->fetch()) {
@@ -413,10 +429,23 @@ class EmailServices extends APIHelper {
 	* return array
 	* throws Exception
 	*/
-	public function searchEmails($query, $offset=0) {
+	public function searchEmails($query, $filters=array(), $offset=0) {
 		try {
 			$queryString = "SELECT * FROM ".EMAIL_SUBSCRIPTIONS." WHERE email LIKE CONCAT('%',:q,'%')";
-			$params = array(':q'=>$query, ':limit'=>$this->getRowLimit(), ':offset'=>$offset);
+			$params = array(':q'=>$query, ':group'=>$group, ':limit'=>$this->getRowLimit(), ':offset'=>$offset);
+
+            foreach($filters as $key => $value) {
+                if($key == 'group') {
+                    $queryString .= ' AND group=:group';
+                    $params[':group'] = $value;
+                } else if ($key ==' subscriber') {
+                    $queryString .= ' AND subscriber=:subscriber';
+                    $params[':subscriber'] = $value;
+                } else if ($key == 'deleted') {
+                    $queryString .= ' AND deleted=:deleted';
+                    $params[':deleted'] = $value;
+                }
+            }
 
 			$results = self::$db->query($queryString.' LIMIT :offset,:limit', $params);
 			$emails = array();
@@ -432,7 +461,7 @@ class EmailServices extends APIHelper {
 	}
 
 	/**
-	* Gets subsciption data
+	* Gets subscription data
 	*
 	* param object $sub Subscription object
 	* return object
@@ -451,12 +480,12 @@ class EmailServices extends APIHelper {
 	* return string
 	* throws Exception
 	*/
-	public function addSubscriber($email) {
+	public function addSubscriber($email, $group='Default') {
 		try {
-			if($r = self::$db->find('id', array('email'=>$email), EMAIL_SUBSCRIPTIONS)) {
+			if($r = self::$db->find('id', array('email'=>$email, 'group'=>$group), EMAIL_SUBSCRIPTIONS)) {
 				self::$db->query('UPDATE '.EMAIL_SUBSCRIPTIONS." SET subscriber='1' WHERE id=:id",array(':id'=>$r['id']));
 			} else {
-				self::$db->query("INSERT INTO ".EMAIL_SUBSCRIPTIONS." SET email=:e,subscriber=1",array(':e'=>$email));
+				self::$db->query("INSERT INTO ".EMAIL_SUBSCRIPTIONS." SET email=:e,group=:group,subscriber=1",array(':e'=>$email, ':group'=>$group));
 			}
 			return 'Subscribed';
 		} catch (Exception $e) {
@@ -471,9 +500,9 @@ class EmailServices extends APIHelper {
 	* return string
 	* throws Exception
 	*/
-	public function removeSubscriber($email) {
+	public function removeSubscriber($email, $group='Default') {
 		try {
-			if($r = self::$db->find('id', array('email'=>$email), EMAIL_SUBSCRIPTIONS)) {
+			if($r = self::$db->find('id', array('email'=>$email, 'group'=>$group), EMAIL_SUBSCRIPTIONS)) {
 				self::$db->query('UPDATE '.EMAIL_SUBSCRIPTIONS." SET subscriber='0' WHERE id=".$r['id']);
 				return 'Unsubscribed';
 			}
