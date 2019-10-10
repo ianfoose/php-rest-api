@@ -6,7 +6,7 @@ CREATE TABLE IF NOT EXISTS `audit_logs` (
   `type` varchar(45) DEFAULT NULL,
   `event` varchar(45) DEFAULT 'changed',
   `date` datetime DEFAULT CURRENT_TIMESTAMP
-) ENGINE=InnoDB AUTO_INCREMENT=8 DEFAULT CHARSET=utf8;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 CREATE TABLE IF NOT EXISTS `email_template_edits` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
@@ -16,7 +16,7 @@ CREATE TABLE IF NOT EXISTS `email_template_edits` (
   `name` varchar(45) DEFAULT NULL,
   `template_id` int(11) DEFAULT NULL,
   PRIMARY KEY (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=8 DEFAULT CHARSET=utf8;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 CREATE TABLE IF NOT EXISTS `email_templates` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
@@ -26,7 +26,7 @@ CREATE TABLE IF NOT EXISTS `email_templates` (
   `body` text,
   `name` varchar(45) DEFAULT NULL,
   PRIMARY KEY (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=26 DEFAULT CHARSET=utf8;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 CREATE TABLE IF NOT EXISTS `errors` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
@@ -36,15 +36,16 @@ CREATE TABLE IF NOT EXISTS `errors` (
   `description` varchar(455) DEFAULT NULL,
   `message` varchar(455) DEFAULT NULL,
   PRIMARY KEY (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=470 DEFAULT CHARSET=utf8;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 CREATE TABLE IF NOT EXISTS `email_subscriptions` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
   `email` varchar(255) DEFAULT NULL,
   `subscriber` tinyint(1) DEFAULT '0',
   `date` datetime DEFAULT NULL,
+  `group` varchar(45) DEFAULT 'Default',
   PRIMARY KEY (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=2 DEFAULT CHARSET=utf8;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 CREATE TABLE IF NOT EXISTS `push_tokens` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
@@ -73,7 +74,7 @@ CREATE TABLE IF NOT EXISTS `tokens` (
   `revoked` tinyint(4) DEFAULT '0',
   `token` varchar(255) DEFAULT NULL,
   PRIMARY KEY (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=186 DEFAULT CHARSET=utf8;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 CREATE TABLE IF NOT EXISTS `traffic` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
@@ -81,4 +82,4 @@ CREATE TABLE IF NOT EXISTS `traffic` (
   `ip` varchar(45) DEFAULT NULL,
   `client` varchar(500) DEFAULT NULL,
   PRIMARY KEY (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=1764 DEFAULT CHARSET=utf8;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
