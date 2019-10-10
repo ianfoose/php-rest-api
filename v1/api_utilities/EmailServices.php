@@ -12,8 +12,8 @@ class EmailServices extends APIHelper {
 	/**
 	* Constructor
 	*
-	* param bool $expose Expose API functions
-	* return void
+	* @param bool $expose Expose API functions
+	* @return void
 	*/
 	public function __construct($expose=false) {
 		parent::__construct();
@@ -26,7 +26,7 @@ class EmailServices extends APIHelper {
 	/**
 	* Exposes API functions
 	*
-	* return void
+	* @return void
 	*/
 	public function exposeAPI() {
 		// templates
@@ -135,11 +135,11 @@ class EmailServices extends APIHelper {
 	/**
 	* Saves an email template
 	*
-	* param string $name Template Name
-	* param string $template Email Template
-	* param int $userID User ID
-	* return string
-	* throws Exception
+	* @param string $name Template Name
+	* @param string $template Email Template
+	* @param int $userID User ID
+	* @return string
+	* @throws Exception
 	*/
 	public function createTemplate($name, $template, $userID) {
 		try {
@@ -164,11 +164,11 @@ class EmailServices extends APIHelper {
 	/**
 	* Edits a template
 	*
-	* param string $name Template Name
-	* param string $template Email Template
-	* param int $userID User ID
-	* return string
-	* throws Exception
+	* @param string $name Template Name
+	* @param string $template Email Template
+	* @param int $userID User ID
+	* @return string
+	* @throws Exception
 	*/
 	public function editTemplate($templateID, $name, $template, $userID) {
 		try {
@@ -189,15 +189,14 @@ class EmailServices extends APIHelper {
 	}
 
 	/**
-	* Gets email template edots
+	* Gets email template edits
 	*
-	* param int $templateID Template ID
-	* param int $sinceID Since ID
-	* param int $maxID Max ID
-	* param int $limit fetch Limit
-	* param string $deleted Deleted Status
-	* return array
-	* throws Exception
+	* @param int $templateID Template ID
+	* @param int $offset Pagination offset
+	* @param int $limit Pagination Limit
+	* @param string $deleted Deleted Status
+	* @return array
+	* @throws Exception
 	*/
 	public function getEmailTemplateEdits($offset=0, $limit=40) {
 		try {
@@ -224,9 +223,9 @@ class EmailServices extends APIHelper {
 	/**
 	* Deletes an email template
 	*
-	* param int $templateID Template id
-	* return string
-	* throws Exception
+	* @param int $templateID Template id
+	* @return string
+	* @throws Exception
 	*/
 	public function deleteTemplate($templateID) {
 		try {
@@ -242,9 +241,9 @@ class EmailServices extends APIHelper {
 	/**
 	* Gets a template
 	*
-	* param int $templateID Template ID
-	* return object
-	* throws Exception
+	* @param int $templateID Template ID
+	* @return object
+	* @throws Exception
 	*/
 	public function getTemplate($templateID) {
 		try {
@@ -259,14 +258,13 @@ class EmailServices extends APIHelper {
 	/**
 	* Gets total number of email templates
 	*
-	* param string $deleted Deleted Status
-	* return int
-	* throws Exception
+	* @param string $deleted Deleted Status
+	* @return int
+	* @throws Exception
 	*/
-	public function getTotalEmailTemplates($deleted) {
+	public function getTotalEmailTemplates($deleted='') {
 		try {
 			$queryString = "SELECT id FROM ".EMAIL_TEMPLATES;
-
 			$params = array();
 
 			if(!empty($deleted)) {
@@ -284,11 +282,11 @@ class EmailServices extends APIHelper {
 	/**
 	* Gets templates
 	*
-	* param int $sinceID Since ID
-	* param int $maxID Max ID
-	* param string $deleted Deleted status
-	* return array
-	* throws Exception
+	* @param int $offset Pagination offset
+	* @param string $deleted Deleted status
+	* @param int $limit Pagination limit
+	* @return array
+	* @throws Exception
 	*/
 	public function getTemplates($offset=0, $deleted='', $limit=40) {
 		try {
@@ -311,8 +309,8 @@ class EmailServices extends APIHelper {
 	/**
 	* Gets data for a template object
 	*
-	* param object $template Email Template object
-	* return object
+	* @param object $template Email Template object
+	* @return object
 	*/
 	public function getTemplateData($template) {
 		if(!empty($template['date']))
@@ -327,10 +325,10 @@ class EmailServices extends APIHelper {
 	/**
 	* Fills out an email template with supplied tokens
 	*
-	* param array $tokens Tokens to fill
-	* param string $template Email template to fill out
-	* return string
-	* throws Exception 
+	* @param array $tokens Tokens to fill
+	* @param string $template Email template to fill out
+	* @return string
+	* @throws Exception
 	*/
 	public static function fillTemplate($tokens, $template) {
 		if(!empty($tokens) && !empty($template)) {
@@ -353,9 +351,9 @@ class EmailServices extends APIHelper {
 	/**
 	* Gets the total number of email subscribers
 	*
-	* param string $unsubscribed Unsubscribe status
-	* return int
-	* throws Exception
+	* @param array $filters Query filters
+	* @return int
+	* @throws Exception
 	*/
 	public function getEmailSubscriptionTotal($filters=array()) {
 		try {
@@ -385,11 +383,11 @@ class EmailServices extends APIHelper {
 	/**
 	* Gets email subscribers
 	*
-	* param int $sinceID Since ID
-	* param int $maxID Max ID
-	* param string $deleted Deleted status
-	* return array
-	* throws Exception
+	* @param array $filters Query filters
+	* @param int $offset Pagination offset
+	* @param string $limit Pagination limit
+	* @return array
+	* @throws Exception
 	*/
 	public function getEmailSubscribers($filters=array(), $offset=0, $limit=40) {
 		try {
@@ -425,14 +423,17 @@ class EmailServices extends APIHelper {
 	/**
 	* Searches email subscribers
 	*
-	* param string $query Search query
-	* return array
-	* throws Exception
+	* @param string $query Search query
+	* @param array $filters Query filters
+	* @param int $offset Pagination offset
+	* @param int $limit Pagination limit
+	* @return array
+	* @throws Exception
 	*/
-	public function searchEmails($query, $filters=array(), $offset=0) {
+	public function searchEmails($query, $filters=array(), $offset=0, $limit=40) {
 		try {
 			$queryString = "SELECT * FROM ".EMAIL_SUBSCRIPTIONS." WHERE email LIKE CONCAT('%',:q,'%')";
-			$params = array(':q'=>$query, ':group'=>$group, ':limit'=>$this->getRowLimit(), ':offset'=>$offset);
+			$params = array(':q'=>$query, ':group'=>$group, ':limit'=>$limit, ':offset'=>$offset);
 
             foreach($filters as $key => $value) {
                 if($key == 'group') {
@@ -463,8 +464,8 @@ class EmailServices extends APIHelper {
 	/**
 	* Gets subscription data
 	*
-	* param object $sub Subscription object
-	* return object
+	* @param object $sub Subscription object
+	* @return object
 	*/
 	private function getSubscriptionData($sub) {
 		if(!empty($sub['date']))
@@ -476,9 +477,10 @@ class EmailServices extends APIHelper {
 	/**
 	* Adds a email subscriber
 	*
-	* param string $email Email to add
-	* return string
-	* throws Exception
+	* @param string $email Email to add
+	* @param string $group Group name for email subscription
+	* @return string
+	* @throws Exception
 	*/
 	public function addSubscriber($email, $group='Default') {
 		try {
@@ -496,9 +498,10 @@ class EmailServices extends APIHelper {
 	/**
 	* Removes an email subscriber
 	*
-	* param string $email Email to remove
-	* return string
-	* throws Exception
+	* @param string $email Email to remove
+	* @param string $group Subscription group name
+	* @return string
+	* @throws Exception
 	*/
 	public function removeSubscriber($email, $group='Default') {
 		try {
