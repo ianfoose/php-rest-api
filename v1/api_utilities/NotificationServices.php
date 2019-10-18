@@ -35,32 +35,26 @@ class NotificationServices extends APIHelper {
     * @return void
     */
 	public function __construct($configs=array(), $expose=false) {
-	    // email notifications
-	    $this->emailConfigs = array_merge($this->configs['notifications']['email']);
+	    if(!empty($configs)) {
+            // email notifications
+            if(array_key_exists('email', $configs)) {
+                $this->emailConfigs = array_merge($this->emailConfigs, $configs['email']);
+            }
 
-        if(array_key_exists($configs['email'])) {
-            $this->emailConfigs = array_merge($configs['email']);
-        }
+            // iOS notifications
+            if(array_key_exists('ios', $configs)) {
+                $this->iosConfigs = array_merge($this->iosConfigs, $configs['ios']);
+            }
 
-        // iOS notifications
-        $this->iosConfigs = array_merge($this->configs['notifications']['ios']);
+            // google notifications
+            if(array_key_exists('google', $configs)) {
+                $this->googleConfigs = array_merge($this->googleConfigs, $configs['google']);
+            }
 
-        if(array_key_exists($configs['ios'])) {
-            $this->iosConfigs = array_merge($configs['ios']);
-        }
-
-        // google notifications
-        $this->googleConfigs = array_merge($this->configs['notifications']['google']);
-
-        if(array_key_exists($configs['google'])) {
-            $this->googleConfigs = array_merge($configs['google']);
-        }
-
-	    // windows notifications
-        $this->windowsConfigs = array_merge($this->configs['notifications']['windows']);
-
-        if(array_key_exists($configs['windows'])) {
-            $this->windowsConfigs = array_merge($configs['windows']);
+            // windows notifications
+            if(array_key_exists('windows', $configs)) {
+                $this->windowsConfigs = array_merge($this->windowsConfigs, $configs['windows']);
+            }
         }
 
 		// expose API
@@ -108,6 +102,66 @@ class NotificationServices extends APIHelper {
 				$res->send($e);
 			}
 		}, 'save_push_token');
+
+		Router::get('/notifications/:userID', function($req, $res) {
+		    try {
+		        $filters = array();
+
+		        if(array_key_exists('filters', $req->body)) {
+		            $filters = json_decode($req->body['filters'], true);
+		        }
+
+		        $res->send($this->getUserNotifications($req->params['userID'], $filters, $_GET['offset'], $_GET['limit']));
+		    } catch (Exception $e) {
+		        $res->send($e);
+		    }
+		}, 'local_notifications');
+
+		Router::get('/notifications', function($req, $res) {
+		    try {
+		        $filters = array();
+
+		        if(array_key_exists('filters', $req->body)) {
+		            $filters = json_decode($req->body['filters'], true);
+		        }
+
+		        $res->send($this->getNotifications($filters, $_GET['offset'], $_GET['limit']));
+		    } catch (Exception $e) {
+		        $res->send($e);
+		    }
+		}, 'local_notifications');
+
+		Router::get('/notification/:id', function($req, $res) {
+		    try {
+		        $res->send($this->getNotification($req->params['id']));
+		    } catch (Exception $e) {
+		        $res->send($e);
+		    }
+		}, 'local_notifications');
+
+		Router::delete('/notification/:id', function($req, $res) {
+		    try {
+		        $res->send($this->deleteNotification($req->params['id']));
+		    } catch (Exception $e) {
+		        $res->send($e);
+		    }
+		}, 'local_notifications');
+
+		Router::put('/notification', function($req, $res) {
+		    try {
+		        $res->send($this->sendLocalNotification($req->body['user_id'], $req->body['object_id'], $req->body['type'], $req->body['event'], $req->body['payload']));
+		    } catch (Exeception $e) {
+		        $res->send($e);
+		    }
+		}, 'local_notifications');
+
+		Router::post('/notification/:id/read', function($req, $res) {
+		    try {
+		        $res->send($this->updateLocalNotification($req->params['id'], $req->body['read']));
+		    } catch (Exception $e) {
+		        $res->send($e);
+		    }
+		}, 'local_notifications');
 	}
 
 	/**
@@ -355,15 +409,177 @@ class NotificationServices extends APIHelper {
     * @throws Exception
     */
     public function sendNotificationToPlatform($data, $token, $platform) {
-    	if($platform == 'apple') {
-    		return $this->iOS($data, $token);
-    	} else if($platform == 'google') {
-    		return $this->android($data, $token, $data['notification']);
-    	} else if($platform == 'microsoft') {
-    		return $this->WP($data, $token);
+        if(is_array($platform)) {
+            foreach($platform as $value) {
+                return $this->sendNotificationToPlatform($data, $token, $value);
+            }
+        } else {
+            if($platform == 'apple') {
+                return $this->iOS($data, $token);
+            } else if($platform == 'google') {
+                return $this->android($data, $token, $data['notification']);
+            } else if($platform == 'microsoft') {
+                return $this->WP($data, $token);
+            }
+            // TODO: log error
+            throw new Exception('Platform '.$platform.' Not Found',404);
     	}
-    	throw new Exception('Invalid Platform',500);
     }
+
+    // ==
+    /*
+
+    User `Marissa` liked your `post`
+
+    underneath - type = news object_id=34
+    */
+
+    /**
+    * Saves a local notification in the database.
+    *
+    * @param int $userID Target user ID
+    * @param string $payload A notification payload, typically JSON
+    * @param string $type Notification type
+    * @return string
+    * @throws Exception
+    */
+    public function sendLocalNotification($userID, $objectID=0, $type='Row', $event='Event', $payload=null) {
+        try {
+            self::$db->query("INSERT INTO ".NOTIFICATIONS." SET payload=:p, user_id=:uID, object_id=:oID, type=:type", array(':p'=>$payload, ':uID'=>$userID, ':oID'=>$objectID, ':type'=>$type));
+
+            return 'Notification Sent';
+        } catch(Exception $e) {
+            throw $e;
+        }
+    }
+
+    /**
+    * Updates a notifications status, (read)
+    *
+    * @return string
+    * @throws Exception
+    */
+    public function updateLocalNotification($notificationID, $readStatus) {
+        try {
+            self::$db->find('*', array('id'=>$notificationID), NOTIFICATIONS);
+            self::$db->query("UPDATE ".NOTIFICATIONS.' SET `read`=:s WHERE id=:nID', array(':nID'=>$notificationID, ':s'=>$readStatus));
+            return 'Notification Updated';
+        } catch(Exception $e) {
+            throw $e;
+        }
+    }
+
+    /**
+    * Delete a local notification
+    *
+    * @param int $notificationID ID of notification
+    * @return string
+    * @throws Exception
+    */
+    public function deleteNotification($notificationID) {
+        try {
+            self::$db->find('id', array('id'=>$notificationID), NOTIFICATIONS);
+            self::$db->query("UPDATE ".NOTIFICATIONS." SET deleted=1 WHERE id=:id", array(':id'=>$notificationID));
+            return 'Notification Deleted.';
+        } catch(Exception $e) {
+            throw $e;
+        }
+    }
+
+    /**
+    * Gets all notifications
+    *
+    * @param array $filters Query filters (deleted, read)
+    * @param int $offset Pagination Offset
+    * @param int $limit Pagination limit
+    * @return array
+    * @throws Exception
+    */
+    public function getNotifications($filters=array(), $offset=0, $limit=40) {
+        try {
+            $queryString = "SELECT * FROM ".NOTIFICATIONS;
+            $offset=0;
+            $limit=40;
+            $params = array(':offset'=>$offset, ':limit'=>$limit);
+
+            if(!empty($filters)) {
+                $queryString .= ' WHERE ';
+                foreach($filters as $key => $value) {
+                    $queryString .= $key.'=:'.$key;
+                    $params[':'.$key] = $value;
+
+                    // check if end of array
+                    if($value != end($filters)) {
+                        $queryString .= ' AND ';
+                    }
+                }
+            }
+
+            $results = self::$db->query($queryString.' ORDER BY id ASC LIMIT :offset,:limit', $params);
+            $notifications = array();
+
+            while($notification = $results->fetch()) {
+                $notifications[] = $this->getNotificationData($notification);
+            }
+
+            return $notifications;
+        } catch(Exception $e) {
+            throw $e;
+        }
+    }
+
+    /**
+    * Gets all notifications for a user
+    *
+    * @param int $userID ID of user
+    * @param array $filters Query filters (deleted, read)
+    * @param int $offset Pagination Offset
+    * @param int $limit Pagination limit
+    * @return array
+    * @throws Exception
+    */
+    public function getUserNotifications($userID, $filters=array(), $offset=0, $limit=40) {
+        try {
+            return $this->getNotifications(array_merge($filters, array('user_id'=>$userID)), $offset, $limit);
+        } catch (Exception $e) {
+            throw $e;
+        }
+    }
+
+    /**
+    * Gets a notification object by id
+    *
+    * @param int $notificationID ID of notification
+    * @return object
+    * @throws Exception
+    */
+    public function getNotification($notificationID) {
+        try {
+            $notification = self::$db->find('*', array('id'=>$notificationID), NOTIFICATIONS);
+            return $this->getNotificationData($notification);
+        } catch(Exception $e) {
+            throw $e;
+        }
+    }
+
+    /**
+    * Gets and formats data for a notification.
+    *
+    * @param object $notification
+    * @return object
+    * @throws Exception
+    */
+    public function getNotificationData($notification=null) {
+        if(array_key_exists('date', $notification)) {
+            $notification['string_data'] = $this->formatDate($notification['date']);
+        }
+
+        // TODO:
+
+        return $notification;
+    }
+
+    //==
 
     /**
     * Saves a push notification token for a user
