@@ -56,28 +56,31 @@ abstract class APIHandler extends APIHelper {
 	* return void
 	*/
 	private function getAPIEndpoint($format=false) {
-		$endpoint = '/';
+	    if(array_key_exists('base_url', $this->configs)) {
+                $baseURL = $this->configs['base_url'];
+            } else {
+                $baseURL = str_replace('/'.basename($_SERVER['SCRIPT_FILENAME']), '', $_SERVER['SCRIPT_NAME']);
+            }
 
-		if(!empty($this->configs['base_url'])) {
-			$baseURL = $this->configs['base_url'];
-		} else {
-			$baseURL = str_replace('/'.basename($_SERVER['SCRIPT_FILENAME']), '', $_SERVER['SCRIPT_NAME']);
-		}
+            if(array_key_exists('PATH_INFO', $_SERVER)) {
+                $endpoint = $_SERVER['PATH_INFO'];
+            }
 
-		if(!empty($_SERVER['PATH_INFO'])) {
-			$endpoint = $_SERVER['PATH_INFO'];
-		}
+	    // for htaccess rewrite
+	    if(array_key_exists('REQUEST_URI', $_SERVER)) {
+		$endpoint = strtok(str_replace($baseURL, '', $_SERVER['REQUEST_URI']),'?');
+	    }
 
-		// for htaccess rewrite
-		if(!empty($_SERVER['REQUEST_URI'])) {
-			$endpoint = strtok(str_replace($baseURL, '', $_SERVER['REQUEST_URI']),'?');
-		}
+            // set endpoint to '/' if still empty
+	    if(empty($endpoint)) {
+                $endpoint = '/';
+	    }
 
-		if($format) {
-			$endpoint = $this->formatAPIEndpoint($endpoint);
-		}
+	    if($format) {
+		$endpoint = $this->formatAPIEndpoint($endpoint);
+	    }
 
-		return $endpoint;
+	    return $endpoint;
 	}
 
 	/**
