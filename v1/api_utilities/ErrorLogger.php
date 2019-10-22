@@ -95,7 +95,7 @@ class ErrorLogger extends APIHelper {
 				if(self::$db->query("INSERT INTO ".ERRORS." SET code=:code,description=:description,message=:message",array(':code'=>$code,':description'=>$description,':message'=>$message), true)) {
 					return 'Error Logged';
 				} 
-			} catch (Excepetion $e) {
+			} catch (Exception $e) {
 				throw $e;
 			}
 		}
