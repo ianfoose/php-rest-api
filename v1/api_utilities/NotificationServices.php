@@ -150,7 +150,7 @@ class NotificationServices extends APIHelper {
 		Router::put('/notification', function($req, $res) {
 		    try {
 		        $res->send($this->sendLocalNotification($req->body['user_id'], $req->body['object_id'], $req->body['type'], $req->body['event'], $req->body['payload']));
-		    } catch (Exeception $e) {
+		    } catch (Exception $e) {
 		        $res->send($e);
 		    }
 		}, 'local_notifications');
