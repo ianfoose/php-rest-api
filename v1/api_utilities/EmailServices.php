@@ -2,13 +2,12 @@
 /**
 * Email Services Class
 *
-* version 1.0
+* @sversion 1.0
 */
 
 require_once('APIHelper.php');
 
 class EmailServices extends APIHelper {
-
 	/**
 	* Constructor
 	*
@@ -32,7 +31,7 @@ class EmailServices extends APIHelper {
 		// templates
 		Router::get('/email/templates', function($req, $res) {
 			try {
-				$res->send($this->getTemplates($_GET['offset'], $_GET['deleted'], $_GET['limit']));
+				$res->send($this->getTemplates($_GET['deleted'], $this->getQueryDirection(), $this->getQueryOffset(), $this->getQueryLimit()));
 			} catch (Exception $e) {
 				$res->send($e);
 			}
@@ -99,7 +98,7 @@ class EmailServices extends APIHelper {
 		Router::get('/email/subscriptions', function($req, $res) {
 			try {
 			    $filters = array('group'=>$req->body['group'], 'subscriber'=>$req->body['subscriber'],'deleted'=>$req->body['deleted']);
-				$res->send($this->getEmailSubscribers($filters, $_GET['limit'], $_GET['offset']));
+				$res->send($this->getEmailSubscribers($filters, $this->getQueryDirection(), $this->getQueryOffset(), $this->getQueryLimit()));
 			} catch (Exception $e) {
 				$res->send($e);
 			}
@@ -116,7 +115,7 @@ class EmailServices extends APIHelper {
 		Router::get('/email/subscriptions/search/:query', function($req, $res) {
 			try {
 			    $filters = array('group'=>$req->body['group'], 'subscriber'=>$req->body['subscriber'],'deleted'=>$req->body['deleted']);
-				$res->send($this->searchEmails($req->params['query'], $filters, $_GET['offset']));
+				$res->send($this->searchEmails($req->params['query'], $filters, $this->getQueryDirection(), $this->getQueryOffset(), $this->getQueryLimit()));
 			} catch (Exception $e) {
 				$res->send($e);
 			}
@@ -164,6 +163,7 @@ class EmailServices extends APIHelper {
 	/**
 	* Edits a template
 	*
+	* @param int $templateID Template ID
 	* @param string $name Template Name
 	* @param string $template Email Template
 	* @param int $userID User ID
@@ -192,18 +192,18 @@ class EmailServices extends APIHelper {
 	* Gets email template edits
 	*
 	* @param int $templateID Template ID
+    * @param string $order Pagination order
 	* @param int $offset Pagination offset
 	* @param int $limit Pagination Limit
-	* @param string $deleted Deleted Status
 	* @return array
 	* @throws Exception
 	*/
-	public function getEmailTemplateEdits($offset=0, $limit=40) {
+	public function getEmailTemplateEdits($templateID, $order='ASC', $offset=0, $limit=40) {
 		try {
 			$queryString = "SELECT * FROM ".EMAIL_TEMPLATE_EDITS.' WHERE template_id=:tID AND ';
-			$params = array(':limit'=>$limit,':tID'=>$templateID,':offset'=>$offset);
+			$params = array(':tID'=>$templateID, ':order'=>$order, ':offset'=>$offset, ':limit'=>$limit);
 
-			$r = self::$db->query($queryString.' ORDER BY id DESC LIMIT :offset,:limit', $params);
+			$r = self::$db->query($queryString.' ORDER BY id :order LIMIT :offset,:limit', $params);
 			$templates = array();
 
 			while($t = $r->fetch()) {
@@ -258,7 +258,7 @@ class EmailServices extends APIHelper {
 	/**
 	* Gets total number of email templates
 	*
-	* @param string $deleted Deleted Status
+	* @param string $deleted Deleted flag
 	* @return int
 	* @throws Exception
 	*/
@@ -282,18 +282,19 @@ class EmailServices extends APIHelper {
 	/**
 	* Gets templates
 	*
+	* @param string $deleted Deleted flag
+	* @param string $order Pagination order
 	* @param int $offset Pagination offset
-	* @param string $deleted Deleted status
 	* @param int $limit Pagination limit
 	* @return array
 	* @throws Exception
 	*/
-	public function getTemplates($offset=0, $deleted='', $limit=40) {
+	public function getTemplates($deleted='', $order='ASC', $offset=0, $limit=40) {
 		try {
 			$queryString = "SELECT * FROM ".$this->emailTemplates.' WHERE ';
-			$params = array(':deleted'=>$deleted, ':limit'=>$limit, ':offset'=>$offset);
+			$params = array(':deleted'=>$deleted, ':offset'=>$offset, ':limit'=>$limit);
 
-			$result = self::$db->query($queryString.' AND deleted=:deleted ORDER BY id DESC LIMIT :offset,:limit', $params);
+			$result = self::$db->query($queryString." AND deleted=:deleted ORDER BY id $order LIMIT :offset,:limit", $params);
 			$templates = array();
 
 			while($temp = $result->fetch()) {
@@ -384,15 +385,16 @@ class EmailServices extends APIHelper {
 	* Gets email subscribers
 	*
 	* @param array $filters Query filters
+	* @param string $order Pagination order
 	* @param int $offset Pagination offset
 	* @param string $limit Pagination limit
 	* @return array
 	* @throws Exception
 	*/
-	public function getEmailSubscribers($filters=array(), $offset=0, $limit=40) {
+	public function getEmailSubscribers($filters=array(), $order='ASC', $offset=0, $limit=40) {
 		try {
 			$queryString = "SELECT * FROM ".EMAIL_SUBSCRIPTIONS." WHERE ";
-			$params = array(':deleted'=>$deleted, ':limit'=>$limit, ':offset'=>$offset);
+			$params = array(':offset'=>$offset, ':limit'=>$limit);
 
 			 foreach($filters as $key => $value) {
                 if($key == 'group') {
@@ -407,7 +409,7 @@ class EmailServices extends APIHelper {
                 }
             }
 
-        	$r = self::$db->query($queryString.'ORDER BY id DESC LIMIT :offset,:limit', $params);
+        	$r = self::$db->query($queryString."ORDER BY id $order LIMIT :offset,:limit", $params);
 			$subs = array();
 
 			while($sub = $r->fetch()) {
@@ -425,15 +427,16 @@ class EmailServices extends APIHelper {
 	*
 	* @param string $query Search query
 	* @param array $filters Query filters
+	* @param string $order Pagination order
 	* @param int $offset Pagination offset
 	* @param int $limit Pagination limit
 	* @return array
 	* @throws Exception
 	*/
-	public function searchEmails($query, $filters=array(), $offset=0, $limit=40) {
+	public function searchEmails($query, $filters=array(), $order='ASC', $offset=0, $limit=40) {
 		try {
 			$queryString = "SELECT * FROM ".EMAIL_SUBSCRIPTIONS." WHERE email LIKE CONCAT('%',:q,'%')";
-			$params = array(':q'=>$query, ':group'=>$group, ':limit'=>$limit, ':offset'=>$offset);
+			$params = array(':q'=>$query, ':group'=>$group, ':offset'=>$offset, ':limit'=>$limit);
 
             foreach($filters as $key => $value) {
                 if($key == 'group') {
@@ -448,7 +451,7 @@ class EmailServices extends APIHelper {
                 }
             }
 
-			$results = self::$db->query($queryString.' LIMIT :offset,:limit', $params);
+			$results = self::$db->query($queryString." ORDER BY id $order LIMIT :offset,:limit", $params);
 			$emails = array();
 
 			while($email = $results->fetch()) {

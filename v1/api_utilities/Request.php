@@ -2,8 +2,8 @@
 /**
 * Request Class
 *
-* copyright Foose Industries
-* version 1.0
+* @copyright Foose Industries
+* @version 1.0
 */
 
 class Request {

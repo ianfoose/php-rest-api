@@ -1,11 +1,12 @@
 <?php 
-require_once('APIHelper.php');
-
 /**
 * Notification Services Class
 *
-* version 1.0
+* @version 1.0
 */
+
+require_once('APIHelper.php');
+
 class NotificationServices extends APIHelper {
     /**
     * @var array $windowsConfigs Windows notification configs
@@ -20,7 +21,7 @@ class NotificationServices extends APIHelper {
    /**
     * @var array $iosConfigs iOS notification configs
     */
-    private $iosConfigs = array('url'=>'ssl://gateway.sandbox.push.apple.com:2195', 'passpahrase'=>'', 'ssl'=> '');
+    private $iosConfigs = array('url'=>'ssl://gateway.sandbox.push.apple.com:2195', 'passphrase'=>'', 'ssl'=> '');
 
     /**
     * @var array $emailConfigs Email notification configs
@@ -79,7 +80,7 @@ class NotificationServices extends APIHelper {
 
 		Router::get('/push/tokens/user/:id', function($req, $res) {
 			try {
-				$res->send($this->getPushTokenForUser($req->params['id'], $_GET['offset'], $_GET['limit']));
+				$res->send($this->getPushTokenForUser($req->params['id'], $this->getQueryDirection(), $this->getQueryOffset(), $this->getQueryLimit()));
 			} catch (Exception $e) {
 				$res->send($e);
 			}
@@ -111,7 +112,7 @@ class NotificationServices extends APIHelper {
 		            $filters = json_decode($req->body['filters'], true);
 		        }
 
-		        $res->send($this->getUserNotifications($req->params['userID'], $filters, $_GET['offset'], $_GET['limit']));
+		        $res->send($this->getUserNotifications($req->params['userID'], $this->getQueryOffset(), $this->getQueryLimit()));
 		    } catch (Exception $e) {
 		        $res->send($e);
 		    }
@@ -125,7 +126,7 @@ class NotificationServices extends APIHelper {
 		            $filters = json_decode($req->body['filters'], true);
 		        }
 
-		        $res->send($this->getNotifications($filters, $_GET['offset'], $_GET['limit']));
+		        $res->send($this->getNotifications($filters, $this->getQueryDirection(), $this->getQueryOffset(), $this->getQueryLimit()));
 		    } catch (Exception $e) {
 		        $res->send($e);
 		    }
@@ -490,16 +491,15 @@ class NotificationServices extends APIHelper {
     * Gets all notifications
     *
     * @param array $filters Query filters (deleted, read)
+    * @param string $order Pagination order
     * @param int $offset Pagination Offset
     * @param int $limit Pagination limit
     * @return array
     * @throws Exception
     */
-    public function getNotifications($filters=array(), $offset=0, $limit=40) {
+    public function getNotifications($filters=array(), $order='ASC', $offset=0, $limit=40) {
         try {
             $queryString = "SELECT * FROM ".NOTIFICATIONS;
-            $offset=0;
-            $limit=40;
             $params = array(':offset'=>$offset, ':limit'=>$limit);
 
             if(!empty($filters)) {
@@ -515,7 +515,7 @@ class NotificationServices extends APIHelper {
                 }
             }
 
-            $results = self::$db->query($queryString.' ORDER BY id ASC LIMIT :offset,:limit', $params);
+            $results = self::$db->query($queryString." ORDER BY id $order LIMIT :offset,:limit", $params);
             $notifications = array();
 
             while($notification = $results->fetch()) {
@@ -540,7 +540,7 @@ class NotificationServices extends APIHelper {
     */
     public function getUserNotifications($userID, $filters=array(), $offset=0, $limit=40) {
         try {
-            return $this->getNotifications(array_merge($filters, array('user_id'=>$userID)), $offset, $limit);
+            return $this->getNotifications(array_merge($filters, array('user_id'=>$userID)), 'ASC', $offset, $limit);
         } catch (Exception $e) {
             throw $e;
         }

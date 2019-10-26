@@ -2,8 +2,8 @@
 /**
 * DatabaseHelper
 *
-* copyright Ian Foose - Foose Industries
-* version 1.0
+* @copyright Ian Foose - Foose Industries
+* @version 1.0
 */
 
 require_once('APIHelper.php');
@@ -84,11 +84,11 @@ class DatabaseHelper {
 			        	throw new Exception($msg, 500);
 				}
 
-                		$dbURL = $dbConfigs['url'];
+                $dbURL = $dbConfigs['url'];
 
-                		if(!empty($dbConfigs['port']) && $dbConfigs['port'] != 3306) {
-                    			$dbURL .= ':'.$dbConfigs['port'];
-              			}
+                if(!empty($dbConfigs['port']) && $dbConfigs['port'] != 3306) {
+                    $dbURL .= ':'.$dbConfigs['port'];
+              	}
 
 				self::$db = new PDO("mysql:host=".$dbURL.";dbname=".$dbConfigs['db'].";charset=".$dbConfigs['charset'].";",$dbConfigs['user'],$dbConfigs['password']);
 				self::$db->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);

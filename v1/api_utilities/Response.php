@@ -2,35 +2,35 @@
 /**
 * Response Class
 *
-* copyright Foose Industries
-* version 1.0
+* @copyright Foose Industries
+* @version 1.0
 */
 class Response {
     /**
     * @var string $format Output format
     */
     public $format = 'text';
-	
+    
     /**
     * @var int $httpStatus HTTP Status Code
     */
     public $httpStatus = 200;
-	
+    
     /**
     * @var array $errorArray Error Message for HTTP Status code 
     */
     public static $errorArray = array(
         200=>'OK',
-    	201=>'Created',
-    	204=>'No Content',
-    	304=>'Not Modifed',
-    	400=>'Bad Request',
-    	401=>'Unauthorized',
-    	403=>'Forbidden',
-    	404=>'Not Found',
-    	405=>'Method Not Allowed',
-    	409=>'Conflict',
-    	500=>'Internal Server Error'
+        201=>'Created',
+        204=>'No Content',
+        304=>'Not Modifed',
+        400=>'Bad Request',
+        401=>'Unauthorized',
+        403=>'Forbidden',
+        404=>'Not Found',
+        405=>'Method Not Allowed',
+        409=>'Conflict',
+        500=>'Internal Server Error'
     );
 
     /**
@@ -50,7 +50,7 @@ class Response {
             }
         }
     }
-	
+    
     /**
     * Gets a messages for status code
     *
@@ -59,20 +59,8 @@ class Response {
     */
     private function getMessage($status=200) {
         if(isset(self::$errorArray[$status])) {
-		  return self::$errorArray[$status];
-	    } 
-    }
-
-    /**
-    * sends data to the client LEGACY SUPPORT
-    *
-    * @param array $data Data array
-    * @param int $status Response HTTP status
-    * @param array $headers Output headers
-    * @return void
-    */
-    public function output($data=null, $status=200, $headers=null) {
-        $this->send($data, $status, $headers);
+          return self::$errorArray[$status];
+        } 
     }
 
     /**

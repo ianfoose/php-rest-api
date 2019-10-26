@@ -2,8 +2,8 @@
 /**
 * IPServices Class
 *
-* copyright Ian Foose Foose Industries
-* version 1.0
+* @copyright Ian Foose Foose Industries
+* @version 1.0
 */
 
 require_once('APIHelper.php');
@@ -30,7 +30,7 @@ class IPServices extends APIHelper {
 	public function exposeAPI() {
 		Router::get('/traffic', function($req, $res) {
 			try {
-				$res->send($this->getVisitors($_GET['offset'],  $_GET['deleted'], $_GET['limit']));
+				$res->send($this->getVisitors( $_GET['deleted'], $this->getQueryDirection(), $this->getQueryOffset(), $this->getQueryLimit()));
 			} catch (Exception $e) {
 				$res->send($e);
 			}
@@ -54,16 +54,16 @@ class IPServices extends APIHelper {
 
 		Router::get('/traffic/search/:query', function($req, $res) {
 			try {
-				$res->send($this->searchVisitors($req->params['query'], $_GET['offset']));
+				$res->send($this->searchVisitors($req->params['query'], $this->getQueryDirection(), $this->getQueryOffset(), $this->getQueryLimit()));
 			} catch (Exception $e) {
 				$res->send($e);
 			}
 		}, 'traffic');
 
-		// Public endpoint
+		// PUBLIC ENDPOINT
 		Router::put('/visit', function($req, $res) {
 			try {
-				$res->send($this->logVistitor());
+				$res->send($this->logVisitor());
 			} catch (Exception $e) {
 				$res->send($e);
 			}
@@ -78,7 +78,7 @@ class IPServices extends APIHelper {
 	public static function getIP() {
 		$ipRemote = $_SERVER['REMOTE_ADDR'];
 		$httpClientIP = $_SERVER['HTTP_CLIENT_IP'];
-		$httpXforwardedFor = $_SERVER['HTTP_X_FORWARDED_FOR'];
+		$httpXForwardedFor = $_SERVER['HTTP_X_FORWARDED_FOR'];
 		if(!empty($httpClientIP)) {
 			return $httpClientIP;
 		} else if(!empty($httpXForwardedFor)) {
@@ -102,7 +102,7 @@ class IPServices extends APIHelper {
 	* @return string
 	* @throws Exception
 	*/
-	public function logVistitor() {
+	public function logVisitor() {
 		try {
 			$ip = IPServices::getIP();
 			$client = IPServices::getClient();
@@ -132,19 +132,20 @@ class IPServices extends APIHelper {
 	}
 
 	/**
-	* Gets visistors
+	* Gets visitors
 	*
-	* @param int $sinceID Since ID
-	* @param int $maxID Max ID
-	* @param int $limit Limit
+	* @param string $deleted Deleted flag
+    * @param string $order Pagination order
+	* @param int $offset Pagination offset
+	* @param int $limit Pagination Limit
 	* @return array
 	* @throws Exception
 	*/
-	public function getVisitors($offset=0, $deleted='', $limit=40) {
+	public function getVisitors($deleted='', $order='ASC', $offset=0, $limit=40) {
 		try {
-			$params = array(':deleted'=>$deleted, ':limit'=>$limit, ':offset'=>$offset);
+			$params = array(':deleted'=>$deleted, ':offset'=>$offset, ':limit'=>$limit);
 
-			$result = self::$db->query("SELECT * FROM ".TRAFFIC.' WHERE deleted=:deleted ORDER BY id DESC LIMIT :offset,:limit',$params);
+			$result = self::$db->query("SELECT * FROM ".TRAFFIC." WHERE deleted=:deleted ORDER BY id $order LIMIT :offset,:limit",$params);
 			$visits = array();
 
 			while($visit = $result->fetch()) {
@@ -161,13 +162,16 @@ class IPServices extends APIHelper {
 	* Searches site visitors
 	*
 	* @param string $query Search query
-	* @param int $offset Search offset
+	* @param string $order Pagination order
+	* @param int $offset Pagination offset
+	* @param int $limit Pagination limit
 	* @return array
 	* @throws Exception
 	*/
-	public function searchVisitors($query, $offset=0) {
+	public function searchVisitors($query, $order='ASC', $offset=0, $limit=40) {
 		try {
-			$results = self::$db->query("SELECT * FROM ".TRAFFIC." WHERE ip LIKE CONCAT('%',:ip,'%') OR client LIKE CONCAT('%',:c,'%') LIMIT :offset,:limit",array(':ip'=>$query,':c'=>$query,':offset'=>$offset,':limit'=>$this->getRowLimit()));
+			$results = self::$db->query("SELECT * FROM ".TRAFFIC." WHERE ip LIKE CONCAT('%',:ip,'%') OR client LIKE CONCAT('%',:c,'%') ORDER BY id $order LIMIT :offset,:limit",
+			    array(':ip'=>$query, ':c'=>$query, ':offset'=>$offset, ':limit'=>$this->getRowLimit()));
 			
 			$logs = array();
 

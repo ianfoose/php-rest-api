@@ -2,8 +2,8 @@
 /**
 * APIHelper Class
 *
-* copyright Foose Industries
-* version 1.0
+* @copyright Foose Industries
+* @version 1.0
 */
 
 require_once('DatabaseHelper.php');
@@ -17,17 +17,17 @@ require_once('TokenServices.php');
 
 abstract class APIHelper {
 	/**
-	* var array $configs API configs array
+	* @var array $configs API configs array
 	*/
 	public $configs = array();
 
 	/**
-	* var array $tables DB Tables Array
+	* @var array $tables DB Tables Array
 	*/
 	public $tables = array();
 
 	/**
-	* var DataHelper $dataHelper Main DataHelper class for database interface
+	* @var DataHelper $dataHelper Main DataHelper class for database interface
 	*/
 	public static $db;
 	public static $dataHelper; // legacy support
@@ -35,8 +35,8 @@ abstract class APIHelper {
 	/**
 	* Main Constructor
 	*
-	* param string $configs Configs file path
-	* return void
+	* @param string $configs Configs file path
+	* @return void
 	*/
 	public function __construct($configPath='./config.json') {	
 		$this->getConfigs($configPath);
@@ -91,8 +91,8 @@ abstract class APIHelper {
 	/**
 	* Gets configs from file
 	*
-	* return void
-	* throws Exception
+	* @return void
+	* @throws Exception
 	*/
 	private function getConfigs($path) {
 		try {
@@ -124,9 +124,9 @@ abstract class APIHelper {
 	/**
 	* Check if data exists
 	*
-	* param string $data String data
-	* return boolean
-	* throws Exception
+	* @param string $data String data
+	* @return boolean
+	* @throws Exception
 	*/
 	public function checkIfDataExists($data) {
 		$emptyKeys = array();
@@ -148,7 +148,7 @@ abstract class APIHelper {
 		return true;
 	}
 
-	// Auditing
+	// ==================== Auditing ====================
 
 	/**
 	* Logs an audit event for a piece of data, example is editing a user, store the event and who edited
@@ -173,9 +173,9 @@ abstract class APIHelper {
 	/**
 	* Gets an audit log by id
 	*
-	* param int $id Audit Id
-	* return Data Object
-	* throws Exception
+	* @param int $id Audit Id
+	* @return Data Object
+	* @throws Exception
 	*/
 	public function getAuditLog($id, $filter='id', $mapping=null, $formatFunc=null) {
 		try {
@@ -273,23 +273,39 @@ abstract class APIHelper {
 	}
 
 	/**
-	* Gets the row fetch limit, defaults to config value or 40 if missing.
+	* Gets limit parameter from the query string
 	*
 	* @return int
 	*/
-	public function getRowLimit() {
-		if(empty($_GET['limit'])) {
-			return $this->configs['database']['limit'];
-		}
-		return $_GET['limit'];
+	public function getQueryLimit() {
+	    $default_limit = isset($_this->configs['database']['limit'])?$this->configs['database']['limit']:40;
+	    return isset($_GET['limit'])?$_GET['limit']:$default_limit;
+	}
+
+	/**
+	* Gets query order parameter from the query string
+	*
+	* @return string
+	*/
+	public function getQueryDirection() {
+	    return isset($_GET['order'])?$_GET['order']:'ASC';
+	}
+
+	/**
+	* Gets the offset parameter from the query string
+	*
+	* @return int
+	*/
+	public function getQueryOffset() {
+	    return isset($_GET['offset'])?$_GET['offset']:0;
 	}
 
 	/**
 	* Formats date
 	*
-	* param string $date String version of a date
-	* param string $format String date format can be left empty for default conversion
-	* return string
+	* @param string $date String version of a date
+	* @param string $format String date format can be left empty for default conversion
+	* @return string
 	*/
 	public function formatDate($date, $format=null) { 
 		if($format == null) {
@@ -325,8 +341,8 @@ abstract class APIHelper {
 	/**
 	* Formats a database time 
 	*
-	* param string $time Time String
-	* return string
+	* @param string $time Time String
+	* @return string
 	*/
 	public function formatTime($time) {
 		return date('g:i A,', strtotime($time));
@@ -335,9 +351,9 @@ abstract class APIHelper {
 	/**
 	* Formats a number to decimal places with an optional suffix
 	*
-	* param int $number The number being formated
-	* param boolean $suffix Determines wheather to output a suffix
-	* return int | string 
+	* @param int $number The number being formated
+	* @param boolean $suffix Determines wheather to output a suffix
+	* @return int | string 
 	*/
 	public function formatNumber($number, $suffix = true) {
 		$ending = '';
@@ -361,9 +377,9 @@ abstract class APIHelper {
 	/**
 	* Formats file size
 	*
-	* param int $bytes The number of bytes at the lowest level
-	* param boolean $suffix Determines wheater to print the suffix
-	* return string
+	* @param int $bytes The number of bytes at the lowest level
+	* @param boolean $suffix Determines wheater to print the suffix
+	* @return string
 	*/
 	public function formatSize($bytes, $suffix=true) {
 	    if ($bytes == 0) {
@@ -382,8 +398,8 @@ abstract class APIHelper {
 	/**
 	* Turns unicode into an emoji
 	* 
-	* param string $input String to be processed 
-	* return string
+	* @param string $input String to be processed 
+	* @return string
 	*/
 	public function processEmoji($input) {
 		return preg_replace("/\\\\u([0-9A-F]{2,5})/i", "&#x$1;", $input);
@@ -392,10 +408,9 @@ abstract class APIHelper {
 	/**
 	* Zips a file
 	*
-	* param string $name File name 
-	* param array $files Files to zip
-
-	* return void
+	* @param string $name File name 
+	* @param array $files Files to zip
+	* @return void
 	*/
 	public function zipFile($name, $files) {
 		$zip = new ZipArchive();

@@ -1,8 +1,8 @@
 <?php
 /**
-*	Error Logging Class
+* Error Logging Class
 *
-* version 1.0
+* @version 1.0
 */
 
 require_once('APIHelper.php');
@@ -42,7 +42,7 @@ class ErrorLogger extends APIHelper {
 	public function exposeAPI() {
 		Router::get('/errors', function($req, $res) {
 			try {
-			 	$res->send($this->getErrors($_GET['offset'], $_GET['deleted'], $_GET['limit']));
+			 	$res->send($this->getErrors($this->getQueryDirection(), $this->getQueryOffset(), $this->getQueryLimit()));
 			} catch (Exception $e) {
 				$res->send($e);
 			}
@@ -66,7 +66,7 @@ class ErrorLogger extends APIHelper {
 
 		Router::get('/errors/search/:query', function($req, $res) {
 			try {
-				$res->send($this->searchErrors($req->params['q'], $_GET['offset']));
+				$res->send($this->searchErrors($req->params['q'], $this->getQueryDirection(), $this->getQueryOffset(), $this->getQueryLimit()));
 			} catch (Exception $e) {
 				$res->send($e);
 			}
@@ -86,13 +86,15 @@ class ErrorLogger extends APIHelper {
 	*
 	* @param string $errorCode Error Code
 	* @param string $errorDescription Error Description
+	* @param string $message Error Message
 	* @return string
 	* @throws Exception
 	*/
-	public function logError($code,$description='',$message='') {
+	public function logError($code, $description='', $message='') {
 		if($this->configs['log_errors'] == true) {
 			try {
-				if(self::$db->query("INSERT INTO ".ERRORS." SET code=:code,description=:description,message=:message",array(':code'=>$code,':description'=>$description,':message'=>$message), true)) {
+				if(self::$db->query("INSERT INTO ".ERRORS." SET code=:code,description=:description,message=:message",
+				    array(':code'=>$code,':description'=>$description,':message'=>$message), true)) {
 					return 'Error Logged';
 				} 
 			} catch (Exception $e) {
@@ -105,15 +107,18 @@ class ErrorLogger extends APIHelper {
 	* Searches errors
 	*
 	* @param string $q Query string
+	* @param string $order Pagination order
+	* @param int $offset Pagination offset
+	* @param int $limit Pagination limit
 	* @return array
 	* @throws Exception
 	*/
-	public function searchErrors($q, $offset=0) {
+	public function searchErrors($q, $order='ASC', $offset=0, $limit=40) {
 		try {
 			$queryString = "SELECT * FROM ".ERRORS." WHERE code LIKE CONCAT('%',:q,'%') OR message LIKE CONCAT('%',:a,'%') OR description LIKE CONCAT('%',:b,'%')";
-			$params = array(':q'=>$q, ':a'=>$q, ':b'=>$q,':limit'=>$this->getRowLimit(), ':offset'=>$offset);
+			$params = array(':q'=>$q, ':a'=>$q, ':b'=>$q, ':offset'=>$offset, ':limit'=>$this->getRowLimit());
 
-			$result = self::$db->query($queryString.' LIMIT :offset,:limit', $params);
+			$result = self::$db->query($queryString." ORDER BY id $order LIMIT :offset,:limit", $params);
 			$errors = array();
 
 			while($error = $result->fetch()) {
@@ -129,7 +134,7 @@ class ErrorLogger extends APIHelper {
 	/**
 	* Gets the total number of errors
 	*
-	* @param string $deleted Deleted
+	* @param string $deleted Deleted flag
 	* @return int
 	* @throws Exception
 	*/
@@ -154,19 +159,18 @@ class ErrorLogger extends APIHelper {
 	/**
 	* Gets errors
 	*
-	* @param int $startID Start ID
-	* @param int $maxID Max ID
-	* @param int $limit Limit
-	* @param array $filters Filters array
-	* @param string $deleted Deleted
+	* @param string $deleted Deleted flag
+	* @param string $order Pagination order
+    * @param int $offset Pagination offset
+	* @param int $limit Pagination limit
 	* @return array
 	* @throws Exception
 	*/
-	public function getErrors($offset=0, $deleted='', $limit=40) {
+	public function getErrors($deleted='', $order='ASC', $offset=0, $limit=40) {
 		try {
-			$params = array('deleted'=>$deleted, ':limit'=>$limit, ':offset'=>$offset);
+			$params = array('deleted'=>$deleted, ':offset'=>$offset, ':limit'=>$limit);
 
-			$result = self::$db->query("SELECT * FROM ".ERRORS.' WHERE deleted=:deleted ORDER BY id DESC LIMIT :offset,:limit',$params,true);
+			$result = self::$db->query("SELECT * FROM ".ERRORS." WHERE deleted=:deleted ORDER BY id $order LIMIT :offset,:limit",$params,true);
 			$errors = array();
 
 			while($error = $result->fetch()) {
@@ -187,7 +191,7 @@ class ErrorLogger extends APIHelper {
 	* @return string
 	* @throws Exception
 	*/
-	public function deleteError($errorID,$userID) {
+	public function deleteError($errorID, $userID) {
 		try {
 			if(self::$db->find('id', array('id'=>$errorID), ERRORS, 'Error')) {
 				self::$db->query("UPDATE ".ERRORS." SET deleted='1' WHERE id=:id", array(':id'=>$errorID));
@@ -219,8 +223,8 @@ class ErrorLogger extends APIHelper {
 	/**
 	* Get error data
 	*
-	* param Error Object $error 
-	* return Error Object
+	* @param Error Object $error 
+	* @return Error Object
 	*/
 	private function getErrorData($error) {
 		if(!empty($error['date']))

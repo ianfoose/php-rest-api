@@ -2,7 +2,7 @@
 /**
 * Token Services 
 *
-* version 1.0
+* @version 1.0
 */
 
 require_once('APIHelper.php');
@@ -53,6 +53,8 @@ class TokenServices extends APIHelper {
 	* @return void
 	*/
 	public function exposeAPI() {
+		// API Tokens
+
 		Router::post('/token/refresh', function($req, $res) {
 			try {
 				if(!empty($req->body['token'])) {
@@ -66,7 +68,7 @@ class TokenServices extends APIHelper {
 
 		Router::get('/tokens', function($req, $res) {
 			try {
-				$res->send($this->getTokens($_GET['offset'], $_GET['deleted'], $_GET['limit']));
+				$res->send($this->getTokens($_GET['deleted'], $this->getQueryDirection(), $this->getQueryOffset(), $this->getQueryLimit()));
 			} catch (Exception $e) {
 				$res->send($e);
 			}
@@ -87,6 +89,54 @@ class TokenServices extends APIHelper {
 				$res->send($e);
 			}
 		}, 'get_token_unique');
+
+		Router::get('/token/validate', function($req, $res) {
+		    try {
+		        // TODO validate token
+		    } catch(Exception $e) {
+		        $res->send($e);
+		    }
+		});
+
+        // API Keys
+
+		Router::get('/keys', function($req, $res) {
+		    try {
+		        $filters = array();
+
+		        if(array_key_exists('filters', $req->body)) {
+		            $filters = json_decode($req->body['filters'], true);
+		        }
+
+		        $res->send($this->getKeys($filters, $this->getQueryDirection(), $this->getQueryOffset(), $this->getQueryLimit()));
+		    } catch(Exception $e) {
+		        $res->send($e);
+		    }
+		});
+
+		Router::get('/key/:id', function($req, $res) {
+		    try {
+		        $res->send($this->getKey($req->params['id']));
+		    } catch(Exception $e) {
+		        $res->send($e);
+		    }
+		});
+
+		Router::put('/key', function($req, $res) {
+		    try {
+		        $res->send($this->createKey($req->body['name']));
+		    } catch(Exception $e) {
+		        $res->send($e);
+		    }
+		});
+
+		Router::delete('/key/:id', function($req, $res) {
+		    try {
+		        $res->send($this->revokeKey($req->params['id']));
+		    } catch(Exception $e) {
+		        $res->send($e);
+		    }
+		});
 	}
 
 	/**
@@ -183,7 +233,7 @@ class TokenServices extends APIHelper {
 										return array('token'=>$this->createToken($userID,$dToken['data']),'refresh_token'=>$newRToken);
 									}
 									
-								} catch(Excpetion $ex) {
+								} catch(Exception $ex) {
 									throw $ex;
 								}	
 							}
@@ -222,7 +272,7 @@ class TokenServices extends APIHelper {
 		try {
 			$this->save($id,$token);
 			return $token;
-		} catch(Excpetion $e) {
+		} catch(Exception $e) {
 			throw $e;
 		}
 	}
@@ -277,11 +327,11 @@ class TokenServices extends APIHelper {
 					if(self::$db->query("INSERT INTO ".TOKENS." SET token=:token,u_id=:uID,exp_date=:eDate",array(':token'=>$token,':uID'=>$uID,':eDate'=>$dToken['auth']['t']))) {
 						return 'Saved';
 					} 	
-				} catch (Excpetion $e) {
+				} catch (Exception $e) {
 					throw $e;
 				}
 			} else {
-				throw new Excpetion('Auth containes no expiration time', 500);
+				throw new Exception('Auth contains no expiration time', 500);
 			}
 		} catch (Exception $e) {
 			throw $e;
@@ -349,18 +399,17 @@ class TokenServices extends APIHelper {
  	/**
 	* Gets all tokens
 	*
-	* @param int $sinceID Since ID
-	* @param int $maxID Max ID
+    * @param string $deleted Deleted
+	* @param int $offset Pagination offset
 	* @param int $limit Limit
-	* @param string $deleted Deleted
 	* @return array
 	* @throws Exception
 	*/
-	public function getTokens($offset=0, $deleted='', $limit=40) {
+	public function getTokens($deleted='', $order='ASC', $offset=0, $limit=40) {
 		try {
-			$params = array(':limit'=>$limit, ':offset'=>$offset, ':deleted'=>$deleted);
+			$params = array(':deleted'=>$deleted, ':offset'=>$offset, ':limit'=>$limit);
 
-			if($results =self::$db->query("SELECT * FROM ".TOKENS.' WHERE deleted=:deleted ORDER BY id DESC LIMIT :offset,:limit',$params)) {
+			if($results =self::$db->query("SELECT * FROM ".TOKENS." WHERE deleted=:deleted ORDER BY id $order LIMIT :offset,:limit",$params)) {
 				$tokens = array();
 
 				while($token = $results->fetch()) {
@@ -381,11 +430,13 @@ class TokenServices extends APIHelper {
 	* @return Object
 	*/
 	private function getTokenData($token) {
-		if(!empty($token['date'])) 
-			$token['string_date'] = formatDate($token['date']);
+        if(array_key_exists('date', $token)) {
+			$token['date'] = formatDate($token['date']);
+        }
 
-		if(!empty($token['exp_date']))
-			$token['string_exp_date'] = formatDate($token['exp_date']);
+        if(array_key_exists('exp_date', $token)) {
+	        $token['string_exp_date'] = formatDate($token['exp_date']);
+        }
 
 		return $token;
 	}
@@ -400,6 +451,113 @@ class TokenServices extends APIHelper {
 			return true;
 		}
 		return false;
+	}
+
+	// ==================== API Keys ====================
+
+	/**
+	*
+	*/
+	public function validateKey($key) {
+	    try {
+
+	    } catch(Exception $e) {
+	        throw $e;
+	    }
+	}
+
+    /**
+    *
+    *
+    */
+	public function createKey($name) {
+	    try {
+
+
+	        self::$db->query("INSERT INTO ".API_KEYS." SET name=:name,key=:key", array(':name'=>$name, ':key'=>$key, ':expDate'=>$expDate));
+	        return 'API Key Created';
+	    } catch(Exception $e) {
+	        throw $e;
+	    }
+	}
+
+    /**
+    *
+    *
+    */
+	public function revokeKey($key) {
+	    try {
+	        self::$db->find('id', array('key'=>$key), API_KEYS);
+	        self::$db->query('DELETE FROM '.API_KEYS.' WHERE key=:key', array(':key'=>$key));
+	        return 'API Key Deleted';
+	    } catch(Exception $e) {
+	        throw $e;
+	    }
+	}
+
+    /**
+    *
+    *
+    */
+	public function getKeys($filters=array(), $order='ASC', $offset=0, $limit=40) {
+	    try {
+	        $queryString = "SELECT * FROM ".API_KEYS;
+	        $params = array(':offset'=>0, ':limit'=>$limit);
+
+	        if(!empty($filters)) {
+	            foreach($filters as $key => $value) {
+	                $queryString .= $key.'=:'.$key;
+	                $params[':'.$key] = $value;
+
+	                 if($value != end($filters)) {
+                        $queryString .= ' AND ';
+                    }
+	            }
+	        }
+
+	        $results = self::$db->query($queryString." ORDER BY id $order LIMIT :offset,:limit", $params);
+	        $apiKeys = array();
+
+	        while($key = $results->fetch()) {
+	            $apiKeys[] = $this->getKeyData($key);
+	        }
+
+	        return $apiKeys;
+	    } catch(Exception $e) {
+	        throw $e;
+	    }
+	}
+
+    /**
+    *
+    *
+    */
+	public function getKey($id) {
+	    try {
+	        return $this->getKeyData(self::$db->find('*', array('id'=>$id)));
+	    } catch(Exception $e) {
+	        throw $e;
+	    }
+	}
+
+    /**
+    *
+    *
+    */
+	public function getKeyData($key) {
+	    try {
+	        if(array_key_exists('date', $key)) {
+                $key['string_date'] = $this->formatDate($key['date']);
+            }
+
+            if(array_key_exists('exp_date', $key)) {
+			    $key['string_exp_date'] = formatDate($key['exp_date']);
+            }
+
+	        return $key;
+	    } catch(Exception $e) {
+	        throw $e;
+	    }
 	}
 }
 ?>
