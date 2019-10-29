@@ -42,7 +42,7 @@ class ErrorLogger extends APIHelper {
 	public function exposeAPI() {
 		Router::get('/errors', function($req, $res) {
 			try {
-			 	$res->send($this->getErrors($this->getQueryDirection(), $this->getQueryOffset(), $this->getQueryLimit()));
+			 	$res->send($this->getErrors($this->getQueryValue($_GET, DB_DIRECTION, DIRECTION_DEFAULT), $this->getQueryValue($_GET, DB_OFFSET, OFFSET_DEFAULT), $this->getQueryValue($_GET, DB_LIMIT, LIMIT_DEFAULT)));
 			} catch (Exception $e) {
 				$res->send($e);
 			}
@@ -50,7 +50,7 @@ class ErrorLogger extends APIHelper {
 
 		Router::get('/error/:id', function($req, $res) {
 			try {
-				$res->send($this->getError($req['params']['id']));
+				$res->send($this->getError($req->params['id']));
 			} catch (Exception $e) {
 				$res->send($e);
 			}
@@ -66,19 +66,19 @@ class ErrorLogger extends APIHelper {
 
 		Router::get('/errors/search/:query', function($req, $res) {
 			try {
-				$res->send($this->searchErrors($req->params['q'], $this->getQueryDirection(), $this->getQueryOffset(), $this->getQueryLimit()));
+				$res->send($this->searchErrors($req->params['q'], $this->getQueryValue($_GET, DB_DIRECTION, DIRECTION_DEFAULT), $this->getQueryValue($_GET, DB_OFFSET, OFFSET_DEFAULT), $this->getQueryValue($_GET, DB_LIMIT, LIMIT_DEFAULT)));
 			} catch (Exception $e) {
 				$res->send($e);
 			}
 		}, 'errors');
 
-		Router::delete('/error/:id', function($req, $res) {
-			try {
-				$res->send($this->deleteError($req->params['id']));
-			} catch (Exception $e) {
-				$res->send($e);
-			}
-		}, 'errors');
+		// Router::delete('/error/:id', function($req, $res) {
+		// 	try {
+		// 		$res->send($this->deleteError($req->params['id']));
+		// 	} catch (Exception $e) {
+		// 		$res->send($e);
+		// 	}
+		// }, 'errors');
 	}
 
 	/**
@@ -113,12 +113,12 @@ class ErrorLogger extends APIHelper {
 	* @return array
 	* @throws Exception
 	*/
-	public function searchErrors($q, $order='ASC', $offset=0, $limit=40) {
+	public function searchErrors($q, $direction='ASC', $offset=0, $limit=40) {
 		try {
 			$queryString = "SELECT * FROM ".ERRORS." WHERE code LIKE CONCAT('%',:q,'%') OR message LIKE CONCAT('%',:a,'%') OR description LIKE CONCAT('%',:b,'%')";
 			$params = array(':q'=>$q, ':a'=>$q, ':b'=>$q, ':offset'=>$offset, ':limit'=>$this->getRowLimit());
 
-			$result = self::$db->query($queryString." ORDER BY id $order LIMIT :offset,:limit", $params);
+			$result = self::$db->query($queryString." ORDER BY id $direction LIMIT :offset,:limit", $params);
 			$errors = array();
 
 			while($error = $result->fetch()) {
@@ -138,18 +138,9 @@ class ErrorLogger extends APIHelper {
 	* @return int
 	* @throws Exception
 	*/
-	public function getNumberOfErrors($deleted='') {
+	public function getNumberOfErrors() {
 		try {
-			$queryString = "SELECT id FROM ".ERRORS;
-
-			$params = array();
-
-			if($deleted != null) {
-				$queryString .= ' and deleted=:d';
-				$params[':d'] = $deleted;
-			}
-
-			$result = self::$db->query($queryString,$params);
+			$result = self::$db->query("SELECT id FROM ".ERRORS);
 			return $result->rowCount();
 		} catch (Exception $e) {
 			throw $e;
@@ -166,11 +157,10 @@ class ErrorLogger extends APIHelper {
 	* @return array
 	* @throws Exception
 	*/
-	public function getErrors($deleted='', $order='ASC', $offset=0, $limit=40) {
+	public function getErrors($direction='ASC', $offset=0, $limit=40) {
 		try {
-			$params = array('deleted'=>$deleted, ':offset'=>$offset, ':limit'=>$limit);
-
-			$result = self::$db->query("SELECT * FROM ".ERRORS." WHERE deleted=:deleted ORDER BY id $order LIMIT :offset,:limit",$params,true);
+			$params = array(':offset'=>$offset, ':limit'=>$limit);
+			$result = self::$db->query("SELECT * FROM ".ERRORS." ORDER BY id $direction LIMIT :offset,:limit",$params);
 			$errors = array();
 
 			while($error = $result->fetch()) {
@@ -191,16 +181,16 @@ class ErrorLogger extends APIHelper {
 	* @return string
 	* @throws Exception
 	*/
-	public function deleteError($errorID, $userID) {
-		try {
-			if(self::$db->find('id', array('id'=>$errorID), ERRORS, 'Error')) {
-				self::$db->query("UPDATE ".ERRORS." SET deleted='1' WHERE id=:id", array(':id'=>$errorID));
-				return 'Error Deleted';
-			}
-		} catch (Exception $e) {
-			throw $e;
-		}
-	}
+	// public function deleteError($errorID, $userID) {
+	// 	try {
+	// 		if(self::$db->find('id', array('id'=>$errorID), ERRORS, 'Error')) {
+	// 			self::$db->query("UPDATE ".ERRORS." SET deleted='1' WHERE id=:id", array(':id'=>$errorID));
+	// 			return 'Error Deleted';
+	// 		}
+	// 	} catch (Exception $e) {
+	// 		throw $e;
+	// 	}
+	// }
 
 	/**
 	* Gets an error
@@ -212,9 +202,9 @@ class ErrorLogger extends APIHelper {
 	*/
 	public function getError($errorID) {
 		try {
-			if($result = self::$db->find('*', array('id'=>$errorID), ERRORS,'Error')) {
-				return self::getErrorData($result);
-			}
+			$result = self::$db->find('*', array('id'=>$errorID), ERRORS, 'Error', true);
+			return self::getErrorData($result);
+			
 		} catch (Exception $e) {
 			throw $e;
 		}

@@ -7,12 +7,12 @@ class API extends APIHandler {
 		parent::__construct(); 
 
 		Router::all('/',function($req, $res) {
-			$res->send($this->configs['name']);
+			send($this->configs['name']);
 		});
 
-		$this->addAuthHandler('default', function($req, $res) {
+		$this->addAuthHandler(array('default','errors', 'email_templates', 'email_subscriptions'), function($req, $res) {
 			// defaults to `false` for security to disallow any connection
-			return false;
+			return true;
 		});
 	}
 }

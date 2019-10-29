@@ -80,7 +80,7 @@ class NotificationServices extends APIHelper {
 
 		Router::get('/push/tokens/user/:id', function($req, $res) {
 			try {
-				$res->send($this->getPushTokenForUser($req->params['id'], $this->getQueryDirection(), $this->getQueryOffset(), $this->getQueryLimit()));
+				$res->send($this->getPushTokenForUser($req->params['id'], $this->getQueryValue($_GET, DB_DIRECTION, DIRECTION_D), $this->getQueryValue($_GET, DB_OFFSET, OFFSET_DEFAULT), $this->getQueryValue($_GET, DB_LIMIT, LIMIT_DEFAULT)));
 			} catch (Exception $e) {
 				$res->send($e);
 			}
@@ -112,7 +112,7 @@ class NotificationServices extends APIHelper {
 		            $filters = json_decode($req->body['filters'], true);
 		        }
 
-		        $res->send($this->getUserNotifications($req->params['userID'], $this->getQueryOffset(), $this->getQueryLimit()));
+		        $res->send($this->getUserNotifications($req->params['userID'], $this->getQueryValue($_GET, DB_OFFSET, OFFSET_DEFAULT), $this->getQueryValue($_GET, DB_LIMIT, LIMIT_DEFAULT)));
 		    } catch (Exception $e) {
 		        $res->send($e);
 		    }
@@ -126,7 +126,7 @@ class NotificationServices extends APIHelper {
 		            $filters = json_decode($req->body['filters'], true);
 		        }
 
-		        $res->send($this->getNotifications($filters, $this->getQueryDirection(), $this->getQueryOffset(), $this->getQueryLimit()));
+		        $res->send($this->getNotifications($filters, $this->getQueryValue($_GET, DB_DIRECTION, DIRECTION_D), $this->getQueryValue($_GET, DB_OFFSET, OFFSET_DEFAULT), $this->getQueryValue($_GET, DB_LIMIT, LIMIT_DEFAULT)));
 		    } catch (Exception $e) {
 		        $res->send($e);
 		    }
@@ -212,7 +212,7 @@ class NotificationServices extends APIHelper {
 	*
 	* return 
 	*/
-	public function android($data, $reg_id, $notification=false) {
+	public function android($data, $regID, $notification=false) {
 	    $vibrate = 1;
 	    if(!empty($data['vibrate']))
 	    	$vibrate = $data['vibrate'];
@@ -232,7 +232,7 @@ class NotificationServices extends APIHelper {
 	    );
 
 	    $fields = array(
-	        'registration_ids' => array($reg_id),
+	        'registration_ids' => array($regID),
 	        'data' => $message
 	    );
 
@@ -497,7 +497,7 @@ class NotificationServices extends APIHelper {
     * @return array
     * @throws Exception
     */
-    public function getNotifications($filters=array(), $order='ASC', $offset=0, $limit=40) {
+    public function getNotifications($filters=array(), $direction='ASC', $offset=0, $limit=40) {
         try {
             $queryString = "SELECT * FROM ".NOTIFICATIONS;
             $params = array(':offset'=>$offset, ':limit'=>$limit);
@@ -515,7 +515,7 @@ class NotificationServices extends APIHelper {
                 }
             }
 
-            $results = self::$db->query($queryString." ORDER BY id $order LIMIT :offset,:limit", $params);
+            $results = self::$db->query($queryString." ORDER BY id $direction LIMIT :offset,:limit", $params);
             $notifications = array();
 
             while($notification = $results->fetch()) {

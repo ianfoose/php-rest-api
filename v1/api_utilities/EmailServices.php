@@ -31,15 +31,15 @@ class EmailServices extends APIHelper {
 		// templates
 		Router::get('/email/templates', function($req, $res) {
 			try {
-				$res->send($this->getTemplates($_GET['deleted'], $this->getQueryDirection(), $this->getQueryOffset(), $this->getQueryLimit()));
+				$res->send($this->getTemplates($_GET['deleted'], $this->getQueryValue($_GET, DB_DIRECTION, DIRECTION_DEFAULT), $this->getQueryValue($_GET, DB_OFFSET, OFFSET_DEFAULT), $this->getQueryValue($_GET, DB_LIMIT, LIMIT_DEFAULT)));
 			} catch (Exception $e) {
 				$res->send($e);
 			}
 		}, 'email_templates');
 
-		Router::get('/emails/templates/count/number', function($req, $res) {
+		Router::get('/email/templates/count/number', function($req, $res) {
 			try {
-				$res->send($this->getEmailTemplatesTotal($_GET['deleted']));
+				$res->send($this->getTotalEmailTemplates($_GET['deleted']));
 			} catch (Exception $e) {
 				$res->send($e);
 			}
@@ -98,7 +98,7 @@ class EmailServices extends APIHelper {
 		Router::get('/email/subscriptions', function($req, $res) {
 			try {
 			    $filters = array('group'=>$req->body['group'], 'subscriber'=>$req->body['subscriber'],'deleted'=>$req->body['deleted']);
-				$res->send($this->getEmailSubscribers($filters, $this->getQueryDirection(), $this->getQueryOffset(), $this->getQueryLimit()));
+				$res->send($this->getEmailSubscribers($filters, $this->getQueryValue($_GET, DB_DIRECTION, DIRECTION_DEFAULT), $this->getQueryValue($_GET, DB_OFFSET, OFFSET_DEFAULT), $this->getQueryValue($_GET, DB_LIMIT, LIMIT_DEFAULT)));
 			} catch (Exception $e) {
 				$res->send($e);
 			}
@@ -115,7 +115,7 @@ class EmailServices extends APIHelper {
 		Router::get('/email/subscriptions/search/:query', function($req, $res) {
 			try {
 			    $filters = array('group'=>$req->body['group'], 'subscriber'=>$req->body['subscriber'],'deleted'=>$req->body['deleted']);
-				$res->send($this->searchEmails($req->params['query'], $filters, $this->getQueryDirection(), $this->getQueryOffset(), $this->getQueryLimit()));
+				$res->send($this->searchEmails($req->params['query'], $filters, $this->getQueryValue($_GET, DB_DIRECTION, DIRECTION_DEFAULT), $this->getQueryValue($_GET, DB_OFFSET, OFFSET_DEFAULT), $this->getQueryValue($_GET, DB_LIMIT, LIMIT_DEFAULT)));
 			} catch (Exception $e) {
 				$res->send($e);
 			}
@@ -173,14 +173,13 @@ class EmailServices extends APIHelper {
 	public function editTemplate($templateID, $name, $template, $userID) {
 		try {
 			if(self::$db->beginTransaction()) {
-				if($r = self::$db->find('id', array('id'=>$templateID), EMAIL_TEMPLATES,'Email Template')) {
-					self::$db->query("INSERT INTO ".EMAIL_TEMPLATE_EDITS." SET user_id=:uID,body=:b,name=:n,template_id=:tID",array(':tID'=>$r['id'],':n'=>$name,':b'=>$template,':uID'=>$userID));
+				$r = self::$db->find('id', array('id'=>$templateID), EMAIL_TEMPLATES,'Email Template');
+				self::$db->query("INSERT INTO ".EMAIL_TEMPLATE_EDITS." SET user_id=:uID,body=:b,name=:n,template_id=:tID",array(':tID'=>$r['id'],':n'=>$name,':b'=>$template,':uID'=>$userID));
 
-					self::$db->query("UPDATE ".EMAIL_TEMPLATES." SET body=:b,name=:n WHERE id=:tID",array(':tID'=>$templateID,':n'=>$name,':b'=>$template));
+				self::$db->query("UPDATE ".EMAIL_TEMPLATES." SET body=:b,name=:n WHERE id=:tID",array(':tID'=>$templateID,':n'=>$name,':b'=>$template));
 					
-					if(self::$db->commit()) {
-						return 'Template Edited';
-					}
+				if(self::$db->commit()) {
+					return 'Template Edited';
 				}
 			}
 		} catch (Exception $e) {
@@ -198,12 +197,12 @@ class EmailServices extends APIHelper {
 	* @return array
 	* @throws Exception
 	*/
-	public function getEmailTemplateEdits($templateID, $order='ASC', $offset=0, $limit=40) {
+	public function getEmailTemplateEdits($templateID, $direction='ASC', $offset=0, $limit=40) {
 		try {
 			$queryString = "SELECT * FROM ".EMAIL_TEMPLATE_EDITS.' WHERE template_id=:tID AND ';
-			$params = array(':tID'=>$templateID, ':order'=>$order, ':offset'=>$offset, ':limit'=>$limit);
+			$params = array(':tID'=>$templateID, ':offset'=>$offset, ':limit'=>$limit);
 
-			$r = self::$db->query($queryString.' ORDER BY id :order LIMIT :offset,:limit', $params);
+			$r = self::$db->query($queryString." ORDER BY id $direction LIMIT :offset,:limit", $params);
 			$templates = array();
 
 			while($t = $r->fetch()) {
@@ -229,10 +228,9 @@ class EmailServices extends APIHelper {
 	*/
 	public function deleteTemplate($templateID) {
 		try {
-			if(self::$db->find('*', array('id'=>$templateID,'deleted'=>'0'), EMAIL_TEMPLATES,'Email Template')) {
-				self::$db->query("UPDATE ".EMAIL_TEMPLATES." SET deleted='1' WHERE id=:id",array(':id'=>$templateID));
-				return 'Template Deleted';
-			}
+			self::$db->find('*', array('id'=>$templateID,'deleted'=>'0'), EMAIL_TEMPLATES,'Email Template');
+			self::$db->query("UPDATE ".EMAIL_TEMPLATES." SET deleted='1' WHERE id=:id",array(':id'=>$templateID));
+			return 'Template Deleted';
 		} catch (Exception $e) {
 			throw $e;
 		}
@@ -247,9 +245,8 @@ class EmailServices extends APIHelper {
 	*/
 	public function getTemplate($templateID) {
 		try {
-			if($result = self::$db->find('*', array('id'=>$templateID),EMAIL_TEMPLATES,'Email Template')) {
-				return $this->getTemplateData($result);
-			}
+			$result = self::$db->find('*', array('id'=>$templateID),EMAIL_TEMPLATES,'Email Template');
+			return $this->getTemplateData($result);
 		} catch (Exception $e) {
 			throw $e;
 		}
@@ -289,12 +286,12 @@ class EmailServices extends APIHelper {
 	* @return array
 	* @throws Exception
 	*/
-	public function getTemplates($deleted='', $order='ASC', $offset=0, $limit=40) {
+	public function getTemplates($deleted='', $direction='ASC', $offset=0, $limit=40) {
 		try {
-			$queryString = "SELECT * FROM ".$this->emailTemplates.' WHERE ';
+			$queryString = "SELECT * FROM ".EMAIL_TEMPLATES.' WHERE ';
 			$params = array(':deleted'=>$deleted, ':offset'=>$offset, ':limit'=>$limit);
 
-			$result = self::$db->query($queryString." AND deleted=:deleted ORDER BY id $order LIMIT :offset,:limit", $params);
+			$result = self::$db->query($queryString." deleted=:deleted ORDER BY id $direction LIMIT :offset,:limit", $params);
 			$templates = array();
 
 			while($temp = $result->fetch()) {
@@ -391,7 +388,7 @@ class EmailServices extends APIHelper {
 	* @return array
 	* @throws Exception
 	*/
-	public function getEmailSubscribers($filters=array(), $order='ASC', $offset=0, $limit=40) {
+	public function getEmailSubscribers($filters=array(), $direction='ASC', $offset=0, $limit=40) {
 		try {
 			$queryString = "SELECT * FROM ".EMAIL_SUBSCRIPTIONS." WHERE ";
 			$params = array(':offset'=>$offset, ':limit'=>$limit);
@@ -409,7 +406,7 @@ class EmailServices extends APIHelper {
                 }
             }
 
-        	$r = self::$db->query($queryString."ORDER BY id $order LIMIT :offset,:limit", $params);
+        	$r = self::$db->query($queryString."ORDER BY id $direction LIMIT :offset,:limit", $params);
 			$subs = array();
 
 			while($sub = $r->fetch()) {
@@ -433,7 +430,7 @@ class EmailServices extends APIHelper {
 	* @return array
 	* @throws Exception
 	*/
-	public function searchEmails($query, $filters=array(), $order='ASC', $offset=0, $limit=40) {
+	public function searchEmails($query, $filters=array(), $direction='ASC', $offset=0, $limit=40) {
 		try {
 			$queryString = "SELECT * FROM ".EMAIL_SUBSCRIPTIONS." WHERE email LIKE CONCAT('%',:q,'%')";
 			$params = array(':q'=>$query, ':group'=>$group, ':offset'=>$offset, ':limit'=>$limit);
@@ -451,7 +448,7 @@ class EmailServices extends APIHelper {
                 }
             }
 
-			$results = self::$db->query($queryString." ORDER BY id $order LIMIT :offset,:limit", $params);
+			$results = self::$db->query($queryString." ORDER BY id $direction LIMIT :offset,:limit", $params);
 			$emails = array();
 
 			while($email = $results->fetch()) {
@@ -487,7 +484,7 @@ class EmailServices extends APIHelper {
 	*/
 	public function addSubscriber($email, $group='Default') {
 		try {
-			if($r = self::$db->find('id', array('email'=>$email, 'group'=>$group), EMAIL_SUBSCRIPTIONS)) {
+			if($r = self::$db->find('id', array('email'=>$email, 'group'=>$group), EMAIL_SUBSCRIPTIONS, false)) {
 				self::$db->query('UPDATE '.EMAIL_SUBSCRIPTIONS." SET subscriber='1' WHERE id=:id",array(':id'=>$r['id']));
 			} else {
 				self::$db->query("INSERT INTO ".EMAIL_SUBSCRIPTIONS." SET email=:e,group=:group,subscriber=1",array(':e'=>$email, ':group'=>$group));
@@ -508,10 +505,9 @@ class EmailServices extends APIHelper {
 	*/
 	public function removeSubscriber($email, $group='Default') {
 		try {
-			if($r = self::$db->find('id', array('email'=>$email, 'group'=>$group), EMAIL_SUBSCRIPTIONS)) {
-				self::$db->query('UPDATE '.EMAIL_SUBSCRIPTIONS." SET subscriber='0' WHERE id=".$r['id']);
-				return 'Unsubscribed';
-			}
+			$r = self::$db->find('id', array('email'=>$email, 'group'=>$group), EMAIL_SUBSCRIPTIONS);
+			self::$db->query('UPDATE '.EMAIL_SUBSCRIPTIONS." SET subscriber='0' WHERE id=".$r['id']);
+			return 'Unsubscribed';
 		} catch (Exception $e) {
 			throw $e;
 		}

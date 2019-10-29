@@ -98,6 +98,26 @@ abstract class APIHelper {
 		try {
 			$configs = json_decode(file_get_contents($path), true);
 
+			// default environment
+			if(!array_key_exists('environment', $configs)) {
+				$configs['environment'] = 'development';
+			}
+
+			// default development params
+			if(!array_key_exists('development', $configs)) {
+				$configs['development'] = array('errors'=>true, 'warnings'=>false);
+			}
+
+			// default format
+			if(!array_key_exists('format', $configs)) {
+				$configs['format'] = 'json';
+			}
+
+			// default CORS
+			if(!array_key_exists('cors', $configs)) {
+				$configs['cors'] = 'Access-Control-Allow-Origin: *';
+			}
+			
 			// get database configs, development or production
 			if(!empty($configs) && !empty($configs['database'])) {
 				if($configs['environment'] == 'development' && !empty($configs['dev-database'])) {
@@ -110,11 +130,48 @@ abstract class APIHelper {
 					} 
 				} 
 
+				// set some defaults
+				if(!isset($configs['database']['limit'])) {
+					$configs['database']['limit'] = 40;
+				}
+
+				if(!isset($configs['database']['direction'])) {
+					$configs['database']['direction'] = 'ASC';
+				}
+
 				if(!isset($configs['database']['charset'])) {
 					$configs['database']['charset'] = 'utf8';
 				}
 			} 
 	
+			// setup database config constants
+			
+			// db default param values
+			if(!defined(DIRECTION_DEFAULT)) {
+				define(DIRECTION_DEFAULT, $configs['database']['direction']);
+			}
+
+			if(!defined(OFFSET_DEFAULT)) {
+				define(OFFSET_DEFAULT, 0);
+			}
+
+			if(!defined(LIMIT_DEFAULT)) {
+				define(LIMIT_DEFAULT, $configs['database']['limit']);
+			}
+
+			// db default param names
+			if(!defined(DB_DIRECTION)) {
+				define(DB_DIRECTION, 'direction');
+			}
+
+			if(!defined(DB_OFFSET)) {
+				define(DB_OFFSET, 'offset');
+			}
+
+			if(!defined(DB_LIMIT)) {
+				define(DB_LIMIT, 'limit');
+			}
+
 			$this->configs = $configs;
 		} catch(Exception $e) {
 			throw new Exception('Config values not set, maybe the file does not exist?');
@@ -201,7 +258,7 @@ abstract class APIHelper {
 	* @return array
 	* @throws Exception
 	*/
-	public function getAuditLogs($filter=null, $offset=0, $limit=40, $mapping=null, $formatFunc=null) {
+	public function getAuditLogs($filter=null, $direction='ASC', $offset=0, $limit=40, $mapping=null, $formatFunc=null) {
 		try {
 			$query = 'SELECT * FROM '.AUDIT_LOGS;
 			$params = array(':limit'=>$limit,':offset'=>$offset);
@@ -231,7 +288,7 @@ abstract class APIHelper {
 				}
 			}
 
-			$query .= ' LIMIT :offset,:limit';
+			$query .= " ORDER BY id $order LIMIT :offset,:limit";
 
 			$results = self::$db->query($query, $params);
 			$logs = array();
@@ -273,31 +330,18 @@ abstract class APIHelper {
 	}
 
 	/**
-	* Gets limit parameter from the query string
+	* Checks for a value and if null provides a default
 	*
-	* @return int
+	* @param array $parent Parent array, ex $_GET, $_POST
+	* @param string $key Key value to check
+	* @param any $default Default value
+	* @return any
 	*/
-	public function getQueryLimit() {
-	    $default_limit = isset($_this->configs['database']['limit'])?$this->configs['database']['limit']:40;
-	    return isset($_GET['limit'])?$_GET['limit']:$default_limit;
-	}
-
-	/**
-	* Gets query order parameter from the query string
-	*
-	* @return string
-	*/
-	public function getQueryDirection() {
-	    return isset($_GET['order'])?$_GET['order']:'ASC';
-	}
-
-	/**
-	* Gets the offset parameter from the query string
-	*
-	* @return int
-	*/
-	public function getQueryOffset() {
-	    return isset($_GET['offset'])?$_GET['offset']:0;
+	public function getQueryValue($parent, $key, $default='') {
+		if(array_key_exists($key, $parent)) {
+			return isset($parent[$key])?$parent[$key]:$default;
+		}
+		return $default;
 	}
 
 	/**

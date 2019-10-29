@@ -168,7 +168,7 @@ class DatabaseHelper {
 	* @param string $message string Name of item being found, default 'item'
 	* @return Bool
 	*/
-	public function find($keys, $vals, $tbl, $message='item', $output=false) {
+	public function find($keys, $vals, $tbl, $message='Item', $output=true) {
 		if(!is_array($vals))
 			throw new Exception('Values must be in an array', 500);
 
@@ -194,7 +194,7 @@ class DatabaseHelper {
 					return $result->fetch();
 				} else {
 					if($output) {
-						// TODO
+						throw new Exception($message, 404);
 					}
 					return false;
 				}

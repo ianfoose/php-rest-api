@@ -68,7 +68,7 @@ class TokenServices extends APIHelper {
 
 		Router::get('/tokens', function($req, $res) {
 			try {
-				$res->send($this->getTokens($_GET['deleted'], $this->getQueryDirection(), $this->getQueryOffset(), $this->getQueryLimit()));
+				$res->send($this->getTokens($_GET['deleted'], $this->getQueryValue($_GET, DB_DIRECTION, DIRECTION_D), $this->getQueryValue($_GET, DB_OFFSET, OFFSET_DEFAULT), $this->getQueryValue($_GET, DB_LIMIT, LIMIT_DEFAULT)));
 			} catch (Exception $e) {
 				$res->send($e);
 			}
@@ -100,43 +100,43 @@ class TokenServices extends APIHelper {
 
         // API Keys
 
-		Router::get('/keys', function($req, $res) {
-		    try {
-		        $filters = array();
+		// Router::get('/keys', function($req, $res) {
+		//     try {
+		//         $filters = array();
 
-		        if(array_key_exists('filters', $req->body)) {
-		            $filters = json_decode($req->body['filters'], true);
-		        }
+		//         if(array_key_exists('filters', $req->body)) {
+		//             $filters = json_decode($req->body['filters'], true);
+		//         }
 
-		        $res->send($this->getKeys($filters, $this->getQueryDirection(), $this->getQueryOffset(), $this->getQueryLimit()));
-		    } catch(Exception $e) {
-		        $res->send($e);
-		    }
-		});
+		//         $res->send($this->getKeys($filters, $this->getQueryDirection(), $this->getQueryOffset(), $this->getQueryLimit()));
+		//     } catch(Exception $e) {
+		//         $res->send($e);
+		//     }
+		// });
 
-		Router::get('/key/:id', function($req, $res) {
-		    try {
-		        $res->send($this->getKey($req->params['id']));
-		    } catch(Exception $e) {
-		        $res->send($e);
-		    }
-		});
+		// Router::get('/key/:id', function($req, $res) {
+		//     try {
+		//         $res->send($this->getKey($req->params['id']));
+		//     } catch(Exception $e) {
+		//         $res->send($e);
+		//     }
+		// });
 
-		Router::put('/key', function($req, $res) {
-		    try {
-		        $res->send($this->createKey($req->body['name']));
-		    } catch(Exception $e) {
-		        $res->send($e);
-		    }
-		});
+		// Router::put('/key', function($req, $res) {
+		//     try {
+		//         $res->send($this->createKey($req->body['name']));
+		//     } catch(Exception $e) {
+		//         $res->send($e);
+		//     }
+		// });
 
-		Router::delete('/key/:id', function($req, $res) {
-		    try {
-		        $res->send($this->revokeKey($req->params['id']));
-		    } catch(Exception $e) {
-		        $res->send($e);
-		    }
-		});
+		// Router::delete('/key/:id', function($req, $res) {
+		//     try {
+		//         $res->send($this->revokeKey($req->params['id']));
+		//     } catch(Exception $e) {
+		//         $res->send($e);
+		//     }
+		// });
 	}
 
 	/**
@@ -401,15 +401,15 @@ class TokenServices extends APIHelper {
 	*
     * @param string $deleted Deleted
 	* @param int $offset Pagination offset
-	* @param int $limit Limit
+	* @param int $limit Pagination Limit
 	* @return array
 	* @throws Exception
 	*/
-	public function getTokens($deleted='', $order='ASC', $offset=0, $limit=40) {
+	public function getTokens($deleted='', $direction='ASC', $offset=0, $limit=40) {
 		try {
 			$params = array(':deleted'=>$deleted, ':offset'=>$offset, ':limit'=>$limit);
 
-			if($results =self::$db->query("SELECT * FROM ".TOKENS." WHERE deleted=:deleted ORDER BY id $order LIMIT :offset,:limit",$params)) {
+			if($results =self::$db->query("SELECT * FROM ".TOKENS." WHERE deleted=:deleted ORDER BY id $direction LIMIT :offset,:limit",$params)) {
 				$tokens = array();
 
 				while($token = $results->fetch()) {
@@ -456,7 +456,11 @@ class TokenServices extends APIHelper {
 	// ==================== API Keys ====================
 
 	/**
+	* Validates an API Key
 	*
+	* @param string $key Key Value
+	* @return bool
+	* @throws Exception
 	*/
 	public function validateKey($key) {
 	    try {
@@ -467,14 +471,17 @@ class TokenServices extends APIHelper {
 	}
 
     /**
-    *
-    *
+    * Creates an API Key
+	*
+    * @param string $name API Key name
+    * @return string
+    * @throws Exception
     */
-	public function createKey($name) {
+	public function createKey($name, $userID=null) {
 	    try {
 
 
-	        self::$db->query("INSERT INTO ".API_KEYS." SET name=:name,key=:key", array(':name'=>$name, ':key'=>$key, ':expDate'=>$expDate));
+	        self::$db->query("INSERT INTO ".API_KEYS." SET name=:name,key=:key,user_id=:uID", array(':name'=>$name, ':key'=>$key, ':uID'=>$userID, ':expDate'=>$expDate));
 	        return 'API Key Created';
 	    } catch(Exception $e) {
 	        throw $e;
@@ -482,13 +489,16 @@ class TokenServices extends APIHelper {
 	}
 
     /**
+    * Revokes an API Key
     *
-    *
+    * @param int $id API Key ID
+    * @return string
+    * @throws Exception
     */
-	public function revokeKey($key) {
+	public function revokeKey($id) {
 	    try {
 	        self::$db->find('id', array('key'=>$key), API_KEYS);
-	        self::$db->query('DELETE FROM '.API_KEYS.' WHERE key=:key', array(':key'=>$key));
+	        self::$db->query('DELETE FROM '.API_KEYS.' WHERE id=:id', array(':id'=>$id));
 	        return 'API Key Deleted';
 	    } catch(Exception $e) {
 	        throw $e;
@@ -496,8 +506,14 @@ class TokenServices extends APIHelper {
 	}
 
     /**
+    * Gets all API Keys, filterable
     *
-    *
+    * @param
+	* @param
+	* @param
+    * @param
+    * @return array
+    * @throws Exception
     */
 	public function getKeys($filters=array(), $order='ASC', $offset=0, $limit=40) {
 	    try {
@@ -529,8 +545,11 @@ class TokenServices extends APIHelper {
 	}
 
     /**
-    *
-    *
+    * Gets an API Key for a specified ID
+    * 
+    * @param int $id API Key ID
+    * @return object
+    * @throws Exception
     */
 	public function getKey($id) {
 	    try {
@@ -541,8 +560,10 @@ class TokenServices extends APIHelper {
 	}
 
     /**
+    * Gets API Key data
     *
-    *
+    * @return object
+    * @throws Exception
     */
 	public function getKeyData($key) {
 	    try {
