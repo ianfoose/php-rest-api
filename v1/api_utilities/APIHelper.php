@@ -219,7 +219,7 @@ abstract class APIHelper {
 	*/
 	public function saveAuditLog($objectID, $rowID, $objectType, $editingID, $event='changed') {
 		try {
-			if(self::$db->query("INSERT INTO ".AUDIT_LOGS." SET object_id=:id, type=:t, row_id=:rID, event=:e, editor_id=:eID",array(':id'=>$objectID,':t'=>$objectType, ':rID'=>$rowId, ':eID'=>$editingID,':e'=>$event))) {
+			if(self::$db->query("INSERT INTO ".AUDIT_LOGS." SET object_id=:id, type=:t, row_id=:rID, event=:e, editor_id=:eID",array(':id'=>$objectID,':t'=>$objectType, ':rID'=>$rowID, ':eID'=>$editingID,':e'=>$event))) {
 				return 'Audit Saved';
 			}
 		} catch (Exception $e) {
