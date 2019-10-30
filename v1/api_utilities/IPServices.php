@@ -30,7 +30,7 @@ class IPServices extends APIHelper {
 	public function exposeAPI() {
 		Router::get('/traffic', function($req, $res) {
 			try {
-				$res->send($this->getTraffic( $_GET['deleted'], $this->getQueryValue($_GET, DB_DIRECTION, DIRECTION_D), $this->getQueryValue($_GET, DB_OFFSET, OFFSET_DEFAULT), $this->getQueryValue($_GET, DB_LIMIT, LIMIT_DEFAULT)));
+				$res->send($this->getTraffic( $_GET['deleted'], $this->getQueryDirection(), $this->getQueryOffset(), $this->getQueryLimit()));
 			} catch (Exception $e) {
 				$res->send($e);
 			}
@@ -54,7 +54,7 @@ class IPServices extends APIHelper {
 
 		Router::get('/traffic/search/:query', function($req, $res) {
 			try {
-				$res->send($this->searchVisitors($req->params['query'], $this->getQueryValue($_GET, DB_DIRECTION, DIRECTION_D), $this->getQueryValue($_GET, DB_OFFSET, OFFSET_DEFAULT), $this->getQueryValue($_GET, DB_LIMIT, LIMIT_DEFAULT)));
+				$res->send($this->searchVisitors($req->params['query'], $this->getQueryDirection(), $this->getQueryOffset(), $this->getQueryLimit()));
 			} catch (Exception $e) {
 				$res->send($e);
 			}
