@@ -7,7 +7,7 @@ class API extends APIHandler {
 		parent::__construct(); 
 
 		Router::all('/',function($req, $res) {
-			send($this->configs['name']);
+			$res->send($this->configs['name']);
 		});
 
 		$this->addAuthHandler(array('default','errors', 'email_templates', 'email_subscriptions', 'local_notifications'), function($req, $res) {
