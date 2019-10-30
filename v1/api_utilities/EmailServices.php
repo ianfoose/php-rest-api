@@ -31,7 +31,7 @@ class EmailServices extends APIHelper {
 		// templates
 		Router::get('/email/templates', function($req, $res) {
 			try {
-				$res->send($this->getTemplates($_GET['deleted'], $this->getQueryValue($_GET, DB_DIRECTION, DIRECTION_DEFAULT), $this->getQueryValue($_GET, DB_OFFSET, OFFSET_DEFAULT), $this->getQueryValue($_GET, DB_LIMIT, LIMIT_DEFAULT)));
+				$res->send($this->getTemplates($_GET['deleted'], $this->getQueryDirection(), $this->getQueryOffset(), $this->getQueryLimit()));
 			} catch (Exception $e) {
 				$res->send($e);
 			}
@@ -98,7 +98,7 @@ class EmailServices extends APIHelper {
 		Router::get('/email/subscriptions', function($req, $res) {
 			try {
 			    $filters = array('group'=>$req->body['group'], 'subscriber'=>$req->body['subscriber'],'deleted'=>$req->body['deleted']);
-				$res->send($this->getEmailSubscribers($filters, $this->getQueryValue($_GET, DB_DIRECTION, DIRECTION_DEFAULT), $this->getQueryValue($_GET, DB_OFFSET, OFFSET_DEFAULT), $this->getQueryValue($_GET, DB_LIMIT, LIMIT_DEFAULT)));
+				$res->send($this->getEmailSubscribers($filters, $this->getQueryDirection(), $this->getQueryOffset(), $this->getQueryLimit()));
 			} catch (Exception $e) {
 				$res->send($e);
 			}
@@ -115,7 +115,7 @@ class EmailServices extends APIHelper {
 		Router::get('/email/subscriptions/search/:query', function($req, $res) {
 			try {
 			    $filters = array('group'=>$req->body['group'], 'subscriber'=>$req->body['subscriber'],'deleted'=>$req->body['deleted']);
-				$res->send($this->searchEmails($req->params['query'], $filters, $this->getQueryValue($_GET, DB_DIRECTION, DIRECTION_DEFAULT), $this->getQueryValue($_GET, DB_OFFSET, OFFSET_DEFAULT), $this->getQueryValue($_GET, DB_LIMIT, LIMIT_DEFAULT)));
+				$res->send($this->searchEmails($req->params['query'], $filters, $this->getQueryDirection(), $this->getQueryOffset(), $this->getQueryLimit()));
 			} catch (Exception $e) {
 				$res->send($e);
 			}
@@ -129,7 +129,7 @@ class EmailServices extends APIHelper {
 				$res->send($e);
 			}
 		}, 'email_subscriptions');
-	}
+	}	
 
 	/**
 	* Saves an email template
@@ -191,7 +191,7 @@ class EmailServices extends APIHelper {
 	* Gets email template edits
 	*
 	* @param int $templateID Template ID
-    * @param string $order Pagination order
+        * @param string $order Pagination order
 	* @param int $offset Pagination offset
 	* @param int $limit Pagination Limit
 	* @return array
