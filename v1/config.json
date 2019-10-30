@@ -25,7 +25,7 @@
 	"environment": "development",
 	"development": {
 		"errors": true,
-		"warnings": true
+		"warnings": false
 	},
 	"cors": "Access-Control-Allow-Origin: *",
 	"notifications": { },
