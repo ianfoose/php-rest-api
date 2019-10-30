@@ -35,34 +35,34 @@ class NotificationServices extends APIHelper {
     * @param bool $expose Expose API functions
     * @return void
     */
-	public function __construct($configs=array(), $expose=false) {
+    public function __construct($configs=array(), $expose=false) {
 	    if(!empty($configs)) {
-            // email notifications
-            if(array_key_exists('email', $configs)) {
-                $this->emailConfigs = array_merge($this->emailConfigs, $configs['email']);
-            }
+            	// email notifications
+            	if(array_key_exists('email', $configs)) {
+                	$this->emailConfigs = array_merge($this->emailConfigs, $configs['email']);
+            	}
 
-            // iOS notifications
-            if(array_key_exists('ios', $configs)) {
-                $this->iosConfigs = array_merge($this->iosConfigs, $configs['ios']);
-            }
+            	// iOS notifications
+            	if(array_key_exists('ios', $configs)) {
+                	$this->iosConfigs = array_merge($this->iosConfigs, $configs['ios']);
+            	}
 
-            // google notifications
-            if(array_key_exists('google', $configs)) {
-                $this->googleConfigs = array_merge($this->googleConfigs, $configs['google']);
-            }
+            	// google notifications
+            	if(array_key_exists('google', $configs)) {
+                	$this->googleConfigs = array_merge($this->googleConfigs, $configs['google']);
+            	}
 
-            // windows notifications
-            if(array_key_exists('windows', $configs)) {
-                $this->windowsConfigs = array_merge($this->windowsConfigs, $configs['windows']);
-            }
+            	// windows notifications
+            	if(array_key_exists('windows', $configs)) {
+                	$this->windowsConfigs = array_merge($this->windowsConfigs, $configs['windows']);
+            	}
         }
 
-		// expose API
-		if($expose) {
-			$this->exposeAPI();
-		}
+	// expose API
+	if($expose) {
+		$this->exposeAPI();
 	}
+   }
 	
 	/**
 	* Expose functions to API
@@ -80,7 +80,7 @@ class NotificationServices extends APIHelper {
 
 		Router::get('/push/tokens/user/:id', function($req, $res) {
 			try {
-				$res->send($this->getPushTokenForUser($req->params['id'], $this->getQueryValue($_GET, DB_DIRECTION, DIRECTION_D), $this->getQueryValue($_GET, DB_OFFSET, OFFSET_DEFAULT), $this->getQueryValue($_GET, DB_LIMIT, LIMIT_DEFAULT)));
+				$res->send($this->getPushTokenForUser($req->params['id'], $this->getQueryDirection(), $this->getQueryOffset(), $this->getQueryLimit()));
 			} catch (Exception $e) {
 				$res->send($e);
 			}
@@ -112,7 +112,7 @@ class NotificationServices extends APIHelper {
 		            $filters = json_decode($req->body['filters'], true);
 		        }
 
-		        $res->send($this->getUserNotifications($req->params['userID'], $this->getQueryValue($_GET, DB_OFFSET, OFFSET_DEFAULT), $this->getQueryValue($_GET, DB_LIMIT, LIMIT_DEFAULT)));
+		        $res->send($this->getUserNotifications($req->params['userID'], $this->getQueryOffset(), $this->getQueryLimit()));
 		    } catch (Exception $e) {
 		        $res->send($e);
 		    }
@@ -126,7 +126,7 @@ class NotificationServices extends APIHelper {
 		            $filters = json_decode($req->body['filters'], true);
 		        }
 
-		        $res->send($this->getNotifications($filters, $this->getQueryValue($_GET, DB_DIRECTION, DIRECTION_D), $this->getQueryValue($_GET, DB_OFFSET, OFFSET_DEFAULT), $this->getQueryValue($_GET, DB_LIMIT, LIMIT_DEFAULT)));
+		        $res->send($this->getNotifications($filters, $this->getQueryDirection(), $this->getQueryOffset(), $this->getQueryLimit()));
 		    } catch (Exception $e) {
 		        $res->send($e);
 		    }
