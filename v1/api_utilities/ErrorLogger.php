@@ -42,7 +42,7 @@ class ErrorLogger extends APIHelper {
 	public function exposeAPI() {
 		Router::get('/errors', function($req, $res) {
 			try {
-			 	$res->send($this->getErrors($this->getQueryValue($_GET, DB_DIRECTION, DIRECTION_DEFAULT), $this->getQueryValue($_GET, DB_OFFSET, OFFSET_DEFAULT), $this->getQueryValue($_GET, DB_LIMIT, LIMIT_DEFAULT)));
+			 	$res->send($this->getErrors($this->getQueryDirection(), $this->getQueryOffset(), $this->getQueryLimit()));
 			} catch (Exception $e) {
 				$res->send($e);
 			}
@@ -66,7 +66,7 @@ class ErrorLogger extends APIHelper {
 
 		Router::get('/errors/search/:query', function($req, $res) {
 			try {
-				$res->send($this->searchErrors($req->params['q'], $this->getQueryValue($_GET, DB_DIRECTION, DIRECTION_DEFAULT), $this->getQueryValue($_GET, DB_OFFSET, OFFSET_DEFAULT), $this->getQueryValue($_GET, DB_LIMIT, LIMIT_DEFAULT)));
+				$res->send($this->searchErrors($req->params['q'], $this->getQueryDirection(), $this->getQueryOffset(), $this->getQueryLimit()));
 			} catch (Exception $e) {
 				$res->send($e);
 			}
@@ -116,7 +116,7 @@ class ErrorLogger extends APIHelper {
 	public function searchErrors($q, $direction='ASC', $offset=0, $limit=40) {
 		try {
 			$queryString = "SELECT * FROM ".ERRORS." WHERE code LIKE CONCAT('%',:q,'%') OR message LIKE CONCAT('%',:a,'%') OR description LIKE CONCAT('%',:b,'%')";
-			$params = array(':q'=>$q, ':a'=>$q, ':b'=>$q, ':offset'=>$offset, ':limit'=>$this->getRowLimit());
+			$params = array(':q'=>$q, ':a'=>$q, ':b'=>$q, ':offset'=>$offset, ':limit'=>$limit);
 
 			$result = self::$db->query($queryString." ORDER BY id $direction LIMIT :offset,:limit", $params);
 			$errors = array();
