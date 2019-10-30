@@ -27,10 +27,9 @@ abstract class APIHelper {
 	public $tables = array();
 
 	/**
-	* @var DataHelper $dataHelper Main DataHelper class for database interface
+	* @var DataHelper $db Main DataHelper class for database interface
 	*/
 	public static $db;
-	public static $dataHelper; // legacy support
 
 	/**
 	* Main Constructor
@@ -61,7 +60,6 @@ abstract class APIHelper {
 
 		// default global datahelper
 		self::$db = new DatabaseHelper($this->configs);
-		self::$dataHelper = self::$db; // legacy support
 
 		// get tables dynamically from DB
 		try {
@@ -143,34 +141,6 @@ abstract class APIHelper {
 					$configs['database']['charset'] = 'utf8';
 				}
 			} 
-	
-			// setup database config constants
-			
-			// db default param values
-			if(!defined(DIRECTION_DEFAULT)) {
-				define(DIRECTION_DEFAULT, $configs['database']['direction']);
-			}
-
-			if(!defined(OFFSET_DEFAULT)) {
-				define(OFFSET_DEFAULT, 0);
-			}
-
-			if(!defined(LIMIT_DEFAULT)) {
-				define(LIMIT_DEFAULT, $configs['database']['limit']);
-			}
-
-			// db default param names
-			if(!defined(DB_DIRECTION)) {
-				define(DB_DIRECTION, 'direction');
-			}
-
-			if(!defined(DB_OFFSET)) {
-				define(DB_OFFSET, 'offset');
-			}
-
-			if(!defined(DB_LIMIT)) {
-				define(DB_LIMIT, 'limit');
-			}
 
 			$this->configs = $configs;
 		} catch(Exception $e) {
@@ -306,10 +276,10 @@ abstract class APIHelper {
 	/**
 	* Gets an audit logs data and formats it
 	* 
-	* @param
-	* @param
-	* @param
-	* @return 
+	* @param object $log Log Object
+	* @param string $mapping Table name to map log data to, Experimental
+	* @param method $formatFunc Method to format a mapped object, Experimental
+	* @return object
 	* @throws Exception
 	*/
 	private function getAuditLogData($log=null, $mapping=null, $formatFunc=null) {
@@ -342,6 +312,33 @@ abstract class APIHelper {
 			return isset($parent[$key])?$parent[$key]:$default;
 		}
 		return $default;
+	}
+	
+	/**
+    	* Gets the `offset` parameter from a query string, defaults to config value
+    	*
+    	* @return int
+    	*/
+	public function getQueryOffset() {
+        	return $this->getQueryValue($_GET, 'offset', $this->configs['database']['offset']);
+	}
+
+    	/**
+    	* Gets the `limit` parameter from a query string, defaults to config value
+    	*
+    	* @return int
+    	*/
+    	public function getQueryLimit() {
+        	return $this->getQueryValue($_GET, 'limit', $this->configs['database']['limit']);
+    	}
+
+    	/**
+    	* Gets the `direction` parameter from a query string, defaults to config value
+    	*
+    	* @return string
+    	*/
+	public function getQueryDirection() {
+        	return $this->getQueryValue($_GET, 'direction', $this->configs['database']['direction']);
 	}
 
 	/**
