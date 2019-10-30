@@ -205,7 +205,12 @@ abstract class APIHandler extends APIHelper {
 	* @return void
 	*/
 	public function run() {
-		$method = $_SERVER['REQUEST_METHOD'];
+		if(array_key_exists('REQUEST_METHOD', $_SERVER)) {
+		    $method = $_SERVER['REQUEST_METHOD'];
+		} else {
+		    $this->res->send('Every Request must have a method!', 400);
+		}
+		
 		$endpoint = $this->getAPIEndpoint(true);
 
 		$routes = Router::getInstance()->routes;
