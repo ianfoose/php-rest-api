@@ -320,7 +320,7 @@ abstract class APIHelper {
     	* @return int
     	*/
 	public function getQueryOffset() {
-        	return $this->getQueryValue($_GET, 'offset', $this->configs['database']['offset']);
+        	return $this->getQueryValue($_GET, 'offset', 0);
 	}
 
     	/**
