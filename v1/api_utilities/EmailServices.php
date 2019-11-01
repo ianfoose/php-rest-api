@@ -97,7 +97,10 @@ class EmailServices extends APIHelper {
 
 		Router::get('/email/subscriptions', function($req, $res) {
 			try {
-			    $filters = array('group'=>$req->body['group'], 'subscriber'=>$req->body['subscriber'],'deleted'=>$req->body['deleted']);
+			    $filters = array('group'=>$this->getQueryValue($_GET, 'group', ''),
+			        'subscriber'=>$this->getQueryValue($_GET, 'subscriber', ''),
+			        'deleted'=>$this->getQueryValue($_GET, 'deleted', ''));
+
 				$res->send($this->getEmailSubscribers($filters, $this->getQueryDirection(), $this->getQueryOffset(), $this->getQueryLimit()));
 			} catch (Exception $e) {
 				$res->send($e);
@@ -114,7 +117,10 @@ class EmailServices extends APIHelper {
 
 		Router::get('/email/subscriptions/search/:query', function($req, $res) {
 			try {
-			    $filters = array('group'=>$req->body['group'], 'subscriber'=>$req->body['subscriber'],'deleted'=>$req->body['deleted']);
+			    $filters = array('group'=>$this->getQueryValue($_GET, 'group', ''),
+			        'subscriber'=>$this->getQueryValue($_GET, 'subscriber', ''),
+			        'deleted'=>$this->getQueryValue($_GET, 'deleted', ''));
+
 				$res->send($this->searchEmails($req->params['query'], $filters, $this->getQueryDirection(), $this->getQueryOffset(), $this->getQueryLimit()));
 			} catch (Exception $e) {
 				$res->send($e);
@@ -123,7 +129,10 @@ class EmailServices extends APIHelper {
 
 		Router::get('/email/subscriptions/count/number', function($req, $res) {
 			try {
-			    $filters = array('group'=>$req->body['group'], 'subscriber'=>$req->body['subscriber'],'deleted'=>$req->body['deleted']);
+			    $filters = array('group'=>$this->getQueryValue($_GET, 'group', ''),
+			        'subscriber'=>$this->getQueryValue($_GET, 'subscriber', ''),
+			        'deleted'=>$this->getQueryValue($_GET, 'deleted', ''));
+
 				$res->send($this->getEmailSubscriptionTotal($filters));
 			} catch (Exception $e) {
 				$res->send($e);
@@ -358,20 +367,29 @@ class EmailServices extends APIHelper {
 			$queryString = "SELECT id FROM ".EMAIL_SUBSCRIPTIONS;
             $params = array();
 
-            foreach($filters as $key => $value) {
-                if($key == 'group') {
-                    $queryString .= ' AND group=:group';
-                    $params[':group'] = $value;
-                } else if ($key ==' subscriber') {
-                    $queryString .= ' AND subscriber=:subscriber';
-                    $params[':subscriber'] = $value;
-                } else if ($key == 'deleted') {
-                    $queryString .= ' AND deleted=:deleted';
-                    $params[':deleted'] = $value;
+            $filters = array_filter($filters, 'strlen');
+            if(!empty($filters)) {
+                list($end) = array_keys(array_slice($filters, -1, 1, true));
+
+                foreach($filters as $key => $value) {
+                    if(!empty($value)) {
+
+                        if(!strpos($queryString, 'WHERE')) {
+                            $queryString .= ' WHERE ';
+                        }
+
+                        $queryString .= '`'.$key.'`=:'.$key;
+                        $params[':'.$key] = $value;
+
+                        // check if end of array
+                        if($key !== $end) {
+                            $queryString .= ' AND ';
+                        }
+                    }
                 }
             }
 
-			$r = self::$db->query($queryString);
+			$r = self::$db->query($queryString, $params);
 			return $r->rowCount();
 		} catch (Exception $e) {
 			throw $e;
@@ -390,23 +408,32 @@ class EmailServices extends APIHelper {
 	*/
 	public function getEmailSubscribers($filters=array(), $direction='ASC', $offset=0, $limit=40) {
 		try {
-			$queryString = "SELECT * FROM ".EMAIL_SUBSCRIPTIONS." WHERE ";
+			$queryString = "SELECT * FROM ".EMAIL_SUBSCRIPTIONS;
 			$params = array(':offset'=>$offset, ':limit'=>$limit);
 
-			 foreach($filters as $key => $value) {
-                if($key == 'group') {
-                    $queryString .= ' AND group=:group';
-                    $params[':group'] = $value;
-                } else if ($key ==' subscriber') {
-                    $queryString .= ' AND subscriber=:subscriber';
-                    $params[':subscriber'] = $value;
-                } else if ($key == 'deleted') {
-                    $queryString .= ' AND deleted=:deleted';
-                    $params[':deleted'] = $value;
+            $filters = array_filter($filters, 'strlen');
+            if(!empty($filters)) {
+                list($end) = array_keys(array_slice($filters, -1, 1, true));
+
+                foreach($filters as $key => $value) {
+                    if(!empty($value)) {
+
+                        if(!strpos($queryString, 'WHERE')) {
+                            $queryString .= ' WHERE ';
+                        }
+
+                        $queryString .= '`'.$key.'`=:'.$key;
+                        $params[':'.$key] = $value;
+
+                        // check if end of array
+                        if($key !== $end) {
+                            $queryString .= ' AND ';
+                        }
+                    }
                 }
             }
 
-        	$r = self::$db->query($queryString."ORDER BY id $direction LIMIT :offset,:limit", $params);
+        	$r = self::$db->query($queryString." ORDER BY id $direction LIMIT :offset,:limit", $params);
 			$subs = array();
 
 			while($sub = $r->fetch()) {
@@ -435,16 +462,25 @@ class EmailServices extends APIHelper {
 			$queryString = "SELECT * FROM ".EMAIL_SUBSCRIPTIONS." WHERE email LIKE CONCAT('%',:q,'%')";
 			$params = array(':q'=>$query, ':group'=>$group, ':offset'=>$offset, ':limit'=>$limit);
 
-            foreach($filters as $key => $value) {
-                if($key == 'group') {
-                    $queryString .= ' AND group=:group';
-                    $params[':group'] = $value;
-                } else if ($key ==' subscriber') {
-                    $queryString .= ' AND subscriber=:subscriber';
-                    $params[':subscriber'] = $value;
-                } else if ($key == 'deleted') {
-                    $queryString .= ' AND deleted=:deleted';
-                    $params[':deleted'] = $value;
+            $filters = array_filter($filters, 'strlen');
+            if(!empty($filters)) {
+                list($end) = array_keys(array_slice($filters, -1, 1, true));
+
+                foreach($filters as $key => $value) {
+                    if(!empty($value)) {
+
+                        if(!strpos($queryString, 'WHERE')) {
+                            $queryString .= ' WHERE ';
+                        }
+
+                        $queryString .= '`'.$key.'`=:'.$key;
+                        $params[':'.$key] = $value;
+
+                        // check if end of array
+                        if($key !== $end) {
+                            $queryString .= ' AND ';
+                        }
+                    }
                 }
             }
 
