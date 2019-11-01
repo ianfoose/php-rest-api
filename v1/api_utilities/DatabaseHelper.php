@@ -318,13 +318,57 @@ class DatabaseHelper {
 		return array('query'=>$q,'params'=>$params);
 	}
 
-	/**
-	* Parse Partial response string
-	*
-	* @param string $unparsed Input String
-	* @return array
-	*/
-	public function parsePartialResponse($unparsed) {
+	 /**
+    * Creates a query string that implements column filters
+    *
+    * @param array $filters Filters Array
+    * @param string $condition Comparison condition, defaults to AND but can be OR
+    * @return string
+    */
+    public function buildFilterQueryString($filters=array(), $condition='AND') {
+        $filters = array_filter($filters, 'strlen');
+        if(!empty($filters)) {
+            list($end) = array_keys(array_slice($filters, -1, 1, true));
+
+            foreach($filters as $key => $value) {
+                if(!empty($value)) {
+                    $queryString .= '`'.$key.'`=:'.$key;
+
+                    // check if end of array
+                    if($key !== $end) {
+                        $queryString .= " $condition ";
+                    }
+                }
+            }
+        }
+    }
+
+    /**
+    * Creates an array of filter parameters for a query.
+    *
+    * @param array $filters Filters Array
+    * @return array
+    */
+    public function buildFilterQueryParameters($filters=array()) {
+        $params = array();
+
+        $filters = array_filter($filters, 'strlen');
+        if(!empty($filters)) {
+            foreach($filters as $key => $value) {
+                if(!empty($value)) {
+                    $params[':'.$key] = $value;
+                }
+            }
+        }
+    }
+	
+    /**
+    * Parse Partial response string
+    *
+    * @param string $unparsed Input String
+    * @return array
+    */
+    public function parsePartialResponse($unparsed) {
 	    $requestedFields = explode(',', trim($unparsed, '()'));
 	    $models = [];
 	    
