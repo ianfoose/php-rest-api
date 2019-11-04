@@ -201,6 +201,8 @@ abstract class APIHelper {
 	* Gets an audit log by id
 	*
 	* @param int $id Audit Id
+	* @param  string $mapping Table name
+	* @param function $formatFunc Function to format sql row
 	* @return Data Object
 	* @throws Exception
 	*/
@@ -222,45 +224,45 @@ abstract class APIHelper {
 	/**
 	* Gets all audit logs
 	*
-	* @param int $sinceID
-	* @param int $maxID
-	* @param int $limit Fetch Limit
+	* @param string $direction Query Direction
+	* @param int $offset Pagination offset
+	* @param int $limit Pagination Limit
+	* @param  string $mapping Table name
+	* @param function $formatFunc Function to format sql row
 	* @return array
 	* @throws Exception
 	*/
-	public function getAuditLogs($filter=null, $direction='ASC', $offset=0, $limit=40, $mapping=null, $formatFunc=null) {
+	public function getAuditLogs($filters=array(), $direction='ASC', $offset=0, $limit=40, $mapping=null, $formatFunc=null) {
 		try {
-			$query = 'SELECT * FROM '.AUDIT_LOGS;
+			$queryString = 'SELECT * FROM '.AUDIT_LOGS;
 			$params = array(':limit'=>$limit,':offset'=>$offset);
 
-			if($filters != null) {
+			if(!empty($filters)) {
 				$validFilters = array('id','object_id','row_id','editor_id', 'type');
 				
-				if(is_array($filters)) {
-					$query .= ' WHERE ';
+				
+				$query .= ' WHERE ';
 
-					foreach ($filters as $key => $value) {
-						if(!in_array($key, $validFilters)) {
-							throw new Exception('Filter is not valid, acceptable filters are, '.implode(',', $validFilters), 500);
-						}
-
-						$paramID = ':id'.$key;
-
-						$query .= $key.'='.$paramID;
-						$params[$paramID] = $value;	
-
-						if($value != end($filters)) {
-							$query .= ' AND ';
-						}
+				foreach ($filters as $key => $value) {
+					if(!in_array($key, $validFilters)) {
+						throw new Exception('Filter is not valid, acceptable filters are, '.implode(',', $validFilters), 500);
 					}
-				} else {
-					throw new Exception('Filter must be an array', 500);
+
+					$paramID = ':id'.$key;
+
+					$queryString .= $key.'='.$paramID;
+					$params[$paramID] = $value;	
+
+					if($value != end($filters)) {
+						$queryString .= ' AND ';
+					}
 				}
 			}
+			
+			$deleted = $this->getQueryDirection();
+			$queryString .= " ORDER BY id $direction LIMIT :offset,:limit";
 
-			$query .= " ORDER BY id $order LIMIT :offset,:limit";
-
-			$results = self::$db->query($query, $params);
+			$results = self::$db->query($queryString, $params);
 			$logs = array();
 
 			while($log = $results->fetch()) {
