@@ -316,31 +316,51 @@ abstract class APIHelper {
 		return $default;
 	}
 	
-	/**
-    	* Gets the `offset` parameter from a query string, defaults to config value
-    	*
-    	* @return int
-    	*/
+	
+
+    	/**
+        * Gets the `offset` parameter from a query string, defaults to config value
+        *
+        * @return int
+        */
 	public function getQueryOffset() {
-        	return $this->getQueryValue($_GET, 'offset', 0);
+		$offset = $this->getQueryValue($_GET, 'offset', 0);
+
+		if(!is_numeric($offset)) {
+			$offset = 0;
+		}
+
+		return $offset;
 	}
 
-    	/**
-    	* Gets the `limit` parameter from a query string, defaults to config value
-    	*
-    	* @return int
-    	*/
-    	public function getQueryLimit() {
-        	return $this->getQueryValue($_GET, 'limit', $this->configs['database']['limit']);
-    	}
+	/**
+	* Gets the `limit` parameter from a query string, defaults to config value
+	*
+	* @return int
+	*/
+	public function getQueryLimit() {
+		$limit = $this->getQueryValue($_GET, 'limit', $this->configs['database']['limit']);
 
-    	/**
-    	* Gets the `direction` parameter from a query string, defaults to config value
-    	*
-    	* @return string
-    	*/
+		if(!is_numeric($limit)) {
+			$limit = $this->configs['database']['limit'];
+		}
+
+		return $limit;
+	}
+
+	/**
+	* Gets the `direction` parameter from a query string, defaults to config value
+	*
+	* @return string
+	*/
 	public function getQueryDirection() {
-        	return $this->getQueryValue($_GET, 'direction', $this->configs['database']['direction']);
+		$direction = $this->getQueryValue($_GET, 'direction', $this->configs['database']['direction']);
+
+		if($direction != 'ASC' || $direction != 'DESC') {
+			$direction = $this->configs['database']['direction'];
+		}
+
+		return $direction;
 	}
 
 	/**
