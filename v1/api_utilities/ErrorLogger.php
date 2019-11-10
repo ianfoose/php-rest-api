@@ -217,8 +217,9 @@ class ErrorLogger extends APIHelper {
 	* @return Error Object
 	*/
 	private function getErrorData($error) {
-		if(!empty($error['date']))
-			$error['string_date'] = formatDate($error['date']);
+		if(array_key_exists('date', $error)) { 
+			$error['string_date'] = $this->formatDate($error['date']);
+		}
 		
 		return $error;
 	}
