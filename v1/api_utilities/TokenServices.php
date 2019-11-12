@@ -285,20 +285,21 @@ class TokenServices extends APIHelper {
 	* @param bool $refresh Generate a refresh token
 	* @return string
 	*/
-	private function create($id, $data=null, $refresh=false) {
+	private function create($id, $expDate='+5 Minutes', $data=array(), $refresh=false) {
 		if($this->checkTokenConfigs()) {
-			$exp = date('Y:m:d H:i:s', strtotime('+5 Minutes'));
+			$exp = date('Y:m:d H:i:s', strtotime($expDate));
 
 			if($refresh) {
-				$exp = date('Y:m:d H:i:s', strtotime('+1 Hour')); 
+				$exp = date('Y:m:d H:i:s', strtotime($expDate));
 			}
 
 			$sig = sha1($this->prefix.':'.$this->secret.':'.$exp);
 			$dataArray = array('id'=>$id);
 
-			if(!empty($data)) 
+			if(!empty($data)) {
 				$dataArray = array_merge($dataArray, $data);
-
+			}
+				
 			$token = array('data'=>$dataArray,'auth'=>array('s'=>$sig,'t'=>$exp)); 
 
 			$token = json_encode($token);
