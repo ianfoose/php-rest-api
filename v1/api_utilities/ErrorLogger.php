@@ -72,13 +72,13 @@ class ErrorLogger extends APIHelper {
 			}
 		}, 'errors');
 
-		// Router::delete('/error/:id', function($req, $res) {
-		// 	try {
-		// 		$res->send($this->deleteError($req->params['id']));
-		// 	} catch (Exception $e) {
-		// 		$res->send($e);
-		// 	}
-		// }, 'errors');
+		Router::delete('/error/:id', function($req, $res) {
+		 	try {
+		 		$res->send($this->deleteError($req->params['id'], $req->body['soft']));
+		 	} catch (Exception $e) {
+		 		$res->send($e);
+		 	}
+		}, 'errors');
 	}
 
 	/**
@@ -173,24 +173,29 @@ class ErrorLogger extends APIHelper {
 		}
 	}
 
-	/**
+	/**/**
 	* Deletes an error
 	*
 	* @param int $errorID Error ID
-	* @param int $userID User ID
+	* @param bool $soft Soft delete flag
 	* @return string
 	* @throws Exception
 	*/
-	// public function deleteError($errorID, $userID) {
-	// 	try {
-	// 		if(self::$db->find('id', array('id'=>$errorID), ERRORS, 'Error')) {
-	// 			self::$db->query("UPDATE ".ERRORS." SET deleted='1' WHERE id=:id", array(':id'=>$errorID));
-	// 			return 'Error Deleted';
-	// 		}
-	// 	} catch (Exception $e) {
-	// 		throw $e;
-	// 	}
-	// }
+	public function deleteError($errorID, $soft=true) {
+		try {
+			if(self::$db->find('id', array('id'=>$errorID), ERRORS, 'Error')) {
+		        if($soft) {
+                    self::$db->query("UPDATE ".ERRORS." SET deleted='1' WHERE id=:id", array(':id'=>$errorID));
+                    return 'Error Deleted';
+                } else {
+                     self::$db->query("DELETE FROM ".ERRORS." WHERE id=:id", array(':id'=>$errorID));
+                     return 'Error Permanently Deleted';
+                }
+			}
+		} catch (Exception $e) {
+			throw $e;
+		}
+	}
 
 	/**
 	* Gets an error
