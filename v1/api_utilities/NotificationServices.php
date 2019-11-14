@@ -209,8 +209,10 @@ class NotificationServices extends APIHelper {
         /**
 	* Sends Push notification for Android users
 	*
-	*
-	* return 
+	* @param array $data Notifcation payload data
+	* @param string $regID Device registration ID
+	* @param bool $notification Flag for notification, default is false 
+	* return object
 	*/
 	public function android($data, $regID, $notification=false) {
 	    $vibrate = 1;
@@ -249,10 +251,10 @@ class NotificationServices extends APIHelper {
 	    $result = self::useCurl($this->googleConfigs['url'], $headers, json_encode($fields));
 
 	    if($result['success'] == 0 && $result['failure'] == 1 && PUSH_UUID) {
-	    	self::deletePushToken($reg_id);
+	    	self::deletePushToken($regID);
 	    }
 
-	   	return $result;
+	    return $result;
    	}
 	
 	/**
@@ -427,14 +429,6 @@ class NotificationServices extends APIHelper {
     	}
     }
 
-    // ==
-    /*
-
-    User `Marissa` liked your `post`
-
-    underneath - type = news object_id=34
-    */
-
     /**
     * Saves a local notification in the database.
     *
@@ -578,8 +572,6 @@ class NotificationServices extends APIHelper {
 
         return $notification;
     }
-
-    //==
 
     /**
     * Saves a push notification token for a user
