@@ -683,7 +683,7 @@ class NotificationServices extends APIHelper {
                     return true;
                 }
             }
-            throw new Exception('Check email fileds, to, from, subject and body cannot be Null ', 404);
+            throw new Exception('Check email fields, to, from, subject and body cannot be Null ', 404);
         } catch (Exception $e) {
             throw $e;
         }
