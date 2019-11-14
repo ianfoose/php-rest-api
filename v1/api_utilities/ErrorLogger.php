@@ -173,7 +173,7 @@ class ErrorLogger extends APIHelper {
 		}
 	}
 
-	/**/**
+	/**
 	* Deletes an error
 	*
 	* @param int $errorID Error ID
