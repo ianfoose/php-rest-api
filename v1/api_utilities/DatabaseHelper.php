@@ -318,7 +318,7 @@ class DatabaseHelper {
 		return array('query'=>$q,'params'=>$params);
 	}
 
-	 /**
+    /**
     * Creates a query string that implements column filters
     *
     * @param array $filters Filters Array
