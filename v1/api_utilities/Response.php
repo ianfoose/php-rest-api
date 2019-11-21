@@ -82,7 +82,7 @@ class Response {
                 $msg = $data->getMessage().' '; 
             }   
   
-            $msg .= self::$errorArray[$status];
+            $msg .= ','.self::$errorArray[$status];
 
             $data = array('result'=>$msg);
         }
