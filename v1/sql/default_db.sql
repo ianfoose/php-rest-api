@@ -1,4 +1,4 @@
-CREATE TABLE IF NOT EXISTS `audit_logs` (
+CREATE TABLE IF NOT EXISTS `activity` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
   `object_id` int(11) DEFAULT NULL,
   `row_id` int(11) DEFAULT NULL,

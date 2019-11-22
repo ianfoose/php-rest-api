@@ -187,10 +187,10 @@ abstract class APIHelper {
 	* @return String
 	* @throws Exception
 	*/
-	public function saveAuditLog($objectID, $rowID, $objectType, $editingID, $event='changed') {
+	public function saveActivity($objectID, $rowID, $objectType, $editingID, $event='changed') {
 		try {
-			if(self::$db->query("INSERT INTO ".AUDIT_LOGS." SET object_id=:id, type=:t, row_id=:rID, event=:e, editor_id=:eID",array(':id'=>$objectID,':t'=>$objectType, ':rID'=>$rowID, ':eID'=>$editingID,':e'=>$event))) {
-				return 'Audit Saved';
+			if(self::$db->query("INSERT INTO ".ACTIVITY." SET object_id=:id, type=:t, row_id=:rID, event=:e, editor_id=:eID",array(':id'=>$objectID,':t'=>$objectType, ':rID'=>$rowID, ':eID'=>$editingID,':e'=>$event))) {
+				return 'Activity Saved';
 			}
 		} catch (Exception $e) {
 			throw $e;
@@ -198,48 +198,43 @@ abstract class APIHelper {
 	}
 
 	/**
-	* Gets an audit log by id
+	* Get an activity log by id
 	*
-	* @param int $id Audit Id
-	* @param  string $mapping Table name
+	* @param int $id Activity Id
+	* @param string $filter, column filter, default 'id'
+	* @param string $mapping Table name
 	* @param function $formatFunc Function to format sql row
 	* @return Data Object
 	* @throws Exception
 	*/
-	public function getAuditLog($id, $filter='id', $mapping=null, $formatFunc=null) {
+	public function getActivityLog($id, $filters='id', $mapping=null, $formatFunc=null) {
 		try {
 			$filters = array('id','object_id','row_id','editor_id');
 			if(!in_array($filter, $filters)) {
 				throw new Exception('Filter is not valid, acceptable filters are, id,row_id,object_id and editor_id', 500);
 			}
 
-			if($auditLog = self::$db->find('*',array($filter=>$id),AUDIT_LOGS)) {
-				return $this->getAuditLogData($auditLog, $mapping, $formatFunc);
-			}
+			$auditLog = self::$db->find('*', array($filter=>$id), ACTIVITY, 'Activity');
+			return $this->getActivityData($auditLog, $mapping, $formatFunc);
 		} catch (Exception $e) {
 			throw $e;
 		}
 	}
 
 	/**
-	* Gets all audit logs
+	* Gets activity count
 	*
-	* @param string $direction Query Direction
-	* @param int $offset Pagination offset
-	* @param int $limit Pagination Limit
-	* @param  string $mapping Table name
-	* @param function $formatFunc Function to format sql row
-	* @return array
+	* @param array $filters Database filters
+	* @return int
 	* @throws Exception
 	*/
-	public function getAuditLogs($filters=array(), $direction='ASC', $offset=0, $limit=40, $mapping=null, $formatFunc=null) {
+	public function getActivityCount($filters=array()) {
 		try {
-			$queryString = 'SELECT * FROM '.AUDIT_LOGS;
-			$params = array(':limit'=>$limit,':offset'=>$offset);
+			$queryString = 'SELECT * FROM '.ACTIVITY;
+			$params = array();
 
 			if(!empty($filters)) {
 				$validFilters = array('id','object_id','row_id','editor_id', 'type');
-				
 				
 				$query .= ' WHERE ';
 
@@ -259,14 +254,58 @@ abstract class APIHelper {
 				}
 			}
 			
-			$deleted = $this->getQueryDirection();
+			$result = self::$db->query($queryString, $params);
+			return $result->rowCount();
+		} catch(Exception $e) {
+			throw $e;
+		}
+	}
+
+	/**
+	* Gets all activity logs
+	*
+	* @param array $filters Database filters
+	* @param string $direction Query Direction
+	* @param int $offset Pagination offset
+	* @param int $limit Pagination Limit
+	* @param string $mapping Table name
+	* @param function $formatFunc Function to format sql row
+	* @return array
+	* @throws Exception
+	*/
+	public function getActivity($filters=array(), $direction='ASC', $offset=0, $limit=40, $mapping=null, $formatFunc=null) {
+		try {
+			$queryString = 'SELECT * FROM '.ACTIVITY;
+			$params = array(':limit'=>$limit,':offset'=>$offset);
+
+			if(!empty($filters)) {
+				$validFilters = array('id','object_id','row_id','editor_id', 'type');
+				
+				$query .= ' WHERE ';
+
+				foreach ($filters as $key => $value) {
+					if(!in_array($key, $validFilters)) {
+						throw new Exception('Filter is not valid, acceptable filters are, '.implode(',', $validFilters), 500);
+					}
+
+					$paramID = ':id'.$key;
+
+					$queryString .= $key.'='.$paramID;
+					$params[$paramID] = $value;	
+
+					if($value != end($filters)) {
+						$queryString .= ' AND ';
+					}
+				}
+			}
+			
 			$queryString .= " ORDER BY id $direction LIMIT :offset,:limit";
 
 			$results = self::$db->query($queryString, $params);
 			$logs = array();
 
 			while($log = $results->fetch()) {
-				$logs[] = $this->getAuditLogData($log, $mapping, $formatFunc);
+				$logs[] = $this->getActivityData($log, $mapping, $formatFunc);
 			}
 
 			return $logs;
@@ -276,7 +315,7 @@ abstract class APIHelper {
 	}
 
 	/**
-	* Gets an audit logs data and formats it
+	* Gets an activity logs data and formats it
 	* 
 	* @param object $log Log Object
 	* @param string $mapping Table name to map log data to, Experimental
@@ -284,9 +323,10 @@ abstract class APIHelper {
 	* @return object
 	* @throws Exception
 	*/
-	private function getAuditLogData($log=null, $mapping=null, $formatFunc=null) {
-		if(isset($log['date']))
+	private function getActivityData($log=null, $mapping=null, $formatFunc=null) {
+		if(isset($log['date'])) {
 			$log['string_date'] = $this->formatDate($log['date']);
+		}
 
 		// if(!empty($mapping)) {
 		// 	if($object = self::$db->find('*',array('id'=>$log['row_id']), $mapping)) {
@@ -316,13 +356,11 @@ abstract class APIHelper {
 		return $default;
 	}
 	
-	
-
-    	/**
-        * Gets the `offset` parameter from a query string, defaults to config value
-        *
-        * @return int
-        */
+    /**
+    * Gets the `offset` parameter from a query string, defaults to config value
+    *
+    * @return int
+    */
 	public function getQueryOffset() {
 		$offset = $this->getQueryValue($_GET, 'offset', 0);
 
