@@ -343,7 +343,7 @@ class DatabaseHelper {
                         $queryString .= " $condition ";
                     }
                 }
-		throw nex Exception("Filter value for key, $key, cannot be empt", 404);
+		throw new Exception("Filter value for key, $key, cannot be empt", 404);
             }
         }
     }
@@ -367,7 +367,7 @@ class DatabaseHelper {
                 if(!empty($value)) {
                     $params[':'.$key] = $value;
                 }
-		throw nex Exception("Filter value for key, $key, cannot be empt", 404);
+		throw new Exception("Filter value for key, $key, cannot be empt", 404);
             }
         }
     }
