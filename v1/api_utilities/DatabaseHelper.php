@@ -325,13 +325,17 @@ class DatabaseHelper {
     * @param string $condition Comparison condition, defaults to AND but can be OR
     * @return string
     */
-    public function buildFilterQueryString($filters=array(), $condition='AND') {
+    public function buildFilterQueryString($filters=array(), $validFilters=array(), $condition='AND') {
         $filters = array_filter($filters, 'strlen');
         if(!empty($filters)) {
             list($end) = array_keys(array_slice($filters, -1, 1, true));
 
             foreach($filters as $key => $value) {
-                if(!empty($value)) {
+		if(!empty($validFilters) && in_array($key, $filters)) {
+		    throw new Exception("Filter key, $key, is not in ", 404);
+		}
+                    
+		if(!empty($value)) {
                     $queryString .= '`'.$key.'`=:'.$key;
 
                     // check if end of array
@@ -339,25 +343,31 @@ class DatabaseHelper {
                         $queryString .= " $condition ";
                     }
                 }
+		throw nex Exception("Filter value for key, $key, cannot be empt", 404);
             }
         }
     }
-
+	
     /**
     * Creates an array of filter parameters for a query.
     *
     * @param array $filters Filters Array
     * @return array
     */
-    public function buildFilterQueryParameters($filters=array()) {
+    public function buildFilterQueryParameters($filters=array(), $validFilters=array()) {
         $params = array();
 
         $filters = array_filter($filters, 'strlen');
         if(!empty($filters)) {
             foreach($filters as $key => $value) {
+		if(!empty($validFilters) && in_array($key, $filters)) {
+		    throw new Exception("Filter key, $key, is not in ", 404);
+		}
+		    
                 if(!empty($value)) {
                     $params[':'.$key] = $value;
                 }
+		throw nex Exception("Filter value for key, $key, cannot be empt", 404);
             }
         }
     }
