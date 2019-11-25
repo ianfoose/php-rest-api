@@ -332,7 +332,8 @@ class DatabaseHelper {
 
             foreach($filters as $key => $value) {
 		if(!empty($validFilters) && in_array($key, $filters)) {
-		    throw new Exception("Filter key, $key, is not in ", 404);
+		    $validFiltersString = implode(',', $validFilters);
+        	    throw new Exception("Filter key, $key, is not in valid filters list, $validFiltersString", 404);
 		}
                     
 		if(!empty($value)) {
@@ -343,7 +344,7 @@ class DatabaseHelper {
                         $queryString .= " $condition ";
                     }
                 }
-		throw new Exception("Filter value for key, $key, cannot be empt", 404);
+		throw new Exception("Filter value for key, $key, cannot be empty", 404);
             }
         }
     }
@@ -361,13 +362,14 @@ class DatabaseHelper {
         if(!empty($filters)) {
             foreach($filters as $key => $value) {
 		if(!empty($validFilters) && in_array($key, $filters)) {
-		    throw new Exception("Filter key, $key, is not in ", 404);
+		    $validFiltersString = implode(',', $validFilters);
+        	    throw new Exception("Filter key, $key, is not in valid filters list, $validFiltersString", 404);
 		}
 		    
                 if(!empty($value)) {
                     $params[':'.$key] = $value;
                 }
-		throw new Exception("Filter value for key, $key, cannot be empt", 404);
+		throw new Exception("Filter value for key, $key, cannot be empty", 404);
             }
         }
     }
