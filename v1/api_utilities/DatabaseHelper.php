@@ -137,18 +137,8 @@ class DatabaseHelper {
 					$errorMessage = 'Query Error: '.$e->getMessage().' ';	
 				}
 				
-				// log error
-				try {
-					$errorLogger = new ErrorLogger();	
-					$errorLogger->logError(500,$errorMessage);
-				} catch(Exception $logError) {
-					if($this->configs['environment'] == 'development') {
-						$errorMessage .= 'Log Error: '.$logError->getMessage().' ';	
-					}
+				error_log('Query Error: '.$e->getMessage().' ');
 					
-					throw new Exception($errorMessage, 500);
-				}
-
 				if($this->transaction) { // auto rollback
 	               	self::rollback();
 	            }
