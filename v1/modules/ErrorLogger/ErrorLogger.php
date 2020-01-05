@@ -5,7 +5,7 @@
 * @version 1.0
 */
 
-require_once('APIHelper.php');
+require_once(dirname(dirname(dirname(__FILE__))).'/api_utilities/APIHelper.php');
 
 class ErrorLogger extends APIHelper {
 	/**
@@ -41,43 +41,23 @@ class ErrorLogger extends APIHelper {
 	*/
 	public function exposeAPI() {
 		Router::get('/errors', function($req, $res) {
-			try {
-			 	$res->send($this->getErrors($this->getQueryDirection(), $this->getQueryOffset(), $this->getQueryLimit()));
-			} catch (Exception $e) {
-				$res->send($e);
-			}
+			$res->send($this->getErrors($this->getQueryDirection(), $this->getQueryOffset(), $this->getQueryLimit()));
 		}, 'errors');
 
 		Router::get('/error/:id', function($req, $res) {
-			try {
-				$res->send($this->getError($req->params['id']));
-			} catch (Exception $e) {
-				$res->send($e);
-			}
+			$res->send($this->getError($req->params['id']));
 		}, 'errors');
 
 		Router::get('/errors/count/number', function($req, $res) {
-			try {
-				$res->send($this->getNumberOfErrors($_GET['deleted']));
-			} catch (Exception $e) {
-				$res->send($e);
-			}
+			$res->send($this->getNumberOfErrors($_GET['deleted']));
 		}, 'errors');
 
 		Router::get('/errors/search/:query', function($req, $res) {
-			try {
-				$res->send($this->searchErrors($req->params['q'], $this->getQueryDirection(), $this->getQueryOffset(), $this->getQueryLimit()));
-			} catch (Exception $e) {
-				$res->send($e);
-			}
+			$res->send($this->searchErrors($req->params['q'], $this->getQueryDirection(), $this->getQueryOffset(), $this->getQueryLimit()));
 		}, 'errors');
 
 		Router::delete('/error/:id', function($req, $res) {
-		 	try {
-		 		$res->send($this->deleteError($req->params['id'], $req->body['soft']));
-		 	} catch (Exception $e) {
-		 		$res->send($e);
-		 	}
+			$res->send($this->deleteError($req->params['id'], $req->body['soft']));
 		}, 'errors');
 	}
 

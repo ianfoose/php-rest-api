@@ -5,7 +5,7 @@
 * @version 1.0
 */
 
-require_once('APIHelper.php');
+require_once(dirname(dirname(dirname(__FILE__))).'/api_utilities/APIHelper.php');
 
 class NotificationServices extends APIHelper {
     /**
@@ -71,97 +71,57 @@ class NotificationServices extends APIHelper {
 	*/
 	private function exposeAPI() {
 		Router::post('/notification/send', function($req, $res) {
-			try {
-				$this->sendNotification($req->body['payload'], $req->body['users'], $req->body['platforms']);
-			} catch (Exception $e) {
-				$res->send($e);
-			}
+			$this->sendNotification($req->body['payload'], $req->body['users'], $req->body['platforms']);
 		});
 
 		Router::get('/push/tokens/user/:id', function($req, $res) {
-			try {
-				$res->send($this->getPushTokenForUser($req->params['id'], $this->getQueryDirection(), $this->getQueryOffset(), $this->getQueryLimit()));
-			} catch (Exception $e) {
-				$res->send($e);
-			}
+			$res->send($this->getPushTokenForUser($req->params['id'], $this->getQueryDirection(), $this->getQueryOffset(), $this->getQueryLimit()));
 		}, 'get_push_token_user');
 
 		Router::delete('/push/token/:token', function($req, $res) {
-			try {
-				$res->send($this->deletePushToken($req->params['token'], $req->body['user_id']));
-			} catch (Exception $e) {
-				$res->send($e);
-			}
+			$res->send($this->deletePushToken($req->params['token'], $req->body['user_id']));
 		}, 'delete_push_token');
 
 		Router::put('/push/token', function($req, $res) {
-			try {
-				if($this->checkIfDataExists(array('token'=>$req->body['token'], 'user_id'=>$req->body['user_id'], 'platform'=>$req->body['platform']))) {
-					$res->send($this->savePushToken($req->body['user_id'], $req->body['token'], $req->body['platform']));
-				}
-			} catch (Exception $e) {
-				$res->send($e);
+			if($this->checkIfDataExists(array('token'=>$req->body['token'], 'user_id'=>$req->body['user_id'], 'platform'=>$req->body['platform']))) {
+				$res->send($this->savePushToken($req->body['user_id'], $req->body['token'], $req->body['platform']));
 			}
 		}, 'save_push_token');
 
 		Router::get('/notifications/:userID', function($req, $res) {
-		    try {
-		        $filters = array();
+			$filters = array();
 
-		        if(array_key_exists('filters', $req->body)) {
-		            $filters = json_decode($req->body['filters'], true);
-		        }
+			if(array_key_exists('filters', $req->body)) {
+				$filters = json_decode($req->body['filters'], true);
+			}
 
-		        $res->send($this->getUserNotifications($req->params['userID'], $this->getQueryOffset(), $this->getQueryLimit()));
-		    } catch (Exception $e) {
-		        $res->send($e);
-		    }
+			$res->send($this->getUserNotifications($req->params['userID'], $this->getQueryOffset(), $this->getQueryLimit()));
 		}, 'local_notifications');
 
 		Router::get('/notifications', function($req, $res) {
-		    try {
-		        $filters = array();
+			$filters = array();
 
-		        if(array_key_exists('filters', $req->body)) {
-		            $filters = json_decode($req->body['filters'], true);
-		        }
+			if(array_key_exists('filters', $req->body)) {
+				$filters = json_decode($req->body['filters'], true);
+			}
 
-		        $res->send($this->getNotifications($filters, $this->getQueryDirection(), $this->getQueryOffset(), $this->getQueryLimit()));
-		    } catch (Exception $e) {
-		        $res->send($e);
-		    }
+			$res->send($this->getNotifications($filters, $this->getQueryDirection(), $this->getQueryOffset(), $this->getQueryLimit()));
 		}, 'local_notifications');
 
 		Router::get('/notification/:id', function($req, $res) {
-		    try {
-		        $res->send($this->getNotification($req->params['id']));
-		    } catch (Exception $e) {
-		        $res->send($e);
-		    }
+			$res->send($this->getNotification($req->params['id']));
 		}, 'local_notifications');
 
 		Router::delete('/notification/:id', function($req, $res) {
-		    try {
-		        $res->send($this->deleteNotification($req->params['id']));
-		    } catch (Exception $e) {
-		        $res->send($e);
-		    }
+			$res->send($this->deleteNotification($req->params['id']));
 		}, 'local_notifications');
 
 		Router::put('/notification', function($req, $res) {
-		    try {
-		        $res->send($this->sendLocalNotification($req->body['user_id'], $req->body['object_id'], $req->body['type'], $req->body['event'], $req->body['payload']));
-		    } catch (Exception $e) {
-		        $res->send($e);
-		    }
+			$res->send($this->sendLocalNotification($req->body['user_id'], $req->body['object_id'], $req->body['type'], $req->body['event'], $req->body['payload']));
 		}, 'local_notifications');
 
 		Router::post('/notification/:id/read', function($req, $res) {
-		    try {
-		        $res->send($this->updateLocalNotification($req->params['id'], $req->body['read']));
-		    } catch (Exception $e) {
-		        $res->send($e);
-		    }
+			$res->send($this->updateLocalNotification($req->params['id'], $req->body['read']));
 		}, 'local_notifications');
 	}
 

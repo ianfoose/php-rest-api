@@ -9,11 +9,6 @@
 require_once('DatabaseHelper.php');
 require_once('Response.php');
 require_once('Request.php');
-require_once('ErrorLogger.php');
-require_once('EmailServices.php');
-require_once('IPServices.php');
-require_once('NotificationServices.php');
-require_once('TokenServices.php');
 
 abstract class APIHelper {
 	/**
@@ -37,7 +32,14 @@ abstract class APIHelper {
 	* @param string $configs Configs file path
 	* @return void
 	*/
-	public function __construct($configPath='./config.json') {	
+	public function __construct($configPath='./config.json', $connectToDB=true) {	
+		// include modules
+		foreach (glob(dirname(dirname(__FILE__)).'/modules/*') as $dirname) {
+    		$dirname = basename($dirname);
+    		
+    		require_once(dirname(dirname(__FILE__))."/modules/$dirname/$dirname.php");
+		}
+
 		$this->getConfigs($configPath);
 
 		// set timezone
@@ -58,31 +60,33 @@ abstract class APIHelper {
 
 		ini_set('display_errors', $errorReporting); 
 
-		// default global datahelper
-		self::$db = new DatabaseHelper($this->configs);
+		if($connectToDB) {
+			// default global datahelper
+			self::$db = new DatabaseHelper($this->configs);
 
-		// get tables dynamically from DB
-		try {
-			if(!empty($this->configs['database']['db']) && self::$db->connect()) {
-				if($results = self::$db->query("SELECT table_name AS table_name FROM information_schema.tables where table_schema='".$this->configs['database']['db']."'")) {
-					
-					while($tblName = $results->fetch()) {
-						$tblName = $tblName['table_name'];
+			// get tables dynamically from DB
+			try {
+				if(!empty($this->configs['database']['db']) && self::$db->connect()) {
+					if($results = self::$db->query("SELECT table_name FROM information_schema.tables where table_schema='".$this->configs['database']['db']."'")) {
+						
+						while($tblName = $results->fetch()) {
+							$tblName = $tblName['table_name'];
 
-						// check for table exceptions
-						if(array_key_exists('table_exceptions', $this->configs) && in_array($tblName, $this->configs['table_exceptions'])) { 
-							continue;
+							// check for table exceptions
+							if(array_key_exists('table_exceptions', $this->configs) && in_array($tblName, $this->configs['table_exceptions'])) { 
+								continue;
+							}
+
+							$this->tables[] = $tblName;
+
+							if(!defined(strtoupper($tblName)))
+								define(strtoupper($tblName), $tblName);
 						}
-
-						$this->tables[] = $tblName;
-
-						if(!defined(strtoupper($tblName)))
-							define(strtoupper($tblName), $tblName);
 					}
 				}
+			} catch (Exception $e) {
+				// todo, silently report error
 			}
-		} catch (Exception $e) {
-			// todo, silently report error
 		}
 	}
 

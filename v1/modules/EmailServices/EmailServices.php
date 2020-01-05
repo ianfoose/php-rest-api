@@ -5,7 +5,7 @@
 * @sversion 1.0
 */
 
-require_once('APIHelper.php');
+require_once(dirname(dirname(dirname(__FILE__))).'/api_utilities/APIHelper.php');
 
 class EmailServices extends APIHelper {
 	/**
@@ -30,113 +30,65 @@ class EmailServices extends APIHelper {
 	public function exposeAPI() {
 		// templates
 		Router::get('/email/templates', function($req, $res) {
-			try {
-				$res->send($this->getTemplates($_GET['deleted'], $this->getQueryDirection(), $this->getQueryOffset(), $this->getQueryLimit()));
-			} catch (Exception $e) {
-				$res->send($e);
-			}
+			$res->send($this->getTemplates($_GET['deleted'], $this->getQueryDirection(), $this->getQueryOffset(), $this->getQueryLimit()));
 		}, 'email_templates');
 
 		Router::get('/email/templates/count/number', function($req, $res) {
-			try {
-				$res->send($this->getTotalEmailTemplates($_GET['deleted']));
-			} catch (Exception $e) {
-				$res->send($e);
-			}
+			$res->send($this->getTotalEmailTemplates($_GET['deleted']));
 		}, 'email_templates');
 
 		Router::get('/email/template/:id', function($req, $res) {
-			try {
-				$res->send($this->getTemplate($req->params['id']));
-			} catch (Exception $e) {
-				$res->send($e);
-			}
+			$res->send($this->getTemplate($req->params['id']));
 		}, 'email_templates');
 
 		Router::delete('/email/template/:id', function($req, $res) {
-			try {
-				$res->send($this->deleteTemplate($req->params['id']));
-			} catch (Exception $e) {
-				$res->send($e);
-			}
+			$res->send($this->deleteTemplate($req->params['id']));
 		}, 'email_templates');
 
 		Router::put('/email/template', function($req, $res) {
-			try {
-				$res->send($this->createTemplate($req->body['name'], $req->body['template'], $req->body['user_id']));
-			} catch (Exception $e) {
-				$res->send($e);
-			}
+			$res->send($this->createTemplate($req->body['name'], $req->body['template'], $req->body['user_id']));
 		}, 'email_templates');
 
 		Router::delete('/email/template/:id', function($req, $res) {
-			try {
-				$res->send($this->deleteTemplate($req->params['id']));
-			} catch (Exception $e) {
-				$res->send($e);
-			}
+			$res->send($this->deleteTemplate($req->params['id']));
 		}, 'email_templates');
 
 		// subscriptions
 
 		Router::put('/email/subscribe/:email', function($req, $res) {
-			try {
-				$res->send($this->addSubscriber($req->params['email'], $req->body['group']));
-			} catch (Exception $e) {
-				$res->send($e);
-			}
+			$res->send($this->addSubscriber($req->params['email'], $req->body['group']));
 		}, 'email_subscriptions');
 
 		Router::delete('/email/unsubscribe/:email', function($req, $res) {
-			try {
-				$res->send($this->removeSubscriber($req->params['email'], $req->body['group']));
-			} catch (Exception $e) {
-				$res->send($e);
-			}
+			$res->send($this->removeSubscriber($req->params['email'], $req->body['group']));
 		}, 'email_subscriptions');
 
 		Router::get('/email/subscriptions', function($req, $res) {
-			try {
-			    $filters = array('group'=>$this->getQueryValue($_GET, 'group', ''),
-			        'subscriber'=>$this->getQueryValue($_GET, 'subscriber', ''),
-			        'deleted'=>$this->getQueryValue($_GET, 'deleted', ''));
+			$filters = array('group'=>$this->getQueryValue($_GET, 'group', ''),
+				'subscriber'=>$this->getQueryValue($_GET, 'subscriber', ''),
+				'deleted'=>$this->getQueryValue($_GET, 'deleted', ''));
 
-				$res->send($this->getEmailSubscribers($filters, $this->getQueryDirection(), $this->getQueryOffset(), $this->getQueryLimit()));
-			} catch (Exception $e) {
-				$res->send($e);
-			}
+			$res->send($this->getEmailSubscribers($filters, $this->getQueryDirection(), $this->getQueryOffset(), $this->getQueryLimit()));
 		}, 'email_subscriptions');
 
 		Router::get('/email/subscription/:id', function($req, $res) {
-			try {
-				$res->send($this->getEmailSubscriber($req->params['id']));
-			} catch (Exception $e) {
-				$res->send($e);
-			}
+			$res->send($this->getEmailSubscriber($req->params['id']));
 		}, 'email_subscriptions');
 
 		Router::get('/email/subscriptions/search/:query', function($req, $res) {
-			try {
-			    $filters = array('group'=>$this->getQueryValue($_GET, 'group', ''),
-			        'subscriber'=>$this->getQueryValue($_GET, 'subscriber', ''),
-			        'deleted'=>$this->getQueryValue($_GET, 'deleted', ''));
+			$filters = array('group'=>$this->getQueryValue($_GET, 'group', ''),
+				'subscriber'=>$this->getQueryValue($_GET, 'subscriber', ''),
+				'deleted'=>$this->getQueryValue($_GET, 'deleted', ''));
 
-				$res->send($this->searchEmails($req->params['query'], $filters, $this->getQueryDirection(), $this->getQueryOffset(), $this->getQueryLimit()));
-			} catch (Exception $e) {
-				$res->send($e);
-			}
+			$res->send($this->searchEmails($req->params['query'], $filters, $this->getQueryDirection(), $this->getQueryOffset(), $this->getQueryLimit()));
 		}, 'email_subscriptions');
 
 		Router::get('/email/subscriptions/count/number', function($req, $res) {
-			try {
-			    $filters = array('group'=>$this->getQueryValue($_GET, 'group', ''),
-			        'subscriber'=>$this->getQueryValue($_GET, 'subscriber', ''),
-			        'deleted'=>$this->getQueryValue($_GET, 'deleted', ''));
+			$filters = array('group'=>$this->getQueryValue($_GET, 'group', ''),
+				'subscriber'=>$this->getQueryValue($_GET, 'subscriber', ''),
+				'deleted'=>$this->getQueryValue($_GET, 'deleted', ''));
 
-				$res->send($this->getEmailSubscriptionTotal($filters));
-			} catch (Exception $e) {
-				$res->send($e);
-			}
+			$res->send($this->getEmailSubscriptionTotal($filters));
 		}, 'email_subscriptions');
 	}	
 
@@ -337,20 +289,38 @@ class EmailServices extends APIHelper {
 	* @return string
 	* @throws Exception
 	*/
-	public static function fillTemplate($tokens, $template) {
-		if(!empty($tokens) && !empty($template)) {
-			$pattern = '{{%s}}';
-		
-			$map = array();
-
-			foreach ($tokens as $var => $value) {
-				$map[sprintf($pattern, $var)] = $value;
-			}
-
-			return $output = strtr($template, $map);
+	public static function fillTemplate($tokens, $template, $delimeter='{{}}') {
+		if(empty($tokens)) {
+			throw new Exception('Substitution tokens cannot be empty!', 404);
 		} else {
-			throw new Exception('Template and or Tokens cannot be empty', 500);
+			if(!is_array($tokens)) {
+				throw new Exception('Substitution tokens must be in a key value array!', 500);
+			}
 		}
+
+		if(empty($template)) {
+			throw new Exception('Template body cannot be empty!', 404);
+		}
+
+
+		// delimeters
+		$delimeters = str_split($delimeter, (strlen($delimeter)/2));
+		$forwardDelim = $delimeters[0];
+		$backDelim = $delimeters[1];
+
+		if(empty($forwardDelim) || empty($backDelim)) {
+			throw new Exception("Delimeters cannot be empty!",404);
+		}
+
+		$pattern = "$forwardDelim%s$backDelim";
+
+		$map = array();
+
+		foreach ($tokens as $var => $value) {
+			$map[sprintf($pattern, $var)] = $value;
+		}
+
+		return $output = strtr($template, $map);
 	}
 
 	// Email Subscribers

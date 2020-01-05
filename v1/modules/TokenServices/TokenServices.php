@@ -5,7 +5,7 @@
 * @version 1.0
 */
 
-require_once('APIHelper.php');
+require_once(dirname(dirname(dirname(__FILE__))).'/api_utilities/APIHelper.php');
 
 class TokenServices extends APIHelper {
 	/**
@@ -56,87 +56,51 @@ class TokenServices extends APIHelper {
 		// API Tokens
 
 		Router::post('/token/refresh', function($req, $res) {
-			try {
-				if(!empty($req->body['token'])) {
-					$res->send($this->refreshToken($req->body['token']));
-				}
-				throw new Exception('Missing token', 404);
-			} catch (Exception $e) {
-				$res->send($e);
+			if(!empty($req->body['token'])) {
+				$res->send($this->refreshToken($req->body['token']));
 			}
+			throw new Exception('Missing token', 404);
 		});
 
 		Router::get('/tokens', function($req, $res) {
-			try {
-				$res->send($this->getTokens($_GET['deleted'], $this->getQueryDirection(), $this->getQueryOffset(), $this->getQueryLimit()));
-			} catch (Exception $e) {
-				$res->send($e);
-			}
+			$res->send($this->getTokens($_GET['deleted'], $this->getQueryDirection(), $this->getQueryOffset(), $this->getQueryLimit()));
 		}, 'get_tokens');
 
 		Router::get('/token/:id', function($req, $res) {
-			try {
-				$res->send($this->getToken($req->params['id']));
-			} catch (Exception $e) {
-				$res->send($e);
-			}
+			$res->send($this->getToken($req->params['id']));
 		}, 'get_token');
 
 		Router::get('/token/unique/:id', function($req, $res) {
-			try {
-				$res->send($this->getTokenUnique($req->params['id']));
-			} catch (Exception $e) {
-				$res->send($e);
-			}
+			$res->send($this->getTokenUnique($req->params['id']));
 		}, 'get_token_unique');
 
 		Router::get('/token/validate', function($req, $res) {
-		    try {
-		        // TODO validate token
-		    } catch(Exception $e) {
-		        $res->send($e);
-		    }
+			// TODO validate token
 		});
 
         // API Keys
 
-		// Router::get('/keys', function($req, $res) {
-		//     try {
-		//         $filters = array();
-
-		//         if(array_key_exists('filters', $req->body)) {
-		//             $filters = json_decode($req->body['filters'], true);
-		//         }
-
-		//         $res->send($this->getKeys($filters, $this->getQueryDirection(), $this->getQueryOffset(), $this->getQueryLimit()));
-		//     } catch(Exception $e) {
-		//         $res->send($e);
-		//     }
-		// });
-
-		// Router::get('/key/:id', function($req, $res) {
-		//     try {
-		//         $res->send($this->getKey($req->params['id']));
-		//     } catch(Exception $e) {
-		//         $res->send($e);
-		//     }
-		// });
-
-		// Router::put('/key', function($req, $res) {
-		//     try {
-		//         $res->send($this->createKey($req->body['name']));
-		//     } catch(Exception $e) {
-		//         $res->send($e);
-		//     }
-		// });
-
-		// Router::delete('/key/:id', function($req, $res) {
-		//     try {
-		//         $res->send($this->revokeKey($req->params['id']));
-		//     } catch(Exception $e) {
-		//         $res->send($e);
-		//     }
-		// });
+//		 Router::get('/keys', function($req, $res) {
+//			 $filters = array();
+//
+//			 if(array_key_exists('filters', $req->body)) {
+//				 $filters = json_decode($req->body['filters'], true);
+//			 }
+//
+//			 $res->send($this->getKeys($filters, $this->getQueryDirection(), $this->getQueryOffset(), $this->getQueryLimit()));
+//		 });
+//
+//		 Router::get('/key/:id', function($req, $res) {
+//		 	$res->send($this->getKey($req->params['id']));
+//		 });
+//
+//		 Router::put('/key', function($req, $res) {
+//		 	$res->send($this->createKey($req->body['name']));
+//		 });
+//
+//		 Router::delete('/key/:id', function($req, $res) {
+//		 	$res->send($this->revokeKey($req->params['id']));
+//		 });
 	}
 
 	/**

@@ -8,7 +8,6 @@
 
 require_once('APIHelper.php');
 require_once('Response.php');
-require_once('ErrorLogger.php');
 
 class DatabaseHelper {
 	/**

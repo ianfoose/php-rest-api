@@ -6,7 +6,7 @@
 * @version 1.0
 */
 
-require_once('APIHelper.php');
+require_once(dirname(dirname(dirname(__FILE__))).'/api_utilities/APIHelper.php');
 
 class IPServices extends APIHelper {
 	/**
@@ -29,44 +29,24 @@ class IPServices extends APIHelper {
 	*/
 	public function exposeAPI() {
 		Router::get('/traffic', function($req, $res) {
-			try {
-				$res->send($this->getTraffic( $_GET['deleted'], $this->getQueryDirection(), $this->getQueryOffset(), $this->getQueryLimit()));
-			} catch (Exception $e) {
-				$res->send($e);
-			}
+			$res->send($this->getTraffic( $_GET['deleted'], $this->getQueryDirection(), $this->getQueryOffset(), $this->getQueryLimit()));
 		}, 'traffic');
 
 		Router::get('/traffic/count/number', function($req, $res) {
-			try {
-				$res->send($this->getTrafficTotal($_GET['deleted']));
-			} catch (Exception $e) {
-				$res->send($e);
-			}
+			$res->send($this->getTrafficTotal($_GET['deleted']));
 		}, 'traffic');
 
 		Router::get('/traffic/:id', function($req, $res) {
-			try {
-				$res->send($this->getTrafficByID($req->params['id']));
-			} catch (Exception $e) {
-				$res->send($e);
-			}
+			$res->send($this->getTrafficByID($req->params['id']));
 		}, 'traffic');
 
 		Router::get('/traffic/search/:query', function($req, $res) {
-			try {
-				$res->send($this->searchVisitors($req->params['query'], $this->getQueryDirection(), $this->getQueryOffset(), $this->getQueryLimit()));
-			} catch (Exception $e) {
-				$res->send($e);
-			}
+			$res->send($this->searchVisitors($req->params['query'], $this->getQueryDirection(), $this->getQueryOffset(), $this->getQueryLimit()));
 		}, 'traffic');
 
 		// PUBLIC ENDPOINT
 		Router::put('/visit', function($req, $res) {
-			try {
-				$res->send($this->logTraffic());
-			} catch (Exception $e) {
-				$res->send($e);
-			}
+			$res->send($this->logTraffic());
 		});
 	}
 
