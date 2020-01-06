@@ -74,13 +74,13 @@ class DatabaseHelper {
 
 				// check database config values
 				if(empty($this->dbConfigs['url']) && !empty($this->dbConfigs['user']) && !empty($this->dbConfigs['password']) && !empty($this->dbConfigs['db'])) {
-			        	$msg = 'Database Connection Error';
+		        	$msg = 'Database Connection Error';
 
-			        	if($this->configs['environment'] == 'development') {
-			            		$msg = 'Invalid Database Config Values';
-			        	}
+		        	if($this->configs['environment'] == 'development') {
+		            	$msg = 'Invalid Database Config Values';
+		        	}
 
-			        	throw new Exception($msg, 500);
+		        	throw new Exception($msg, 500);
 				}
 
                 $dbURL = $dbConfigs['url'];

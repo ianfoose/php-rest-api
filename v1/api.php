@@ -4,7 +4,7 @@ require_once('api_utilities/APIHandler.php');
 class API extends APIHandler {
 
 	public function __construct() {
-		parent::__construct(); 
+		parent::__construct();
 
 		Router::all('/',function($req, $res) {
 			$res->send($this->configs['name']);
