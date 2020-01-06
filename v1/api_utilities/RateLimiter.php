@@ -15,7 +15,7 @@ if(!file_exists($ipServicesFile)) {
 require_once($ipServicesFile);
 
 class RateLimiter {
-  public function rateLimitByIP($limit=3, $secs=30) {
+  public function rateLimitByIP($limit=100, $secs=60) {
     session_start();
 
     $ipServices = new IPServices();
