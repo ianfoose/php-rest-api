@@ -2,7 +2,7 @@
 /**
 * Router Class
 *
-* @version 2.0
+* @version 3.0
 */
 class Router {
 	/**
@@ -57,8 +57,8 @@ class Router {
 	* @param bool $o Override pre existing route
 	* @return void
 	*/
-	public static function all($n,$f,$v=false,$o=false) {
-		self::addRoute('ALL',$n,$f,$v,$o);
+	public static function all($n,$f,$v=false,$o=false,$r=false) {
+		self::addRoute('ALL',$n,$f,$v,$o,$r);
 	}
 
 	/**
@@ -70,8 +70,8 @@ class Router {
 	* @param bool $o Override pre existing route
 	* @return void
 	*/
-	public static function get($n,$f,$v=false,$o=false) {
-		self::addRoute('GET',$n,$f,$v,$o);
+	public static function get($n,$f,$v=false,$o=false,$r=false) {
+		self::addRoute('GET',$n,$f,$v,$o,$r);
 	}
 	
 	/**
@@ -83,8 +83,8 @@ class Router {
 	* @param bool $o Override pre existing route
 	* @return void
 	*/
-	public static function post($n,$f,$v=false,$o=false) {
-		self::addRoute('POST',$n,$f,$v,$o);
+	public static function post($n,$f,$v=false,$o=false,$r=false) {
+		self::addRoute('POST',$n,$f,$v,$o,$r);
 	}
 
 	/**
@@ -96,8 +96,8 @@ class Router {
 	* @param bool $o Override pre existing route
 	* @return void
 	*/
-	public static function patch($n,$f,$v=false,$o=false) {
-		self::addRoute('PATCH',$n,$f,$v,$o);
+	public static function patch($n,$f,$v=false,$o=false,$r=false) {
+		self::addRoute('PATCH',$n,$f,$v,$o,$r);
 	}
 
 	/**
@@ -109,8 +109,8 @@ class Router {
 	* @param bool $o Override pre existing route
 	* @return void
 	*/
-	public static function put($n,$f,$v=false,$o=false) {
-		self::addRoute('PUT',$n,$f,$v,$o);
+	public static function put($n,$f,$v=false,$o=false,$r=false) {
+		self::addRoute('PUT',$n,$f,$v,$o,$r);
 	}
 
 	/**
@@ -122,8 +122,8 @@ class Router {
 	* @param bool $o Override pre existing route
 	* @return void
 	*/
-	public static function delete($n,$f,$v=false,$o=false) {
-		self::addRoute('DELETE',$n,$f,$v,$o);
+	public static function delete($n,$f,$v=false,$o=false,$r=false) {
+		self::addRoute('DELETE',$n,$f,$v,$o,$r);
 	}
 
 	/**
@@ -136,8 +136,8 @@ class Router {
 	* @param bool $o Override pre existing route
 	* @return void
 	*/
-	private static function addRoute($m,$n,$f,$v=false,$o=false) {	
-		$newRoute = array('method'=>$m,'route'=>$n,'function'=>$f,'verify'=>$v,'override'=>$o);
+	private static function addRoute($m,$n,$f,$v=false,$o=false,$r=false) {	
+		$newRoute = array('method'=>$m,'route'=>$n,'function'=>$f,'verify'=>$v,'override'=>$o,'rate_limit'=>$r);
 
 		// route overriding
 		if(sizeof(self::getInstance()->routes) == 0) {

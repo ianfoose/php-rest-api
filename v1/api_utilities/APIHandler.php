@@ -30,6 +30,11 @@ abstract class APIHandler extends APIHelper {
 	private $authHandlers = array();
 
 	/**
+	* @var array $rateLimitHandlers Handlers for rate limiting
+	*/
+	private $rateLimitHandlers = array();
+
+	/**
 	* Main constructor
 	*
 	* @return void
@@ -40,7 +45,7 @@ abstract class APIHandler extends APIHelper {
 		$this->setCorsPolicy($this->configs['cors']);
 
 		$this->format = $this->getFormat($this->getAPIEndpoint());
-		
+
 		$responses = null;
 		if(array_key_exists('status_responses', $this->configs)) {
 			$responses = $this->configs['status_responses'];
@@ -151,7 +156,7 @@ abstract class APIHandler extends APIHelper {
 	* Function used for Authentication, overridable
 	*
 	* @param string $name route name
-	* @param function $handler Auth handler for named route
+	* @param function $handler Authentication handler for named route
 	*
 	* @return void
 	*/
@@ -181,6 +186,45 @@ abstract class APIHandler extends APIHelper {
 
 		if(isset($this->authHandlers[$method])) {
 			return $this->authHandlers[$method]($req, $res);
+		}
+		return false;
+	}
+
+	/**
+	* Function used for rate limiting, overridable
+	*
+	* @param string $name route name
+	* @param function $handler rate limiting handler for named route
+	*
+	* @return void
+	*/
+	public function addRateLimitHandler($names, $handler) {
+
+		if(is_array($names)) {
+			foreach ($names as $name) {
+				$this->addRateLimitHandler($name, $handler);
+			}
+		} else {
+			$this->rateLimitHandlers[$names] = $handler;
+		}
+	}
+
+	/**
+	* Handle rate limiting by method
+	*
+	* @param string $method Handler name or true for default
+	* @return method Handler function
+	*/
+	private function rateLimitHandler($method=true, $req, $res) {
+		if($method === true) {
+			if(isset($this->rateLimitHandlers['default'])) {
+				return $this->rateLimitHandlers['default']($req, $res);
+			}
+			return true;
+		}
+
+		if(isset($this->rateLimitHandlers[$method])) {
+			return $this->rateLimitHandlers[$method]($req, $res);
 		}
 		return false;
 	}
@@ -273,6 +317,7 @@ abstract class APIHandler extends APIHelper {
 				// if route matches url
 				if($value['route'] === $endpoint) {	
 					$body = array();
+
 					parse_str(file_get_contents('php://input'),$body);
 
 					/*if(!empty(trim($_SERVER['HTTP_IF_NONE_MATCH']))) {
@@ -298,6 +343,19 @@ abstract class APIHandler extends APIHelper {
 					$headers = array_merge($_SERVER, getallheaders());
 
 					$this->req = new Request($params, $body, $headers, $this->format);
+
+					// check for rate limiting
+					if(isset($value['rate_limit']) && !empty($value['rate_limit'])) {
+						
+						$valid = $this->rateLimitHandler($value['rate_limit'], $this->req, $this->res);
+
+						if($valid === true) { // run api endpoint function
+							$this->callEndpointFunc($value);
+						}
+						$this->res->send('Rate Limited', 429);
+					} else { // no authentication required, run function
+						$this->callEndpointFunc($value);
+					}
 
 					// checks for custom auth function
 					if(isset($value['verify']) && !empty($value['verify'])) {

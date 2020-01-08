@@ -1,5 +1,6 @@
 <?php
 require_once('api_utilities/APIHandler.php');
+require_once('api_utilities/RateLimiter.php');
 
 class API extends APIHandler {
 
@@ -13,6 +14,11 @@ class API extends APIHandler {
 		$this->addAuthHandler(array('default', 'errors', 'email_templates', 'email_subscriptions', 'local_notifications'), function($req, $res) {
 			// defaults to `false` for security to disallow any connection
 			return false;
+		});
+
+		$this->addRateLimitHandler(array('default'), function($req, $res) {
+			$rateLimiter = new RateLimiter();
+			return $rateLimiter->rateLimitByIP();
 		});
 	}
 }

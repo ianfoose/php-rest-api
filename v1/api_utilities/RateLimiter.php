@@ -28,9 +28,8 @@ class RateLimiter {
         $sec =  abs($last - $curr);
         if ($sec <= $secs) {
           // rate limit client
-          die ('limit exceeded'); 
-
-          throw new Exception('API Request Limit Exceeded!', 429);       
+          //throw new Exception('API Request Limit Exceeded!', 429);  
+          return false;     
         }
       }
       $_SESSION[$sessionID] = date('Y-m-d h:i:s');
