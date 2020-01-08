@@ -56,15 +56,17 @@ class IPServices extends APIHelper {
 	* @return string
 	*/
 	public function getIP() {
-		$ipRemote = $_SERVER['REMOTE_ADDR'];
-		$httpClientIP = $_SERVER['HTTP_CLIENT_IP'];
-		$httpXForwardedFor = $_SERVER['HTTP_X_FORWARDED_FOR'];
-		if(!empty($httpClientIP)) {
-			return $httpClientIP;
-		} else if(!empty($httpXForwardedFor)) {
-			return $httpXForwardedFor;
-		} 
-		return $ipRemote;
+		if(array_key_exists('REMOTE_ADDR', $_SERVER)) {
+			return  $_SERVER['REMOTE_ADDR'];
+		}
+
+		if(array_key_exists('HTTP_CLIENT_IP', $_SERVER)) {
+			return  $_SERVER['HTTP_CLIENT_IP'];
+		}
+
+		if(array_key_exists('HTTP_X_FORWARDED_FOR', $_SERVER)) {
+			return  $_SERVER['HTTP_X_FORWARDED_FOR'];
+		}
 	}
 
 	/**
