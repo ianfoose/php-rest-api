@@ -34,5 +34,9 @@
 		"prefix": "api-token",
 		"secret": "api123456"
 	},
+	"rate_limiting": {
+		"interval": 60,
+		"max_requests": 100
+	},
 	"format": "json"
 }

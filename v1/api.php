@@ -1,6 +1,5 @@
 <?php
 require_once('api_utilities/APIHandler.php');
-require_once('api_utilities/RateLimiter.php');
 
 class API extends APIHandler {
 

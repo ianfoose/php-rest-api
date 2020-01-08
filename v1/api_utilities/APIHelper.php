@@ -6,6 +6,7 @@
 * @version 1.0
 */
 
+require_once('RateLimiter.php');
 require_once('DatabaseHelper.php');
 require_once('Response.php');
 require_once('Request.php');
