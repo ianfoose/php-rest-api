@@ -37,7 +37,6 @@ abstract class APIHelper {
 		// include modules
 		foreach (glob(dirname(dirname(__FILE__)).'/modules/*') as $dirname) {
     		$dirname = basename($dirname);
-    		
     		require_once(dirname(dirname(__FILE__))."/modules/$dirname/$dirname.php");
 		}
 

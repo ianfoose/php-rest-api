@@ -190,11 +190,11 @@ class TokenServices extends APIHelper {
 						if(self::$db->find('id', array('token'=>$rToken,'u_id'=>$userID,'revoked'=>0), TOKENS,'Token')) {
 							if(self::$db->beginTransaction()) {
 								try {
-									$newRToken = $this->createRefreshToken($userID,$dToken['data']);
+									$newRToken = $this->createRefreshToken($userID, '+1 hour', $dToken['data']);
 									$newDToken = $this->decodeToken($newRToken);
 
 									if(self::$db->commit()) {
-										return array('token'=>$this->createToken($userID,$dToken['data']),'refresh_token'=>$newRToken);
+										return array('token'=>$this->createToken($userID, '1 Hour', $dToken['data']),'refresh_token'=>$newRToken);
 									}
 									
 								} catch(Exception $ex) {
@@ -218,8 +218,8 @@ class TokenServices extends APIHelper {
 	* @param array $data body data array
 	* @return string
 	*/
-	public function createToken($id, $data=null) {
-		return $this->create($id,$data);
+	public function createToken($id, $expDate='+5 Minutes', $data=null) {
+		return $this->create($id, $expDate, $data);
 	}
 
 	/**
@@ -230,11 +230,11 @@ class TokenServices extends APIHelper {
 	* @return string
 	* @throws Exception
 	*/
-	public function createRefreshToken($id, $data=null) {
-		$token = $this->create($id,$data,true);
+	public function createRefreshToken($id, $expDate='+5 Minutes', $data=null) {
+		$token = $this->create($id, $expDate, $data, true);
 
 		try {
-			$this->save($id,$token);
+			$this->save($id, $token);
 			return $token;
 		} catch(Exception $e) {
 			throw $e;
@@ -260,7 +260,7 @@ class TokenServices extends APIHelper {
 			$sig = sha1($this->prefix.':'.$this->secret.':'.$exp);
 			$dataArray = array('id'=>$id);
 
-			if(!empty($data)) {
+			if(is_array($data)) { 
 				$dataArray = array_merge($dataArray, $data);
 			}
 				
