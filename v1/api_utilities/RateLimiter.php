@@ -63,16 +63,21 @@ class RateLimiter extends APIHelper {
 
     if (isset($_SESSION[$sessionID])) {
       $sessionData = $_SESSION[$sessionID];
-      
+
       $last = strtotime($_SESSION[$sessionID]['date']);
       $curr = strtotime(date('Y-m-d h:i:s'));
       $sec =  abs($last - $curr);
 
       if ($sec <= $interval) { 
-        if($sessionData['requests'] >= $limit) {
+        if($sessionData['requests'] == $limit) {
           // rate limit client
           return false;
         } else {
+          if($sessionData['requests'] > $limit) {
+            $_SESSION[$sessionID] = $defaultSession;
+            return false;
+          }
+
           $sessionData['requests'] = $sessionData['requests'] + 1;
           $_SESSION[$sessionID] = $sessionData;
           return true;

@@ -349,8 +349,8 @@ abstract class APIHandler extends APIHelper {
 						$valid = $this->rateLimitHandler($value['rate_limit'], $this->req, $this->res);
 
 						if($valid === false) { // run api endpoint function
-							$this->res->send('Rate Limited', 429);
-						}
+							$this->res->send('Rate Limited', 429);	
+						} 
 					} 
 
 					// checks for custom auth function
