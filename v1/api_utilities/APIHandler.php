@@ -57,6 +57,7 @@ abstract class APIHandler extends APIHelper {
 	/**
 	* Gets the API endpoint from URL 
 	*
+	* @param bool $format flag to format API endpoint, default `false`
 	* @return void
 	*/
 	private function getAPIEndpoint($format=false) {
@@ -90,6 +91,7 @@ abstract class APIHandler extends APIHelper {
 	/**
 	* Formats the API endpoint for route matching
 	*
+	* @param string $endpointAPI endpoint to format
 	* @return void
 	*/
 	private function formatAPIEndpoint($endpoint='/') {
@@ -111,7 +113,7 @@ abstract class APIHandler extends APIHelper {
 	/**
 	* Returns the format specified
 	*
-	* param string $function The input function
+	* @param string $function The input function
 	* @return string
 	*/
 	public function getFormat($function) {
@@ -157,7 +159,6 @@ abstract class APIHandler extends APIHelper {
 	*
 	* @param string $name route name
 	* @param function $handler Authentication handler for named route
-	*
 	* @return void
 	*/
 	public function addAuthHandler($names, $handler) {
@@ -174,14 +175,13 @@ abstract class APIHandler extends APIHelper {
 	* Handle authorization by method
 	*
 	* @param string $method Handler name or true for default
-	* @return method Handler function
+	* @param object $req Resuest Object
+	* @param object $res Response Object
+	* @return bool
 	*/
 	private function authHandler($method=true, $req, $res) {
 		if($method === true) {
-			if(isset($this->authHandlers['default'])) {
-				return $this->authHandlers['default']($req, $res);
-			}
-			return true;
+			$method = 'default';
 		}
 
 		if(isset($this->authHandlers[$method])) {
@@ -195,11 +195,9 @@ abstract class APIHandler extends APIHelper {
 	*
 	* @param string $name route name
 	* @param function $handler rate limiting handler for named route
-	*
 	* @return void
 	*/
 	public function addRateLimitHandler($names, $handler) {
-
 		if(is_array($names)) {
 			foreach ($names as $name) {
 				$this->addRateLimitHandler($name, $handler);
@@ -213,14 +211,13 @@ abstract class APIHandler extends APIHelper {
 	* Handle rate limiting by method
 	*
 	* @param string $method Handler name or true for default
-	* @return method Handler function
+	* @param object $req Resuest Object
+	* @param object $res Response Object
+	* @return bool
 	*/
 	private function rateLimitHandler($method=true, $req, $res) {
 		if($method === true) {
-			if(isset($this->rateLimitHandlers['default'])) {
-				return $this->rateLimitHandlers['default']($req, $res);
-			}
-			return true;
+			$method = 'default';
 		}
 
 		if(isset($this->rateLimitHandlers[$method])) {
@@ -345,7 +342,7 @@ abstract class APIHandler extends APIHelper {
 					$this->req = new Request($params, $body, $headers, $this->format);
 
 					// check for rate limiting
-					if(isset($value['rate_limit']) && !empty($value['rate_limit'])) {
+					if((isset($value['rate_limit']) && !empty($value['rate_limit'])) || $this->configs['rate_limiting']['auto_enforce'] == true) {
 						$valid = $this->rateLimitHandler($value['rate_limit'], $this->req, $this->res);
 
 						if($valid === false) { // run api endpoint function

@@ -8,13 +8,15 @@ class API extends APIHandler {
 
 		Router::all('/', function($req, $res) {
 			$res->send($this->configs['name']);
-		}, false, false, true);
+		});
 
+		// authentication handler(s)
 		$this->addAuthHandler(array('default', 'errors', 'email_templates', 'email_subscriptions', 'local_notifications'), function($req, $res) {
 			// defaults to `false` for security to disallow any connection
 			return false;
 		});
 
+		// rate limiting handler(s)
 		$this->addRateLimitHandler(array('default'), function($req, $res) {
 			$rateLimiter = new RateLimiter();
 			return $rateLimiter->rateLimitByIP();
@@ -24,6 +26,8 @@ class API extends APIHandler {
 
 // start the api
 $api = new API();
+
+// place all custom class initalizers here.
 
 $api->run();
 ?>
