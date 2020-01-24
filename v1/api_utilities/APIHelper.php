@@ -146,6 +146,11 @@ abstract class APIHelper {
 				}
 			} 
 
+			// rate limiting
+			if(!array_key_exists('auto_enforce', $configs['rate_limiting'])) {
+				$configs['rate_limiting']['auto_enforce'] = false;
+			}
+
 			$this->configs = $configs;
 		} catch(Exception $e) {
 			throw new Exception('Config values not set, maybe the file does not exist?');

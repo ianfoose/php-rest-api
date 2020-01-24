@@ -341,6 +341,10 @@ abstract class APIHandler extends APIHelper {
 
 					$this->req = new Request($params, $body, $headers, $this->format);
 
+					if(empty($value['rate_limit'])) {
+						$value['rate_limit'] = false;
+					}
+
 					// check for rate limiting
 					if((isset($value['rate_limit']) && !empty($value['rate_limit'])) || $this->configs['rate_limiting']['auto_enforce'] == true) {
 						$valid = $this->rateLimitHandler($value['rate_limit'], $this->req, $this->res);
