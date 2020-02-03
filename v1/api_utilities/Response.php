@@ -78,11 +78,11 @@ class Response {
               $status = $data->getCode();
             }   
   
+            $msg = self::$errorArray[$status];
+
             if($data->getMessage() != null) {
-                $msg = $data->getMessage().' '; 
+                $msg .= ', '.$data->getMessage(); 
             }   
-  
-            $msg .= ','.self::$errorArray[$status];
 
             $data = array('result'=>$msg);
         }
