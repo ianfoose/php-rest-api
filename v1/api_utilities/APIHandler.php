@@ -343,26 +343,33 @@ abstract class APIHandler extends APIHelper {
 
 					if(empty($value['rate_limit'])) {
 						$value['rate_limit'] = false;
+
+						if($this->configs['rate_limiting']['auto_enforce'] == true) {
+							$value['rate_limit'] = true;
+						}
 					}
 
 					// check for rate limiting
-					if((isset($value['rate_limit']) && !empty($value['rate_limit'])) || $this->configs['rate_limiting']['auto_enforce'] == true) {
-						$valid = $this->rateLimitHandler($value['rate_limit'], $this->req, $this->res);
+					$rateLimited = false;
 
-						if($valid === false) { // run api endpoint function
-							$this->res->send('Rate Limited', 429);	
-						} 
+					if($value['rate_limit']) { 
+						$rateLimited = !$this->rateLimitHandler($value['rate_limit'], $this->req, $this->res);
 					} 
 
 					// checks for custom auth function
-					if(isset($value['verify']) && !empty($value['verify'])) {
-						$valid = $this->authHandler($value['verify'], $this->req, $this->res);
+					$tokenIsValid = true;
 
-						if($valid === true) { // run api endpoint function
-							$this->callEndpointFunc($value);
-						}
+					if(isset($value['verify']) && !empty($value['verify'])) {
+						$tokenIsValid = $this->authHandler($value['verify'], $this->req, $this->res);
+					} 
+
+					if($rateLimited && $tokenIsValid) {
+						// endpoint is rate limited and token is valid
+						$this->res->send('Rate Limited', 429);	
+					} else if(!$tokenIsValid) {
+						// token is expired
 						$this->res->send('Invalid authentication', 401);
-					} else { // no authentication required, run function
+					} else {
 						$this->callEndpointFunc($value);
 					}
 

@@ -315,7 +315,7 @@ class TokenServices extends APIHelper {
 		try {
 			if(self::$db->beginTransaction()) {
 				if(self::$db->find('id', array('token'=>$token), TOKENS)) {
-					if(self::$db->query("UPDATE ".TOKENS." SET revoked='1' WHERE token=':t'",array(':t'=>$token))) {
+					if(self::$db->query("UPDATE ".TOKENS." SET revoked='1' WHERE token=:t",array(':t'=>$token))) {
 						if(self::$db->commit()) {
 							return 'Token Revoked';
 						}
