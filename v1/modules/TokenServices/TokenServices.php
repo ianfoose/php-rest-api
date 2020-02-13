@@ -57,7 +57,7 @@ class TokenServices extends APIHelper {
 
 		Router::post('/token/refresh', function($req, $res) {
 			if(!empty($req->body['token'])) {
-				$res->send($this->refreshToken($req->body['token']));
+				$res->send($this->refreshToken($req->body['token'], $req->body['token_exp'], $req->body['regenerate'], $req->body['refresh_exp']));
 			}
 			throw new Exception('Missing token', 404);
 		});
@@ -176,25 +176,32 @@ class TokenServices extends APIHelper {
 	/**
 	* Refreshes a token
 	*
-	* @param string $rToken Refresh Token
+	* @param string $refreshToken Refresh Token
+    * @param string $expDate Refreshed token expiration date, default +5 minutes.
+    * @param bool $regenerate Regenerate a new refresh token is the refresh token is still valid.
+    * @param string $refreshTokenExp Regenerated refresh token expiration date, default +1 hour.
 	* @return array
 	* @throws Exception
 	*/
-	public function refreshToken($rToken) {
-		if($this->validateRefreshToken($rToken)) {
-			if($dToken = $this->decodeToken($rToken)) {
-				if(!empty($dToken['data']['id'])) {
-					$userID = $dToken['data']['id'];
+	public function refreshToken($refreshToken, $expDate='+5 Minutes', $regenerate=false, $refreshTokenExp='+1 Hour') {
+		if($this->validateRefreshToken($refreshToken)) {
+			if($decodedToken = $this->decodeToken($refreshToken)) {
+				if(!empty($decodedToken['data']['id'])) {
+					$userID = $decodedToken['data']['id'];
 
 					try {
-						if(self::$db->find('id', array('token'=>$rToken,'u_id'=>$userID,'revoked'=>0), TOKENS,'Token')) {
+						if(self::$db->find('id', array('token'=>$refreshToken,'u_id'=>$userID,'revoked'=>0), TOKENS,'Token')) {
 							if(self::$db->beginTransaction()) {
 								try {
-									$newRToken = $this->createRefreshToken($userID, '+1 hour', $dToken['data']);
-									$newDToken = $this->decodeToken($newRToken);
+								    $tokenData = array('token'=>$this->createToken($userID, $expDate, $decodedToken['data']));
+
+								    if($regenerate) {
+                                        $newRefreshToken = $this->createRefreshToken($userID, $refreshTokenExp, $decodedToken['data']);
+                                        $tokenData['refresh_token'] = $newRefreshToken;
+                                    }
 
 									if(self::$db->commit()) {
-										return array('token'=>$this->createToken($userID, '1 Hour', $dToken['data']),'refresh_token'=>$newRToken);
+										return $tokenData;
 									}
 									
 								} catch(Exception $ex) {
@@ -217,6 +224,7 @@ class TokenServices extends APIHelper {
 	* @param string $id Unique ID 
 	* @param array $data body data array
 	* @return string
+    * @throws Exception
 	*/
 	public function createToken($id, $expDate='+5 Minutes', $data=null) {
 		return $this->create($id, $expDate, $data);
@@ -248,6 +256,7 @@ class TokenServices extends APIHelper {
 	* @param array $data body data array
 	* @param bool $refresh Generate a refresh token
 	* @return string
+    * @throws Exception
 	*/
 	private function create($id, $expDate='+5 Minutes', $data=array(), $refresh=false) {
 		if($this->checkTokenConfigs()) {
