@@ -28,7 +28,8 @@
 		"errors": true,
 		"warnings": false
 	},
-	"cors": "Access-Control-Allow-Origin: *",
+	"cors": "*",
+	"methods": "GET PUT POST DELETE OPTIONS",
 	"notifications": { },
 	"email": { },
 	"tokens": {
