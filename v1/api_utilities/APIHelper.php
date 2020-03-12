@@ -3,7 +3,7 @@
 * APIHelper Class
 *
 * @copyright Foose Industries
-* @version 1.0
+* @version 2.0
 */
 
 require_once('RateLimiter.php');
@@ -30,8 +30,10 @@ abstract class APIHelper {
 	/**
 	* Main Constructor
 	*
-	* @param string $configs Configs file path
+	* @param string $configPath Configs file path
+    * @param bool $connectToDB Flag to start a database connection
 	* @return void
+    * @throws Exception
 	*/
 	public function __construct($configPath='./config.json', $connectToDB=true) {	
 		// include modules
@@ -62,11 +64,11 @@ abstract class APIHelper {
 
 		// set error logging file path
 		if(isset($this->configs['error_log']) && file_exists($this->configs['error_log'])) {
-			ini_set("error_log", $this->configs['error_log']);
+			ini_set('error_log', $this->configs['error_log']);
 		}
 
 		if($connectToDB) {
-			// default global datahelper
+			// default global datahelper class
 			self::$db = new DatabaseHelper($this->configs);
 
 			// get tables dynamically from DB
@@ -115,15 +117,30 @@ abstract class APIHelper {
 				$configs['development'] = array('errors'=>true, 'warnings'=>false);
 			}
 
-			// default format
-			if(!array_key_exists('format', $configs)) {
-				$configs['format'] = 'json';
-			}
+			// default timezone
+            if(!array_key_exists('date', $configs)) {
+                $configs['date']['timezone'] = 'UTC';
+            }
 
 			// default CORS
 			if(!array_key_exists('cors', $configs)) {
-				$configs['cors'] = 'Access-Control-Allow-Origin: *';
+				$configs['cors'] = '*';
 			}
+
+			// default allowed methods
+			if(!array_key_exists('methods', $configs)) {
+			    $configs['methods'] = 'POST, GET, OPTIONS, DELETE, PUT';
+            }
+
+			// default rate limiting
+			if(!array_key_exists('rate_limiting', $configs)) {
+                $configs['rate_limiting'] = array('auto_enforce'=>false, 'interval'=> 60, 'max_requests'=>100);
+            }
+
+            // default format
+            if(!array_key_exists('format', $configs)) {
+                $configs['format'] = 'json';
+            }
 			
 			$environment = $configs['environment'];
 
@@ -133,18 +150,17 @@ abstract class APIHelper {
 					$envConfigKey = $environment."-$config";
 					if(array_key_exists($envConfigKey, $configs)) {
 						if(is_array($configs[$envConfigKey])) {
-							foreach ($configs[$config] as $key => $value) {
+							foreach ($configs[$config] as $key => $configValue) {
 								if(array_key_exists($key, $configs[$envConfigKey])) {
 									$configs[$config][$key] = $configs[$envConfigKey][$key];
 								} else {
-									$configs[$config][$key] = $value;
+									$configs[$config][$key] = $configValue;
 								}
 							}
 						} else {	
 							$configs[$config] = $configs[$envConfigKey];
 						}
 					}
-					// unset($configs[$envConfigKey]);
 				}
 			}
 
@@ -234,7 +250,7 @@ abstract class APIHelper {
 	* @return Data Object
 	* @throws Exception
 	*/
-	public function getActivityLog($id, $filters='id', $mapping=null, $formatFunc=null) {
+	public function getActivityLog($id, $filter='id', $mapping=null, $formatFunc=null) {
 		try {
 			$filters = array('id','object_id','row_id','editor_id');
 			if(!in_array($filter, $filters)) {
@@ -263,7 +279,7 @@ abstract class APIHelper {
 			if(!empty($filters)) {
 				$validFilters = array('id', 'object_id', 'row_id', 'editor_id', 'type');
 				
-				$query .= ' WHERE ';
+				$queryString .= ' WHERE ';
 
 				foreach ($filters as $key => $value) {
 					if(!in_array($key, $validFilters)) {
@@ -308,7 +324,7 @@ abstract class APIHelper {
 			if(!empty($filters)) {
 				$validFilters = array('id','object_id','row_id','editor_id', 'type');
 				
-				$query .= ' WHERE ';
+				$queryString .= ' WHERE ';
 
 				foreach ($filters as $key => $value) {
 					if(!in_array($key, $validFilters)) {
