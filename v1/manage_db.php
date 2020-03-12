@@ -3,8 +3,18 @@
 <?php
 require_once('api_utilities/APIHelper.php');
 
-// db manager class
+/**
+* DBManager Class
+*
+* @version 1.0
+* @return void
+*/
 class DBManager extends APIHelper {
+	/**
+	* Main Constructor
+	*
+	* @return void
+	*/
 	function __construct() {
 		parent::__construct();
 
@@ -13,6 +23,13 @@ class DBManager extends APIHelper {
 		}
 	}
 
+	/**
+	* Parse SQL files
+	*
+	* @param bool $update Flag to update database.
+	* @param $all Flag to run all scripts in modules folder.
+	* @return void
+	*/
 	public function parseSQLFiles($update=false, $all=true) {
 		$prefix = 'Installing ';
 		$fileName = 'database.sql';
@@ -41,15 +58,42 @@ class DBManager extends APIHelper {
 		}
 	}
 
+	/**
+	* Backup database method
+	*
+	* @return void
+	*/
+	private function backupDB() {
+		$dbHost = $this->configs['database']['host'];
+		$dbPort = $this->configs['database']['port'];
+		$user = $this->configs['database']['user'];
+		$password = $this->configs['database']['password'];
+		$db = $this->configs['database']['db'];
+
+		$currentDate = date('now');
+		$command = "mysqldump -u $user -h $dbHost -p $db > $currentDate-$db.sql";
+
+		shell_exec($command);
+		echo "Database export complete.\n\n";
+	}
+
+	/**
+	* Execute SQL method
+	*
+	* @param string $filePath File path for SQL file to run.
+	* @return void
+	*/
 	private function executeSQL($filePath) {
 		try {
 			file_exists($filePath);
 
+			$dbHost = $this->configs['database']['host'];
+			$dbPort = $this->configs['database']['port'];
 			$user = $this->configs['database']['user'];
 			$password = $this->configs['database']['password'];
 			$db = $this->configs['database']['db'];
 
-			$mySQLString = "mysql -u $user -p$password -D $db -e 'source $filePath'";
+			$mySQLString = "mysql -h $dbHost -p $dbPort -u $user -p$password -D $db -e 'source $filePath'";
 		
 			shell_exec($mySQLString);
 			echo "Installed...\n\n";
@@ -59,10 +103,11 @@ class DBManager extends APIHelper {
 	}
 }
 
-// interactive portion
+/* ==================== INTERACTIVE PORTION ==================== */
 
 $command = '';
 $runAll = true;
+$backup = true;
 
 if(isset($argv) && isset($argv[1])) {
 	$command = strtolower($argv[1]);
@@ -74,13 +119,27 @@ if(isset($argv) && isset($argv[1])) {
 			die("Invalid option, ".$argv[2]."!!, valid option(s) are 'base' to install base data only, empty value for all.");
 		}
 	}
+
+	if(isset($argv[3])) {
+		if(strtolower($argv[3]) == 'backup') {
+			$backup = true;
+		} else {
+			die("Invalid option, ".$argv[3]."!!, valid option(s) are 'backup' to backup the existing database");
+		}
+	}
 }
 
 $dbManager = new DBManager();
 
 if($command == 'update') {
+	// update database only
+	if($backup) {
+		$dbManager->backupDB();
+	}
+
 	$dbManager->parseSQLFiles(true, $runAll);
 } else if($command == 'install') {
+	// install database only
 	$dbManager->parseSQLFiles(false, $runAll);
 } else {
 	die('Invalid command!, valid commands are install and update');

@@ -60,6 +60,11 @@ abstract class APIHelper {
 
 		ini_set('display_errors', $errorReporting); 
 
+		// set error logging file path
+		if(isset($this->configs['error_log']) && file_exists($this->configs['error_log'])) {
+			ini_set("error_log", $this->configs['error_log']);
+		}
+
 		if($connectToDB) {
 			// default global datahelper
 			self::$db = new DatabaseHelper($this->configs);
@@ -120,18 +125,31 @@ abstract class APIHelper {
 				$configs['cors'] = 'Access-Control-Allow-Origin: *';
 			}
 			
+			$environment = $configs['environment'];
+
+			// loop configs and check for environment specific configs, if found merge them
+			foreach($configs as $config => $value) {
+				if($config != 'name' && $config != 'environment') {
+					$envConfigKey = $environment."-$config";
+					if(array_key_exists($envConfigKey, $configs)) {
+						if(is_array($configs[$envConfigKey])) {
+							foreach ($configs[$config] as $key => $value) {
+								if(array_key_exists($key, $configs[$envConfigKey])) {
+									$configs[$config][$key] = $configs[$envConfigKey][$key];
+								} else {
+									$configs[$config][$key] = $value;
+								}
+							}
+						} else {	
+							$configs[$config] = $configs[$envConfigKey];
+						}
+					}
+					// unset($configs[$envConfigKey]);
+				}
+			}
+
 			// get database configs, development or production
 			if(!empty($configs) && !empty($configs['database'])) {
-				if($configs['environment'] == 'development' && !empty($configs['dev-database'])) {
-					foreach ($configs['database'] as $key => $value) {
-						if(isset($configs['dev-database'][$key])) {
-							$configs['database'][$key] = $configs['dev-database'][$key];
-						} else {
-							$configs['database'][$key] = $value;
-						}
-					} 
-				} 
-
 				// set some defaults
 				if(!isset($configs['database']['limit'])) {
 					$configs['database']['limit'] = 40;
@@ -243,7 +261,7 @@ abstract class APIHelper {
 			$params = array();
 
 			if(!empty($filters)) {
-				$validFilters = array('id','object_id','row_id','editor_id', 'type');
+				$validFilters = array('id', 'object_id', 'row_id', 'editor_id', 'type');
 				
 				$query .= ' WHERE ';
 

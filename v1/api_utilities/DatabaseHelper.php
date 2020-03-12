@@ -73,7 +73,7 @@ class DatabaseHelper {
 				$dbConfigs = $this->configs['database'];
 
 				// check database config values
-				if(empty($this->dbConfigs['url']) && !empty($this->dbConfigs['user']) && !empty($this->dbConfigs['password']) && !empty($this->dbConfigs['db'])) {
+				if(empty($this->dbConfigs['host']) && !empty($this->dbConfigs['user']) && !empty($this->dbConfigs['password']) && !empty($this->dbConfigs['db'])) {
 		        	$msg = 'Database Connection Error';
 
 		        	if($this->configs['environment'] == 'development') {
@@ -83,7 +83,7 @@ class DatabaseHelper {
 		        	throw new Exception($msg, 500);
 				}
 
-                $dbURL = $dbConfigs['url'];
+                $dbURL = $dbConfigs['host'];
 
                 if(!empty($dbConfigs['port']) && $dbConfigs['port'] != 3306) {
                     $dbURL .= ':'.$dbConfigs['port'];

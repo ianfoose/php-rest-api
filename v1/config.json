@@ -1,18 +1,19 @@
 {
 	"name": "My API",
 	"log_errors": true,
+	"error_log": "",
 	"database": {
 		"type": "mysql",
-		"url": "localhost",
+		"host": "localhost",
 		"user": "root",
 		"password": "root",
 		"db": "sakila",
 		"direction": "ASC",
 		"limit": 40
 	},
-	"dev-database": {
+	"development-database": {
 		"type": "mysql",
-		"url": "localhost",
+		"host": "localhost",
 		"user": "root",
 		"password": "root",
 		"db": "sakila",
