@@ -59,7 +59,7 @@ abstract class APIHandler extends APIHelper {
 	* Gets the API endpoint from URL 
 	*
 	* @param bool $format flag to format API endpoint, default `false`
-	* @return void
+	* @return array | string
 	*/
 	private function getAPIEndpoint($format=false) {
         if(array_key_exists('base_url', $this->configs)) {
@@ -77,7 +77,7 @@ abstract class APIHandler extends APIHelper {
 		    $endpoint = strtok(str_replace($baseURL, '', $_SERVER['REQUEST_URI']),'?');
 		}
 
-        // set endpoint to '/' if still empty
+                // set endpoint to '/' if still empty
 		if(empty($endpoint)) {
 		   $endpoint = '/';
 		}
