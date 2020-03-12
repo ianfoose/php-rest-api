@@ -1,165 +1,172 @@
 <?php
 /**
-* Router Class
-*
-* @version 3.0
-*/
+ * Router Class
+ *
+ * @version 4.0
+ */
 class Router {
-	/**
-	* @var array $routes Routes array
-	*/
-	public $routes = array();
-	
-	/**
-	* @var Router $instance Singleton instance of router (this class)
-	*/
-	private static $instance;
+    /**
+     * @var array $routes Routes array
+     */
+    public $routes = array();
 
-	/**
-	* Main Constructor 
-	*
-	* @return void
-	*/
-	public function __construct() { }
+    /**
+     * @var Router $instance Singleton instance of router (this class)
+     */
+    private static $instance;
 
-	/**
-	* Clone Function 
-	*
-	* @return void
-	*/
-	public function __clone() { }
+    /**
+     * Main Constructor
+     *
+     * @return void
+     */
+    public function __construct() { }
 
-	/**
-	* Wakeup Function 
-	*
-	* @return void
-	*/
-	public function __wakeup() { }
+    /**
+     * Clone Function
+     *
+     * @return void
+     */
+    public function __clone() { }
 
-	/**
-	* Gets a class instance
-	*
-	* @return Class Instance
-	*/
-	public static function getInstance() {
-		if(null === static::$instance) {
-			static::$instance = new static();
-		}
-		return static::$instance;
-	}
+    /**
+     * Wakeup Function
+     *
+     * @return void
+     */
+    public function __wakeup() { }
 
-	/**
-	* Adds a route for all methods
-	*
-	* @param string $n Route name
-	* @param function $f Route function
-	* @param bool $v API verification
-	* @param bool $o Override pre existing route
-	* @return void
-	*/
-	public static function all($n,$f,$v=false,$o=false,$r=false) {
-		self::addRoute('ALL',$n,$f,$v,$o,$r);
-	}
+    /**
+     * Gets a class instance
+     *
+     * @return Class Instance
+     */
+    public static function getInstance() {
+        if(null === static::$instance) {
+            static::$instance = new static();
+        }
+        return static::$instance;
+    }
 
-	/**
-	* Adds a get route
-	*
-	* @param string $n Route name
-	* @param function $f Route function
-	* @param bool $v API verification
-	* @param bool $o Override pre existing route
-	* @return void
-	*/
-	public static function get($n,$f,$v=false,$o=false,$r=false) {
-		self::addRoute('GET',$n,$f,$v,$o,$r);
-	}
-	
-	/**
-	* Adds a post route
-	*
-	* @param string $n Route name
-	* @param function $f Route function
-	* @param bool $v API verification
-	* @param bool $o Override pre existing route
-	* @return void
-	*/
-	public static function post($n,$f,$v=false,$o=false,$r=false) {
-		self::addRoute('POST',$n,$f,$v,$o,$r);
-	}
+    /**
+     * Adds a route for all methods
+     *
+     * @param string $name Route name
+     * @param function $func Route function
+     * @param bool $verify API verification flag
+     * @param bool $override Override pre existing route flag
+     * @param bool $rate Rate limiting flag
+     * @return void
+     */
+    public static function all($name, $func, $verify=false, $override=false, $rate=false) {
+        self::addRoute('ALL', $name, $func, $verify, $override, $rate);
+    }
 
-	/**
-	* Adds a patch route
-	*
-	* @param string $n Route name
-	* @param function $f Route function
-	* @param bool $v API verification
-	* @param bool $o Override pre existing route
-	* @return void
-	*/
-	public static function patch($n,$f,$v=false,$o=false,$r=false) {
-		self::addRoute('PATCH',$n,$f,$v,$o,$r);
-	}
+    /**
+     * Adds a get route
+     *
+     * @param string $name Route name
+     * @param function $func Route function
+     * @param bool $verify API verification flag
+     * @param bool $override Override pre existing route flag
+     * @param bool $rate Rate limiting flag
+     * @return void
+     */
+    public static function get($name, $func, $verify=false, $override=false, $rate=false) {
+        self::addRoute('GET', $name, $func, $verify, $override, $rate);
+    }
 
-	/**
-	* Adds a put route
-	*
-	* @param string $n Route name
-	* @param function $f Route function
-	* @param bool $v API verification
-	* @param bool $o Override pre existing route
-	* @return void
-	*/
-	public static function put($n,$f,$v=false,$o=false,$r=false) {
-		self::addRoute('PUT',$n,$f,$v,$o,$r);
-	}
+    /**
+     * Adds a post route
+     *
+     * @param string $name Route name
+     * @param function $func Route function
+     * @param bool $verify API verification flag
+     * @param bool $override Override pre existing route flag
+     * @param bool $rate Rate limiting flag
+     * @return void
+     */
+    public static function post($name, $func, $verify=false, $override=false, $rate=false) {
+        self::addRoute('POST', $name, $func, $verify, $override, $rate);
+    }
 
-	/**
-	* Adds a delete route
-	*
-	* @param string $n Route name
-	* @param function $f Route function
-	* @param bool $v API verification
-	* @param bool $o Override pre existing route
-	* @return void
-	*/
-	public static function delete($n,$f,$v=false,$o=false,$r=false) {
-		self::addRoute('DELETE',$n,$f,$v,$o,$r);
-	}
+    /**
+     * Adds a patch route
+     *
+     * @param string $name Route name
+     * @param function $func Route function
+     * @param bool $verify API verification flag
+     * @param bool $override Override pre existing route flag
+     * @param bool $rate Rate limiting flag
+     * @return void
+     */
+    public static function patch($name, $func, $verify=false, $override=false, $rate=false) {
+        self::addRoute('PATCH', $name, $func, $verify, $override, $rate);
+    }
 
-	/**
-	* Adds a route
-	*
-	* @param string $m Method
-	* @param string $n Route name
-	* @param function $f Route function
-	* @param bool $v API verification
-	* @param bool $o Override pre existing route
-	* @return void
-	*/
-	private static function addRoute($m,$n,$f,$v=false,$o=false,$r=false) {	
-		$newRoute = array('method'=>$m,'route'=>$n,'function'=>$f,'verify'=>$v,'override'=>$o,'rate_limit'=>$r);
+    /**
+     * Adds a put route
+     *
+     * @param string $name Route name
+     * @param function $func Route function
+     * @param bool $verify API verification flag
+     * @param bool $override Override pre existing route flag
+     * @param bool $rate Rate limiting flag
+     * @return void
+     */
+    public static function put($name, $func, $verify=false, $override=false, $rate=false) {
+        self::addRoute('PUT', $name, $func, $verify, $override, $rate);
+    }
 
-		// route overriding
-		if(sizeof(self::getInstance()->routes) == 0) {
-			self::getInstance()->routes[] = $newRoute;
-		} else {
-			if($routes = self::getInstance()->routes) {
-				foreach($routes as $key => $route) {
-					if($route['route'] == $n && $m == $route['method']) {
-						if($o == true && $route['override'] == false) {
-							self::getInstance()->routes[$key] = $newRoute;
-						}
-						break;
-					} else {
-						if(end($routes) == $route) {
-							self::getInstance()->routes[] = $newRoute;
-							break;
-						}
-					}	 
-				}
-			}
-		}		
-	}
+    /**
+     * Adds a delete route
+     *
+     * @param string $name Route name
+     * @param function $func Route function
+     * @param bool $verify API verification flag
+     * @param bool $override Override pre existing route flag
+     * @param bool $rate Rate limiting flag
+     * @return void
+     */
+    public static function delete($name, $func, $verify=false, $override=false, $rate=false) {
+        self::addRoute('DELETE', $name, $func, $verify, $override, $rate);
+    }
+
+    /**
+     * Adds a route
+     *
+     * @param string $method Method
+     * @param string $name Route name
+     * @param function $func Route function
+     * @param bool $verify API verification flag
+     * @param bool $override Override pre existing route flag
+     * @param bool $rate Rate limiting flag
+     * @return void
+     */
+    private static function addRoute($method, $name, $func, $verify=false, $override=false, $rate=false) {
+        $newRoute = array('method'=>$method, 'route'=>$name, 'function'=>$func, 'verify'=>$verify, 'override'=>$override, 'rate_limit'=>$rate);
+
+        // route overriding
+        if(sizeof(self::getInstance()->routes) == 0) {
+            self::getInstance()->routes[] = $newRoute;
+        } else {
+            if($routes = self::getInstance()->routes) {
+                foreach($routes as $key => $route) {
+                    if($route['route'] == $name && $method == $route['method']) {
+                        if($override == true && $route['override'] == false) {
+                            self::getInstance()->routes[$key] = $newRoute;
+                        }
+                        break;
+                    } else {
+                        if(end($routes) == $route) {
+                            self::getInstance()->routes[] = $newRoute;
+                            break;
+                        }
+                    }
+                }
+            }
+        }
+    }
 }
 
 ?>
