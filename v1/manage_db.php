@@ -27,7 +27,7 @@ class DBManager extends APIHelper {
 	* Parse SQL files
 	*
 	* @param bool $update Flag to update database.
-	* @param $all Flag to run all scripts in modules folder.
+	* @param bool $all Flag to run all scripts in modules folder.
 	* @return void
 	*/
 	public function parseSQLFiles($update=false, $all=true) {
@@ -63,7 +63,7 @@ class DBManager extends APIHelper {
 	*
 	* @return void
 	*/
-	private function backupDB() {
+	public function backupDB() {
 		$dbHost = $this->configs['database']['host'];
 		$dbPort = $this->configs['database']['port'];
 		$user = $this->configs['database']['user'];

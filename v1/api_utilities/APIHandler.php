@@ -3,7 +3,7 @@
 * APIHandler Class
 *
 * @copyright Foose Industries
-* @version 1.0
+* @version 2.0
 */
 require_once('APIHelper.php');
 require_once('Router.php');
@@ -38,6 +38,7 @@ abstract class APIHandler extends APIHelper {
 	* Main constructor
 	*
 	* @return void
+    * @throws Exception
 	*/
 	public function __construct() {
 		parent::__construct();
@@ -58,7 +59,7 @@ abstract class APIHandler extends APIHelper {
 	* Gets the API endpoint from URL 
 	*
 	* @param bool $format flag to format API endpoint, default `false`
-	* @return void
+	* @return array | string
 	*/
 	private function getAPIEndpoint($format=false) {
         if(array_key_exists('base_url', $this->configs)) {
@@ -76,7 +77,7 @@ abstract class APIHandler extends APIHelper {
 		    $endpoint = strtok(str_replace($baseURL, '', $_SERVER['REQUEST_URI']),'?');
 		}
 
-        // set endpoint to '/' if still empty
+                // set endpoint to '/' if still empty
 		if(empty($endpoint)) {
 		   $endpoint = '/';
 		}
@@ -91,7 +92,7 @@ abstract class APIHandler extends APIHelper {
 	/**
 	* Formats the API endpoint for route matching
 	*
-	* @param string $endpointAPI endpoint to format
+	* @param string $endpoint API endpoint to format
 	* @return void
 	*/
 	private function formatAPIEndpoint($endpoint='/') {
@@ -135,29 +136,34 @@ abstract class APIHandler extends APIHelper {
 	/**
 	* Function used to set CORS Policy, overridable
 	*
-	* @param array | string $headers An array or string of header(s) 
+	* @param array | string $policy An array or string of header(s)
 	* @return void
 	*/
 	public function setCorsPolicy($policy=null) {
+
 	    if(empty($policy)) {
 		    if($headers = array_key_exists('cors', $this->configs)) {
                 if(is_array($headers)) {
                     foreach ($headers as $value) {
-                        header($value);
+                        header('Access-Control-Allow-Origin: '.$value);
                     }
                 } else {
-                    header($headers);
+                    header('Access-Control-Allow-Origin: '.$headers);
                 }
             }
         } else {
-            header($policy);
+
+            header('Access-Control-Allow-Origin: '.$policy);
+
+            header('Access-Control-Allow-Methods: GET, POST');
+            header("Access-Control-Allow-Headers: X-Requested-With");
         }
 	}
 
 	/**
 	* Function used for Authentication, overridable
 	*
-	* @param string $name route name
+	* @param string $names route name
 	* @param function $handler Authentication handler for named route
 	* @return void
 	*/
@@ -174,8 +180,8 @@ abstract class APIHandler extends APIHelper {
 	/**
 	* Handle authorization by method
 	*
-	* @param string $method Handler name or true for default
-	* @param object $req Resuest Object
+	* @param bool $method Handler name or true for default
+	* @param object $req Request Object
 	* @param object $res Response Object
 	* @return bool
 	*/
@@ -193,7 +199,7 @@ abstract class APIHandler extends APIHelper {
 	/**
 	* Function used for rate limiting, overridable
 	*
-	* @param string $name route name
+	* @param string $names route name
 	* @param function $handler rate limiting handler for named route
 	* @return void
 	*/
@@ -253,13 +259,23 @@ abstract class APIHandler extends APIHelper {
 		}
 		
 		$endpoint = $this->getAPIEndpoint(true);
-
 		$routes = Router::getInstance()->routes;
-
 		$this->req = new Request();
 
 		$params = array();
 		$body = array();
+
+		if($method == 'OPTIONS') {
+            if (isset($_SERVER["HTTP_ACCESS_CONTROL_REQUEST_METHOD"])) {
+                header("Access-Control-Allow-Methods: ".$this->configs['methods']);
+            }
+
+            if (isset($_SERVER["HTTP_ACCESS_CONTROL_REQUEST_HEADERS"])) {
+                header("Access-Control-Allow-Headers: {$_SERVER['HTTP_ACCESS_CONTROL_REQUEST_HEADERS']}");
+            }
+
+            exit(0);
+        }
 
 		foreach ($routes as $key => $value) {
 			if($value['method'] == $method || $value['method'] == 'ALL') { // method
@@ -317,9 +333,9 @@ abstract class APIHandler extends APIHelper {
 
 					parse_str(file_get_contents('php://input'),$body);
 
-					/*if(!empty(trim($_SERVER['HTTP_IF_NONE_MATCH']))) {
+					if(!empty($_SERVER['HTTP_IF_NONE_MATCH'])) {
 						$body['etag'] = $_SERVER['HTTP_IF_NONE_MATCH'];
-					}*/
+					}
 
 					$params = array_merge($params, $_GET);
 					$body = array_merge($body, $_POST); 
