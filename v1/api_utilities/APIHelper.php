@@ -54,7 +54,7 @@ abstract class APIHelper {
 		// set error reporting
 		$errorReporting = 1;
 
-		if($this->configs['environment'] == 'production' || $this->configs['development']['errors'] == false || empty($this->configs['development']['warnings'])) {
+		if($this->configs['environment'] == 'prod' || $this->configs['dev']['errors'] == false || empty($this->configs['dev']['warnings'])) {
 			$errorReporting = 0;
 		} else {
 			error_reporting(E_ALL); // Error Reporting 
@@ -109,12 +109,12 @@ abstract class APIHelper {
 
 			// default environment
 			if(!array_key_exists('environment', $configs)) {
-				$configs['environment'] = 'development';
+				$configs['environment'] = 'dev';
 			}
 
-			// default development params
-			if(!array_key_exists('development', $configs)) {
-				$configs['development'] = array('errors'=>true, 'warnings'=>false);
+			// default dev params
+			if(!array_key_exists('dev', $configs)) {
+				$configs['dev'] = array('errors'=>true, 'warnings'=>false);
 			}
 
 			// default timezone
@@ -162,7 +162,7 @@ abstract class APIHelper {
 				}
 			}
 
-			// get database configs, development or production
+			// get database configs, dev or prod
 			if(!empty($configs) && !empty($configs['database'])) {
 				// set some defaults
 				if(!isset($configs['database']['limit'])) {
