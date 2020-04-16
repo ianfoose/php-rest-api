@@ -71,7 +71,7 @@ class DBManager extends APIHelper {
 		$db = $this->configs['database']['db'];
 
 		$currentDate = date('now');
-		$command = "mysqldump -u $user -h $dbHost -p $db > $currentDate-$db.sql";
+		$command = "mysqldump -u $user -h $dbHost -p$password $db > $currentDate-$db.sql";
 
 		shell_exec($command);
 		echo "Database export complete.\n\n";
@@ -93,7 +93,7 @@ class DBManager extends APIHelper {
 			$password = $this->configs['database']['password'];
 			$db = $this->configs['database']['db'];
 
-			$mySQLString = "mysql -h $dbHost -p $dbPort -u $user -p$password -D $db -e 'source $filePath'";
+			$mySQLString = "mysql -h $dbHost -P $dbPort -u $user -p$password -D $db -e 'source $filePath'";
 		
 			shell_exec($mySQLString);
 			echo "Installed...\n\n";
@@ -130,6 +130,8 @@ if(isset($argv) && isset($argv[1])) {
 }
 
 $dbManager = new DBManager();
+
+chdir('sql/');
 
 if($command == 'update') {
 	// update database only

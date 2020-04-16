@@ -27,7 +27,7 @@ class API extends APIHandler {
 // start the api
 $api = new API();
 
-// place all custom class initializers here.
+/****** place all custom class initializers here. ******/
 
 $api->run();
 ?>

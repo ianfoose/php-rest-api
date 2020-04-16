@@ -11,7 +11,7 @@
 		"direction": "ASC",
 		"limit": 40
 	},
-	"development-database": {
+	"dev-database": {
 		"type": "mysql",
 		"host": "localhost",
 		"user": "root",
@@ -23,7 +23,7 @@
 	"date": {
 		"timezone": "UTC"
 	},
-	"environment": "development",
+	"environment": "dev",
 	"development": {
 		"errors": true,
 		"warnings": false

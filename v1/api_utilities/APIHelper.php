@@ -148,16 +148,14 @@ abstract class APIHelper {
 			foreach($configs as $config => $value) {
 				if($config != 'name' && $config != 'environment') {
 					$envConfigKey = $environment."-$config";
+					
 					if(array_key_exists($envConfigKey, $configs)) {
+						// environment config exists						
 						if(is_array($configs[$envConfigKey])) {
-							foreach ($configs[$config] as $key => $configValue) {
-								if(array_key_exists($key, $configs[$envConfigKey])) {
-									$configs[$config][$key] = $configs[$envConfigKey][$key];
-								} else {
-									$configs[$config][$key] = $configValue;
-								}
-							}
-						} else {	
+							// environment config is array
+							$configs[$config] = $this->mergeConfigs($configs[$config], $configs[$envConfigKey]);
+						} else {
+							// environment config is not an array, replace current config with environment specific config	
 							$configs[$config] = $configs[$envConfigKey];
 						}
 					}
@@ -188,6 +186,38 @@ abstract class APIHelper {
 			$this->configs = $configs;
 		} catch(Exception $e) {
 			throw new Exception('Config values not set, maybe the file does not exist?');
+		}
+	}
+
+	/**
+	* Merges environment specific configs into the primary set of API configs.
+	*
+	* @param array $configs Primary confgis to merge in to.
+	* @param array $envConfigs Environment specific configs to merge into the primary configs.
+	* @param int $depth Max array depth to merge, max is 15.
+	* @return array
+	*/
+	private function mergeConfigs($configs, $envConfigs, $depth=0) {
+		if($depth < 15) {
+			foreach ($envConfigs as $key => $configValue) {
+				if(array_key_exists($key, $configs) && is_array($envConfigs[$key])) {
+					// env key exists in primary configs and is an array
+					if(!is_array($configs[$key])) {
+						// env config is not an array, directly modify primary configs
+						$configs[$key] = $envConfigs[$key];
+					} else {
+						// repeat process as env config is an array
+				 		$configs[$key] = $this->mergeConfigs($configs[$key], $envConfigs[$key], ($depth += 1));
+					}
+				} else {
+					// either env config is not an array or does not exist in the primary configs.
+					$configs[$key] = $envConfigs[$key];
+				}
+			}
+
+			return $configs;
+		} else {
+			throw new Exception("Max depth of config array reached, max depth is $depth!");
 		}
 	}
 
