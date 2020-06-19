@@ -76,7 +76,7 @@ class DatabaseHelper {
 				if(empty($this->dbConfigs['host']) && !empty($this->dbConfigs['user']) && !empty($this->dbConfigs['password']) && !empty($this->dbConfigs['db'])) {
 		        	$msg = 'Database Connection Error';
 
-		        	if($this->configs['environment'] == 'development') {
+		        	if($this->configs['environment'] == 'dev') {
 		            	$msg = 'Invalid Database Config Values';
 		        	}
 
@@ -89,20 +89,20 @@ class DatabaseHelper {
                     $dbURL .= ':'.$dbConfigs['port'];
               	}
 
-				self::$db = new PDO("mysql:host=".$dbURL.";dbname=".$dbConfigs['db'].";charset=".$dbConfigs['charset'].";",$dbConfigs['user'],$dbConfigs['password']);
+				self::$db = new PDO("mysql:host=".$dbURL.";dbname=".$dbConfigs['db'].";charset=".$dbConfigs['charset'].";", $dbConfigs['user'], $dbConfigs['password']);
 				self::$db->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
 				self::$db->setAttribute(PDO::ATTR_DEFAULT_FETCH_MODE, PDO::FETCH_ASSOC);
-				self::$db->setAttribute( PDO::ATTR_EMULATE_PREPARES, false );
+				self::$db->setAttribute(PDO::ATTR_EMULATE_PREPARES, false);
 
 				return self::$db;
 			} catch(Exception $e) {
 				$msg = '';
 			    
-				if($this->configs['environment'] == 'development') {
+				if($this->configs['environment'] == 'dev') {
 			   	    $msg .= ', Error: '.$e->getMessage();
 			   	}
 			    
-				throw new Exception($msg,500);
+				throw new Exception($msg, 500);
 			} 
 		}
 	}
@@ -119,9 +119,9 @@ class DatabaseHelper {
 		if(!empty($query)) {
 			try {
 				if($this->connect()) {
-					if($useResult)
+					if($useResult) {
 						self::$db->setAttribute(PDO::MYSQL_ATTR_USE_BUFFERED_QUERY, true);
-
+					}
 			
 					$statement = $this->connect()->prepare($query);
            			$statement->execute($params);
@@ -133,7 +133,7 @@ class DatabaseHelper {
 			} catch(Exception $e) { // query failed
 				$errorMessage = 'Query Error';
 				
-				if($this->configs['environment'] == 'development') {
+				if($this->configs['environment'] == 'dev') {
 					$errorMessage = 'Query Error: '.$e->getMessage().' ';	
 				}
 				

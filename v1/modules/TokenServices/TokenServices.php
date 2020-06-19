@@ -75,8 +75,8 @@ class TokenServices extends APIHelper {
 		}, 'get_token_unique');
 
 		Router::get('/token/validate', function($req, $res) {
-			// TODO validate token
-		});
+			$res->send($this->validate($req->body['token']));
+		}, 'validate_token');
 
         // API Keys
 
@@ -111,8 +111,7 @@ class TokenServices extends APIHelper {
 	*/
 	public function decodeToken($token) {
 		$token = base64_decode($token);
-		$token = json_decode($token,true);
-
+		$token = json_decode($token, true);
 		return $token;
 	}
 
@@ -125,11 +124,10 @@ class TokenServices extends APIHelper {
 	public function validate($token) {
 		if($this->checkTokenConfigs()) {
 			$token = $this->decodeToken($token);
-
 			$sig = sha1($this->prefix.':'.$this->secret.':'.$token['auth']['t']);
 
 			if($sig === $token['auth']['s']) {
-				$today = date("Y:m:d H:i:s");
+				$today = date('Y:m:d H:i:s');
 
 				if($today < $token['auth']['t']){
 				    return $token;
@@ -151,15 +149,14 @@ class TokenServices extends APIHelper {
 	public function validateRefreshToken($rToken) {
 		if($this->checkTokenConfigs()) {
 			$token = $this->decodeToken($rToken);
-
 			$sig = sha1($this->prefix.':'.$this->secret.':'.$token['auth']['t']);
 
 			if($sig === $token['auth']['s']) {
-				$today = date("Y:m:d H:i:s");
+				$today = date('Y:m:d H:i:s');
 
 				if($today < $token['auth']['t']){
 				    try {
-				    	if(self::$db->find('id',array('token'=>$rToken,'revoked'=>0), TOKENS, 'Token')) {
+				    	if(self::$db->find('id', array('token'=>$rToken, 'revoked'=>0), TOKENS, 'Token')) {
 				    		return true;
 				    	}
 				    } catch (Exception $e) {
@@ -190,7 +187,7 @@ class TokenServices extends APIHelper {
 					$userID = $decodedToken['data']['id'];
 
 					try {
-						if(self::$db->find('id', array('token'=>$refreshToken,'u_id'=>$userID,'revoked'=>0), TOKENS,'Token')) {
+						if(self::$db->find('id', array('token'=>$refreshToken, 'u_id'=>$userID, 'revoked'=>0), TOKENS, 'Token')) {
 							if(self::$db->beginTransaction()) {
 								try {
 								    $tokenData = array('token'=>$this->createToken($userID, $expDate, $decodedToken['data']));
@@ -273,8 +270,7 @@ class TokenServices extends APIHelper {
 				$dataArray = array_merge($dataArray, $data);
 			}
 				
-			$token = array('data'=>$dataArray,'auth'=>array('s'=>$sig,'t'=>$exp)); 
-
+			$token = array('data'=>$dataArray, 'auth'=>array('s'=>$sig, 't'=>$exp)); 
 			$token = json_encode($token);
 			$token = base64_encode($token);
 
@@ -298,7 +294,7 @@ class TokenServices extends APIHelper {
 			
 			if(!empty($dToken['auth']['t'])) {
 				try {
-					if(self::$db->query("INSERT INTO ".TOKENS." SET token=:token,u_id=:uID,exp_date=:eDate",array(':token'=>$token,':uID'=>$uID,':eDate'=>$dToken['auth']['t']))) {
+					if(self::$db->query("INSERT INTO ".TOKENS." SET token=:token,u_id=:uID,exp_date=:eDate", array(':token'=>$token, ':uID'=>$uID, ':eDate'=>$dToken['auth']['t']))) {
 						return 'Saved';
 					} 	
 				} catch (Exception $e) {
@@ -324,7 +320,7 @@ class TokenServices extends APIHelper {
 		try {
 			if(self::$db->beginTransaction()) {
 				if(self::$db->find('id', array('token'=>$token), TOKENS)) {
-					if(self::$db->query("UPDATE ".TOKENS." SET revoked='1' WHERE token=:t",array(':t'=>$token))) {
+					if(self::$db->query("UPDATE ".TOKENS." SET revoked='1' WHERE token=:t", array(':t'=>$token))) {
 						if(self::$db->commit()) {
 							return 'Token Revoked';
 						}
@@ -383,7 +379,7 @@ class TokenServices extends APIHelper {
 		try {
 			$params = array(':deleted'=>$deleted, ':offset'=>$offset, ':limit'=>$limit);
 
-			if($results =self::$db->query("SELECT * FROM ".TOKENS." WHERE deleted=:deleted ORDER BY id $direction LIMIT :offset,:limit",$params)) {
+			if($results =self::$db->query("SELECT * FROM ".TOKENS." WHERE deleted=:deleted ORDER BY id $direction LIMIT :offset,:limit", $params)) {
 				$tokens = array();
 
 				while($token = $results->fetch()) {
@@ -453,8 +449,6 @@ class TokenServices extends APIHelper {
     */
 	public function createKey($name, $userID=null) {
 	    try {
-
-
 	        self::$db->query("INSERT INTO ".API_KEYS." SET name=:name,key=:key,user_id=:uID", array(':name'=>$name, ':key'=>$key, ':uID'=>$userID, ':expDate'=>$expDate));
 	        return 'API Key Created';
 	    } catch(Exception $e) {

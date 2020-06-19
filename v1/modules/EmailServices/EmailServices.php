@@ -103,8 +103,8 @@ class EmailServices extends APIHelper {
 	*/
 	public function createTemplate($name, $template, $userID) {
 		try {
-			if(!self::$db->find('id', array('body'=>$template,'name'=>$name), EMAIL_TEMPLATES,'Email Template')) {
-				self::$db->query("INSERT INTO ".EMAIL_TEMPLATES." SET name=:n,body=:b,user_id=:uID",array(':n'=>$name,
+			if(!self::$db->find('id', array('body'=>$template,'name'=>$name), EMAIL_TEMPLATES, 'Email Template')) {
+				self::$db->query("INSERT INTO ".EMAIL_TEMPLATES." SET name=:n,body=:b,user_id=:uID", array(':n'=>$name,
 				':b'=>$template,
 				':uID'=>$userID));
 
@@ -114,7 +114,7 @@ class EmailServices extends APIHelper {
 					':b'=>$template,
 					':uID'=>$userID));
 
-				return 'Template Created';
+				return $this->getTemplate($templateID);
 			}
 		} catch (Exception $e) {
 			throw $e;
@@ -140,7 +140,7 @@ class EmailServices extends APIHelper {
 				self::$db->query("UPDATE ".EMAIL_TEMPLATES." SET body=:b,name=:n WHERE id=:tID",array(':tID'=>$templateID,':n'=>$name,':b'=>$template));
 					
 				if(self::$db->commit()) {
-					return 'Template Edited';
+					return $this->getTemplate($templateID);
 				}
 			}
 		} catch (Exception $e) {
@@ -189,9 +189,9 @@ class EmailServices extends APIHelper {
 	*/
 	public function deleteTemplate($templateID) {
 		try {
-			self::$db->find('*', array('id'=>$templateID,'deleted'=>'0'), EMAIL_TEMPLATES,'Email Template');
-			self::$db->query("UPDATE ".EMAIL_TEMPLATES." SET deleted='1' WHERE id=:id",array(':id'=>$templateID));
-			return 'Template Deleted';
+			self::$db->find('*', array('id'=>$templateID, 'deleted'=>'0'), EMAIL_TEMPLATES, 'Email Template');
+			self::$db->query("UPDATE ".EMAIL_TEMPLATES." SET deleted='1' WHERE id=:id", array(':id'=>$templateID));
+			return $this->getTemplate($templateID);
 		} catch (Exception $e) {
 			throw $e;
 		}
@@ -206,7 +206,7 @@ class EmailServices extends APIHelper {
 	*/
 	public function getTemplate($templateID) {
 		try {
-			$result = self::$db->find('*', array('id'=>$templateID),EMAIL_TEMPLATES,'Email Template');
+			$result = self::$db->find('*', array('id'=>$templateID), EMAIL_TEMPLATES, 'Email Template');
 			return $this->getTemplateData($result);
 		} catch (Exception $e) {
 			throw $e;
@@ -230,7 +230,7 @@ class EmailServices extends APIHelper {
 				$params[':d'] = $deleted;
 			}
 
-			$r = self::$db->query($queryString,$params);
+			$r = self::$db->query($queryString, $params);
 			return $r->rowCount();
 		} catch (Exception $e) {
 			throw $e;
@@ -275,9 +275,6 @@ class EmailServices extends APIHelper {
 		if(!empty($template['date']))
 			$template['string_date'] = formatDate($template['date']);
 
-		//if(!empty($template['body']))
-			//$template['body'] = htmlspecialchars_decode($template['body'], ENT_QUOTES);
-
 		return $template;
 	}
 
@@ -309,7 +306,7 @@ class EmailServices extends APIHelper {
 		$backDelim = $delimeters[1];
 
 		if(empty($forwardDelim) || empty($backDelim)) {
-			throw new Exception("Delimeters cannot be empty!",404);
+			throw new Exception("Delimeters cannot be empty!", 404);
 		}
 
 		$pattern = "$forwardDelim%s$backDelim";
@@ -474,8 +471,9 @@ class EmailServices extends APIHelper {
 	* @return object
 	*/
 	private function getSubscriptionData($sub) {
-		if(!empty($sub['date']))
+		if(!empty($sub['date'])) {
 			$sub['string_date'] = $this->formatDate($sub['date']);
+		}
 
 		return $sub;
 	}
@@ -491,9 +489,9 @@ class EmailServices extends APIHelper {
 	public function addSubscriber($email, $group='Default') {
 		try {
 			if($r = self::$db->find('id', array('email'=>$email, 'group'=>$group), EMAIL_SUBSCRIPTIONS, false)) {
-				self::$db->query('UPDATE '.EMAIL_SUBSCRIPTIONS." SET subscriber='1' WHERE id=:id",array(':id'=>$r['id']));
+				self::$db->query('UPDATE '.EMAIL_SUBSCRIPTIONS." SET subscriber='1' WHERE id=:id", array(':id'=>$r['id']));
 			} else {
-				self::$db->query("INSERT INTO ".EMAIL_SUBSCRIPTIONS." SET email=:e,group=:group,subscriber=1",array(':e'=>$email, ':group'=>$group));
+				self::$db->query("INSERT INTO ".EMAIL_SUBSCRIPTIONS." SET email=:e,group=:group,subscriber=1", array(':e'=>$email, ':group'=>$group));
 			}
 			return 'Subscribed';
 		} catch (Exception $e) {

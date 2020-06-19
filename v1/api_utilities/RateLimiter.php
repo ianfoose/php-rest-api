@@ -8,7 +8,7 @@
 $ipServicesFile = dirname(dirname(__FILE__)).'/modules/IPServices/IPServices.php';
 
 if(!file_exists($ipServicesFile)) {
-  error_log('IPServices Module is Missing!!');
+  error_log('Rate Limiter: IPServices Module is Missing!!');
   die();
 }
 
@@ -16,17 +16,17 @@ require_once($ipServicesFile);
 
 class RateLimiter extends APIHelper {
   /**
-  * @var
+  * @var int $limit 'Rate Limit' Max requests for an interval, default=100.
   */
   private $limit = 100;
 
   /**
-  * @var
+  * @var int $interval Max amount of time that the max number of requests can be made.
   */
   private $interval = 60;
 
   /**
-  *
+  * Main constructor
   */
   public function __construct() {
     parent::__construct();
@@ -44,6 +44,13 @@ class RateLimiter extends APIHelper {
     }
   }
 
+  /**
+  * Rate limit an IP be the number of requests made over an interval.
+  *
+  * @param int $limit Max requests for an interval, default=100.
+  * @param int $interval Max amount of time that the max number of requests can be made, default=60 seconds.
+  * @return bool
+  */
   public function rateLimitByIP($limit=100, $interval=60) {
     session_start();
 
@@ -84,8 +91,9 @@ class RateLimiter extends APIHelper {
         }     
       } 
     }
+  
     $_SESSION[$sessionID] = $defaultSession;
     return true;
-    }
+  }
 }
 ?>

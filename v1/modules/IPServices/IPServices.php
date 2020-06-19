@@ -47,7 +47,7 @@ class IPServices extends APIHelper {
 		// PUBLIC ENDPOINT
 		Router::put('/visit', function($req, $res) {
 			$res->send($this->logTraffic());
-		});
+		}, 'traffic_visit');
 	}
 
 	/**
@@ -57,15 +57,15 @@ class IPServices extends APIHelper {
 	*/
 	public function getIP() {
 		if(array_key_exists('REMOTE_ADDR', $_SERVER)) {
-			return  $_SERVER['REMOTE_ADDR'];
+			return $_SERVER['REMOTE_ADDR'];
 		}
 
 		if(array_key_exists('HTTP_CLIENT_IP', $_SERVER)) {
-			return  $_SERVER['HTTP_CLIENT_IP'];
+			return $_SERVER['HTTP_CLIENT_IP'];
 		}
 
 		if(array_key_exists('HTTP_X_FORWARDED_FOR', $_SERVER)) {
-			return  $_SERVER['HTTP_X_FORWARDED_FOR'];
+			return $_SERVER['HTTP_X_FORWARDED_FOR'];
 		}
 	}
 
@@ -89,7 +89,7 @@ class IPServices extends APIHelper {
 			$ip = $this->getIP();
 			$client = $this->getClient();
 			
-			self::$db->query("INSERT INTO ".TRAFFIC." SET ip=:ip,client=:client", array(':ip'=>$ip,':client'=>$client));
+			self::$db->query("INSERT INTO ".TRAFFIC." SET ip=:ip,client=:client", array(':ip'=>$ip, ':client'=>$client));
 			return 'Traffic Logged';	
 		} catch(Exception $e) {
 			throw $e;
@@ -127,7 +127,7 @@ class IPServices extends APIHelper {
 		try {
 			$params = array(':deleted'=>$deleted, ':offset'=>$offset, ':limit'=>$limit);
 
-			$result = self::$db->query("SELECT * FROM ".TRAFFIC." WHERE deleted=:deleted ORDER BY id $direction LIMIT :offset,:limit",$params);
+			$result = self::$db->query("SELECT * FROM ".TRAFFIC." WHERE deleted=:deleted ORDER BY id $direction LIMIT :offset,:limit", $params);
 			$visits = array();
 
 			while($visit = $result->fetch()) {
@@ -174,8 +174,9 @@ class IPServices extends APIHelper {
 	* @return object
 	*/
 	public function getTrafficData($item) {
-		if(!empty($item['date']))
+		if(!empty($item['date'])) {
 			$item['string_date'] = $this->formatDate($item['date']);
+		}
 
 		return $item;
 	}

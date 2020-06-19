@@ -68,6 +68,5 @@ class Request {
 			$this->token = $token;
 		}
 	}
-
 }
 ?>

@@ -37,31 +37,31 @@ class NotificationServices extends APIHelper {
     */
     public function __construct($configs=array(), $expose=false) {
 	    if(!empty($configs)) {
-            	// email notifications
-            	if(array_key_exists('email', $configs)) {
-                	$this->emailConfigs = array_merge($this->emailConfigs, $configs['email']);
-            	}
+        	// email notifications
+        	if(array_key_exists('email', $configs)) {
+            	$this->emailConfigs = array_merge($this->emailConfigs, $configs['email']);
+        	}
 
-            	// iOS notifications
-            	if(array_key_exists('ios', $configs)) {
-                	$this->iosConfigs = array_merge($this->iosConfigs, $configs['ios']);
-            	}
+        	// iOS notifications
+        	if(array_key_exists('ios', $configs)) {
+            	$this->iosConfigs = array_merge($this->iosConfigs, $configs['ios']);
+        	}
 
-            	// google notifications
-            	if(array_key_exists('google', $configs)) {
-                	$this->googleConfigs = array_merge($this->googleConfigs, $configs['google']);
-            	}
+        	// google notifications
+        	if(array_key_exists('google', $configs)) {
+            	$this->googleConfigs = array_merge($this->googleConfigs, $configs['google']);
+        	}
 
-            	// windows notifications
-            	if(array_key_exists('windows', $configs)) {
-                	$this->windowsConfigs = array_merge($this->windowsConfigs, $configs['windows']);
-            	}
+        	// windows notifications
+        	if(array_key_exists('windows', $configs)) {
+            	$this->windowsConfigs = array_merge($this->windowsConfigs, $configs['windows']);
+        	}
         }
 
-	// expose API
-	if($expose) {
-		$this->exposeAPI();
-	}
+		// expose API
+		if($expose) {
+			$this->exposeAPI();
+		}
    }
 	
 	/**
@@ -176,8 +176,9 @@ class NotificationServices extends APIHelper {
 	*/
 	public function android($data, $regID, $notification=false) {
 	    $vibrate = 1;
-	    if(!empty($data['vibrate']))
+	    if(!empty($data['vibrate'])) {
 	    	$vibrate = $data['vibrate'];
+	    }
 
 	    $message = array(
 	        'title' => $data['mtitle'],
@@ -246,8 +247,9 @@ class NotificationServices extends APIHelper {
 		$result = array();
 		foreach(explode("\n", $response) as $line) {
 		    $tab = explode(":", $line, 2);
-		    if (count($tab) == 2)
+		    if (count($tab) == 2) {
 		        $result[$tab[0]] = trim($tab[1]);
+		    }
 		}
 
 		return $result;
@@ -276,13 +278,15 @@ class NotificationServices extends APIHelper {
 				$this->iosConfigs['url'], $err,
 				$errstr, 60, STREAM_CLIENT_CONNECT|STREAM_CLIENT_PERSISTENT, $ctx);
 
-			if (!$fp)
+			if (!$fp) {
 				exit("Failed to connect: $err $errstr" . PHP_EOL);
+			}
 
 			$sound = 'default';
 
-			if(!empty($data['sound']))
+			if(!empty($data['sound'])) {
 				$sound = $data['sound'];
+			}
 
 			// Create the payload body
 			$body['aps'] = array(
@@ -384,8 +388,10 @@ class NotificationServices extends APIHelper {
             } else if($platform == 'microsoft') {
                 return $this->WP($data, $token);
             }
-            // TODO: log error
-            throw new Exception('Platform '.$platform.' Not Found',404);
+
+            $errorMessage = "Platform $platform Not Found";
+            error_log("Notification Services: $errorMessage");
+            throw new Exception($errorMessage, 404);
     	}
     }
 
@@ -401,7 +407,6 @@ class NotificationServices extends APIHelper {
     public function sendLocalNotification($userID, $objectID=0, $type='Row', $event='Event', $payload=null) {
         try {
             self::$db->query("INSERT INTO ".NOTIFICATIONS." SET payload=:p, user_id=:uID, object_id=:oID, type=:type", array(':p'=>$payload, ':uID'=>$userID, ':oID'=>$objectID, ':type'=>$type));
-
             return 'Notification Sent';
         } catch(Exception $e) {
             throw $e;
@@ -411,6 +416,8 @@ class NotificationServices extends APIHelper {
     /**
     * Updates a notifications status, (read)
     *
+    * @param int $notificationID Notification ID
+    * @param bool $readStatus Notification read status
     * @return string
     * @throws Exception
     */
@@ -427,7 +434,7 @@ class NotificationServices extends APIHelper {
     /**
     * Delete a local notification
     *
-    * @param int $notificationID ID of notification
+    * @param int $notificationID Notification ID
     * @return string
     * @throws Exception
     */
@@ -528,8 +535,6 @@ class NotificationServices extends APIHelper {
             $notification['string_data'] = $this->formatDate($notification['date']);
         }
 
-        // TODO:
-
         return $notification;
     }
 
@@ -543,8 +548,8 @@ class NotificationServices extends APIHelper {
     */
     public function savePushToken($userID, $token, $platform) {
     	try {
-	    	if(!self::$db->find('id',array('uuid'=>$token,'user_id'=>$userID,'platform'=>$platform),'uuid,user_id,platform',PUSH_UUID,'Token')) {
-	   			self::$db->query("INSERT INTO ".PUSH_UUID." SET platform=:p,uuid=:uuid,user_id=:userID",array(':p'=>$platform,':uuid'=>$token,':userID'=>$userID));
+	    	if(!self::$db->find('id', array('uuid'=>$token, 'user_id'=>$userID, 'platform'=>$platform), 'uuid,user_id,platform', PUSH_UUID, 'Token')) {
+	   			self::$db->query("INSERT INTO ".PUSH_UUID." SET platform=:p,uuid=:uuid,user_id=:userID", array(':p'=>$platform, ':uuid'=>$token, ':userID'=>$userID));
 	   			return 'Push Token Added';
 	   		} 
     	} catch(Exception $e) {
@@ -562,11 +567,9 @@ class NotificationServices extends APIHelper {
     */
     public function deletePushToken($token, $userID) {
     	try {
-	    	if(self::$db->find('id',array('user_id'=>$userID,'uuid'=>$token), PUSH_UUID, 'Token')) {
-	    		self::$db->query("UPDATE ".PUSH_UUID." SET deleted='1' WHERE token=:t",array(':t'=>$token));
-
-	    		return 'Push Token Deleted';
-	   		}
+	    	self::$db->find('id', array('user_id'=>$userID, 'uuid'=>$token), PUSH_UUID, 'Token');
+	    	self::$db->query("UPDATE ".PUSH_UUID." SET deleted='1' WHERE token=:t", array(':t'=>$token));
+	    	return 'Push Token Deleted';
 	   	} catch (Exception $e) {
 	    	throw $e;
 	    }
@@ -627,7 +630,7 @@ class NotificationServices extends APIHelper {
                 ->setBody($body);
 
                 if($html)
-                    $message->setContentType("text/html");
+                    $message->setContentType('text/html');
 
                 $result = $mailer->send($message);
 
@@ -635,7 +638,7 @@ class NotificationServices extends APIHelper {
                     return true;
                 }
             }
-            throw new Exception('Check email fields, to, from, subject and body cannot be Null ', 404);
+            throw new Exception('Check email fields, to, from, subject and body cannot be null!!', 404);
         } catch (Exception $e) {
             throw $e;
         }

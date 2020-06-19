@@ -12,8 +12,14 @@ class API extends APIHandler {
 
 		// authentication handler(s)
 		$this->addAuthHandler(array('default', 'errors', 'email_templates', 'email_subscriptions', 'local_notifications'), function($req, $res) {
-			// defaults to `false` for security to disallow any connection
+			// defaults to `false` for security to disallow any connection.
 			return false;
+		});
+
+		// public authentication handler(s)
+		$this->addAuthHandler(array('traffic_visit'), function($req, $res) {
+			// defaults to `true` for public endpoints.
+			return true;
 		});
 
 		// rate limiting handler(s)

@@ -74,7 +74,7 @@ abstract class APIHelper {
 			// get tables dynamically from DB
 			try {
 				if(!empty($this->configs['database']['db']) && self::$db->connect()) {
-					if($results = self::$db->query("SELECT table_name FROM information_schema.tables where table_schema='".$this->configs['database']['db']."'")) {
+					if($results = self::$db->query("SELECT table_name as table_name FROM information_schema.tables where table_schema='".$this->configs['database']['db']."'")) {
 						
 						while($tblName = $results->fetch()) {
 							$tblName = $tblName['table_name'];
@@ -86,13 +86,14 @@ abstract class APIHelper {
 
 							$this->tables[] = $tblName;
 
-							if(!defined(strtoupper($tblName)))
+							if(!defined(strtoupper($tblName))) {
 								define(strtoupper($tblName), $tblName);
+							}
 						}
 					}
 				}
 			} catch (Exception $e) {
-				// todo, silently report error
+				error_log('APIHelper: '.$e->getMessage());
 			}
 		}
 	}
