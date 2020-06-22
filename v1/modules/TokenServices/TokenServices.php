@@ -174,9 +174,9 @@ class TokenServices extends APIHelper {
 	* Refreshes a token
 	*
 	* @param string $refreshToken Refresh Token
-    * @param string $expDate Refreshed token expiration date, default +5 minutes.
-    * @param bool $regenerate Regenerate a new refresh token is the refresh token is still valid.
-    * @param string $refreshTokenExp Regenerated refresh token expiration date, default +1 hour.
+        * @param string $expDate Refreshed token expiration date, default +5 minutes.
+        * @param bool $regenerate Regenerate a new refresh token is the refresh token is still valid.
+        * @param string $refreshTokenExp Regenerated refresh token expiration date, default +1 hour.
 	* @return array
 	* @throws Exception
 	*/
@@ -256,6 +256,10 @@ class TokenServices extends APIHelper {
     * @throws Exception
 	*/
 	private function create($id, $expDate='+5 Minutes', $data=array(), $refresh=false) {
+		if(empty($expDate)) {
+			$expDate = '+5 Minutes';
+		}
+		
 		if($this->checkTokenConfigs()) {
 			$exp = date('Y:m:d H:i:s', strtotime($expDate));
 
