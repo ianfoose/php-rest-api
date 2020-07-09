@@ -2,7 +2,7 @@
 /**
 * Email Services Class
 *
-* @sversion 1.0
+* @version 1.0
 */
 
 require_once(dirname(dirname(dirname(__FILE__))).'/api_utilities/APIHelper.php');
