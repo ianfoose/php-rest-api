@@ -609,7 +609,7 @@ class NotificationServices extends APIHelper {
 	* @param string $body Email body
 	* @return bool
 	*/
-	public function sendEmail($to,$from,$fromName,$subject,$body,$html=false) {
+	public function sendEmail($to, $from, $fromName, $subject, $body, $html=false) {
 		try {
             require_once('swift_mailer/swift_required.php');
 
