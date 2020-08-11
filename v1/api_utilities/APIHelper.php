@@ -51,19 +51,16 @@ abstract class APIHelper {
 			date_default_timezone_set('UTC');
 		}
 
-		// set error reporting
-		$errorReporting = 1;
+		// error configuration
+		error_reporting(E_ALL); // Error Reporting 
 
+		// set display errors
 		if($this->configs['environment'] == 'prod' || $this->configs['dev']['errors'] == false || empty($this->configs['dev']['warnings'])) {
-			$errorReporting = 0;
-		} else {
-			error_reporting(E_ALL); // Error Reporting 
-		}
-
-		ini_set('display_errors', $errorReporting); 
+			ini_set('display_errors', 0); 
+		} 
 
 		// set error logging file path
-		if(isset($this->configs['error_log']) && file_exists($this->configs['error_log'])) {
+		if(isset($this->configs['error_log'])) {
 			ini_set('error_log', $this->configs['error_log']);
 		}
 
