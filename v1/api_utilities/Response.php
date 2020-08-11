@@ -104,7 +104,7 @@ class Response {
         } else if($this->format == 'xml') {
             $xml = new SimpleXMLElement("<?xml version=\"1.0\"?><root></root>");
 
-            $this->array_to_xml($data, $xml);
+            $this->arrayToXML($data, $xml);
 
             // set xml header
             header('Content-Type: text/xml');
@@ -131,17 +131,17 @@ class Response {
     * @param object $xml XML element to append to
     * @return SimpleXML Element 
     */
-    private function array_to_xml($array, &$xml) {
+    private function arrayToXML($array, &$xml) {
         foreach($array as $key => $value) {
             if(is_array($value)) {
                 if(!is_numeric($key)){
                     $subnode = $xml->addChild("$key");
-                    $this->array_to_xml($value, $subnode);
+                    $this->arrayToXML($value, $subnode);
                 } else {
-                    $this->array_to_xml($value, $xml);
+                    $this->arrayToXML($value, $xml);
                 }
             } else {
-                $xml->addChild("$key","$value");
+                $xml->addChild("$key", "$value");
             }
         }
     }
@@ -161,8 +161,14 @@ class Response {
         header('Content-Type: text/csv');
         header('Content-Disposition: attachment;filename='.$fileName);
 
+        // check if data is not an array
         if(!is_array($data)) {
             $data = array('result'=>$data);
+        }
+
+        // check if data is a single object, if so encase in array
+        if(!is_array($data[0])) {
+            $data = array($data);
         }
 
         $fp = fopen('php://output', 'w');
@@ -188,7 +194,7 @@ class Response {
 
             foreach($row as $key => $_row) {
                 if(is_array($_row)) {
-                    $row[$key] = implode(',', $row[$key]);
+                    $row[$key] = json_encode($row[$key]);
                 }
             }
 

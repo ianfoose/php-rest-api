@@ -51,8 +51,8 @@ abstract class APIHelper {
 			date_default_timezone_set('UTC');
 		}
 
-		// error configuration
-		error_reporting(E_ALL); // Error Reporting 
+		// Error Reporting 
+		error_reporting(E_ALL); 
 
 		// set display errors
 		if($this->configs['environment'] == 'prod' || $this->configs['dev']['errors'] == false || empty($this->configs['dev']['warnings'])) {
