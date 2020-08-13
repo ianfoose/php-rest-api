@@ -140,24 +140,22 @@ abstract class APIHandler extends APIHelper {
 	* @return void
 	*/
 	public function setCorsPolicy($policy=null) {
-
 	    if(empty($policy)) {
 		    if($headers = array_key_exists('cors', $this->configs)) {
-                if(is_array($headers)) {
-                    foreach ($headers as $value) {
-                        header('Access-Control-Allow-Origin: '.$value);
-                    }
-                } else {
-                    header('Access-Control-Allow-Origin: '.$headers);
-                }
+                	if(is_array($headers)) {
+                    		foreach ($headers as $value) {
+                        		header('Access-Control-Allow-Origin: '.$value);
+                    		}
+                	} else {
+                    		header('Access-Control-Allow-Origin: '.$headers);
+                	}
+            	    }
+            } else {
+            	header('Access-Control-Allow-Origin: '.$policy);
+
+            	header('Access-Control-Allow-Methods: GET, POST');
+            	header("Access-Control-Allow-Headers: X-Requested-With");
             }
-        } else {
-
-            header('Access-Control-Allow-Origin: '.$policy);
-
-            header('Access-Control-Allow-Methods: GET, POST');
-            header("Access-Control-Allow-Headers: X-Requested-With");
-        }
 	}
 
 	/**
