@@ -92,33 +92,44 @@ class Response {
         header($headerString);
         
         if(!empty($headers)) {
-            header($headers);
+            if(!is_array($headers)) {
+                $preFormattedHeader = explode(':', $headers);
+                $headers = array($preFormattedHeader[0]=>$preFormattedHeader[1]);
+            }
+
+            foreach ($headers as $key => $value) {
+                header("$key: $value");
+            }
         }
 
-        if(!is_array($data)) { // for single values 
-            $data = array('result'=>$data); 
-        } 
+        if((!empty($headers) && is_array($headers) && !array_key_exists('Content-Type', $headers)) || empty($headers)) {
+            if(!is_array($data) && ($this->format == 'xml' || $this->format == 'json')) { // for single values 
+                $data = array('result'=>$data); 
+            } 
 
-        if($this->format == 'json') { // json   
-            echo json_encode($data);
-        } else if($this->format == 'xml') {
-            $xml = new SimpleXMLElement("<?xml version=\"1.0\"?><root></root>");
+            if($this->format == 'json') { // json   
+                echo json_encode($data);
+            } else if($this->format == 'xml') {
+                $xml = new SimpleXMLElement("<?xml version=\"1.0\"?><root></root>");
 
-            $this->arrayToXML($data, $xml);
+                $this->arrayToXML($data, $xml);
 
-            // set xml header
-            header('Content-Type: text/xml');
+                // set xml header
+                header('Content-Type: text/xml');
 
-            echo $xml->asXML();
-        } else if($this->format == 'csv') { // csv
-            $this->outputCsv('data.csv', $data);
-        } else { // plain text, default
-            if(is_array($data)) {
-                echo implode(',', $data);
-            } else { 
-                echo $data; // plain text
-            }
-        }   
+                echo $xml->asXML();
+            } else if($this->format == 'csv') { // csv
+                $this->outputCsv('data.csv', $data);
+            } else { // plain text, default
+                if(is_array($data)) {
+                    echo implode(',', $data);
+                } else { 
+                    echo $data; // plain text
+                }
+            }   
+        } else {
+           echo $data;
+        }
 
         exit;   
     } 
