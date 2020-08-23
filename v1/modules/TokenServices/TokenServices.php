@@ -189,23 +189,19 @@ class TokenServices extends APIHelper {
 
 					try {
 						if(self::$db->find('id', array('token'=>$refreshToken, 'u_id'=>$userID, 'revoked'=>0), TOKENS, 'Token', false)) {
-							if(self::$db->beginTransaction()) {
-								try {
-								    $tokenData = array('token'=>$this->createToken($userID, $expDate, $decodedToken['data']));
+							
+							try {
+							    $tokenData = array('token'=>$this->createToken($userID, $expDate, $decodedToken['data']));
 
-								    if($regenerate) {
-                                        $newRefreshToken = $this->createRefreshToken($userID, $refreshTokenExp, $decodedToken['data']);
-                                        $tokenData['refresh_token'] = $newRefreshToken;
-                                    }
+							    if($regenerate) {
+                                    $newRefreshToken = $this->createRefreshToken($userID, $refreshTokenExp, $decodedToken['data']);
+                                    $tokenData['refresh_token'] = $newRefreshToken;
+                                }
 
-									if(self::$db->commit()) {
-										return $tokenData;
-									}
-									
-								} catch(Exception $ex) {
-									throw $ex;
-								}	
-							}
+								return $tokenData;
+							} catch(Exception $ex) {
+								throw $ex;
+							}	
 						}
 					} catch(Exception $e) {
 						throw $e;

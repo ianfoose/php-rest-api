@@ -133,16 +133,12 @@ class EmailServices extends APIHelper {
 	*/
 	public function editTemplate($templateID, $name, $template, $userID) {
 		try {
-			if(self::$db->beginTransaction()) {
-				$r = self::$db->find('id', array('id'=>$templateID), EMAIL_TEMPLATES,'Email Template');
-				self::$db->query("INSERT INTO ".EMAIL_TEMPLATE_EDITS." SET user_id=:uID,body=:b,name=:n,template_id=:tID",array(':tID'=>$r['id'],':n'=>$name,':b'=>$template,':uID'=>$userID));
+			$r = self::$db->find('id', array('id'=>$templateID), EMAIL_TEMPLATES,'Email Template');
+			self::$db->query("INSERT INTO ".EMAIL_TEMPLATE_EDITS." SET user_id=:uID,body=:b,name=:n,template_id=:tID",array(':tID'=>$r['id'],':n'=>$name,':b'=>$template,':uID'=>$userID));
 
-				self::$db->query("UPDATE ".EMAIL_TEMPLATES." SET body=:b,name=:n WHERE id=:tID",array(':tID'=>$templateID,':n'=>$name,':b'=>$template));
-					
-				if(self::$db->commit()) {
-					return $this->getTemplate($templateID);
-				}
-			}
+			self::$db->query("UPDATE ".EMAIL_TEMPLATES." SET body=:b,name=:n WHERE id=:tID",array(':tID'=>$templateID,':n'=>$name,':b'=>$template));
+				
+			return $this->getTemplate($templateID);
 		} catch (Exception $e) {
 			throw $e;
 		}
