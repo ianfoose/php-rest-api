@@ -59,7 +59,7 @@ class TokenServices extends APIHelper {
 			if(!empty($req->body['token'])) {
 				$res->send($this->refreshToken($req->body['token'], $req->body['token_exp'], $req->body['regenerate'], $req->body['refresh_exp']));
 			}
-			throw new Exception('Missing token', 404);
+			throw new Exception('Missing token', 401);
 		});
 
 		Router::get('/tokens', function($req, $res) {
@@ -156,9 +156,10 @@ class TokenServices extends APIHelper {
 
 				if($today < $token['auth']['t']){
 				    try {
-				    	if(self::$db->find('id', array('token'=>$rToken, 'revoked'=>0), TOKENS, 'Token')) {
+				    	if(self::$db->find('id', array('token'=>$rToken, 'revoked'=>0), TOKENS, 'Token', false)) {
 				    		return true;
 				    	}
+				    	throw new Exception('Token not found', 401);
 				    } catch (Exception $e) {
 				    	throw $e;
 				    } 
@@ -166,7 +167,7 @@ class TokenServices extends APIHelper {
 			}
 			return false;
 		} else {
-			throw new Exception('Check token secret and or prefix in configs', 404);
+			throw new Exception('Check token secret and or prefix in configs', 401);
 		}
 	}
 
@@ -187,7 +188,7 @@ class TokenServices extends APIHelper {
 					$userID = $decodedToken['data']['id'];
 
 					try {
-						if(self::$db->find('id', array('token'=>$refreshToken, 'u_id'=>$userID, 'revoked'=>0), TOKENS, 'Token')) {
+						if(self::$db->find('id', array('token'=>$refreshToken, 'u_id'=>$userID, 'revoked'=>0), TOKENS, 'Token', false)) {
 							if(self::$db->beginTransaction()) {
 								try {
 								    $tokenData = array('token'=>$this->createToken($userID, $expDate, $decodedToken['data']));
@@ -212,7 +213,7 @@ class TokenServices extends APIHelper {
 				}
 			}
 		}
-		throw new Exception('Invalid Refresh Token',401);
+		throw new Exception('Invalid Refresh Token', 401);
 	}
 
 	/**
@@ -322,13 +323,9 @@ class TokenServices extends APIHelper {
 	*/
 	public function revoke($token) {
 		try {
-			if(self::$db->beginTransaction()) {
-				if(self::$db->find('id', array('token'=>$token), TOKENS)) {
-					if(self::$db->query("UPDATE ".TOKENS." SET revoked='1' WHERE token=:t", array(':t'=>$token))) {
-						if(self::$db->commit()) {
-							return 'Token Revoked';
-						}
-					}
+			if(self::$db->find('id', array('token'=>$token), TOKENS, 'Token', false)) {
+				if(self::$db->query("UPDATE ".TOKENS." SET revoked='1' WHERE token=:t", array(':t'=>$token))) {
+					return 'Token Revoked';
 				}
 			}
 		} catch (Exception $e) {
