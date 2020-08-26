@@ -161,7 +161,7 @@ class DatabaseHelper {
 		if(!is_array($vals))
 			throw new Exception('Values must be in an array', 500);
 
-		$queryString = 'SELECT '.$keys.' FROM '.$tbl.' WHERE ';
+		$queryString = 'SELECT '.$keys.' FROM `'.$tbl.'` WHERE ';
 		$params = array();
 
 		$j = 0;
