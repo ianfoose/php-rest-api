@@ -129,7 +129,7 @@ class TokenServices extends APIHelper {
 			if($sig === $token['auth']['s']) {
 				$today = date('Y:m:d H:i:s');
 
-				if($today < $token['auth']['t']){
+				if($today < $token['auth']['t']) {
 				    return $token;
 				} 
 			}
@@ -154,7 +154,7 @@ class TokenServices extends APIHelper {
 			if($sig === $token['auth']['s']) {
 				$today = date('Y:m:d H:i:s');
 
-				if($today < $token['auth']['t']){
+				if($today < $token['auth']['t']) {
 				    try {
 				    	if(self::$db->find('id', array('token'=>$rToken, 'revoked'=>0), TOKENS, 'Token', false)) {
 				    		return true;
