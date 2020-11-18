@@ -11,6 +11,11 @@ require_once('api_utilities/APIHelper.php');
 */
 class DBManager extends APIHelper {
 	/**
+	* @var array $dbConfigs Database configs for the API
+	*/
+	private $dbConfigs;
+
+	/**
 	* Main Constructor
 	*
 	* @return void
@@ -18,8 +23,17 @@ class DBManager extends APIHelper {
 	function __construct() {
 		parent::__construct();
 
-		if(!$this->configs['database']) {
+		if(!array_key_exists('database', $this->configs)) {
 			die('No database configs were found, please check your config.json!');
+		} else {
+			$this->dbConfigs = $this->configs['database']; 
+			
+			// check for 'root_db' credentials
+			if(array_key_exists('root_user', $this->dbConfigs) && array_key_exists('root_password', $this->dbConfigs)) {
+				// using 'root_db' credentials
+				$this->dbConfigs['user'] = $this->dbConfigs['root_user'];
+				$this->dbConfigs['password'] = $this->dbConfigs['root_password'];
+			} 
 		}
 	}
 
@@ -41,11 +55,10 @@ class DBManager extends APIHelper {
 
 		if(!$update) {
 			$databaseSQLFileDir = dirname(__FILE__).'/sql/';
-			
-			$this->executeSQL($databaseSQLFileDir.'database.sql', false);
-			$this->executeSQL($databaseSQLFileDir.'default_db.sql');
+			$this->executeSQLFile($databaseSQLFileDir.'database.sql', false);
+			$this->executeSQLFile($databaseSQLFileDir.'default_db.sql');
 		} else {
-			$this->executeSQL(dirname(__FILE__).'/sql/updates.sql');
+			$this->executeSQLFile(dirname(__FILE__).'/sql/updates.sql');
 		}
 
 		if($all) {
@@ -53,9 +66,23 @@ class DBManager extends APIHelper {
 				$sqlFile = "$dirname/$fileName";
 
 				echo "$prefix $sqlFile...\n\n";
-				$this->executeSQL($sqlFile);
+				$this->executeSQLFile($sqlFile);
 			}
 		}
+	}
+
+	/**
+	* Constructs a MySQL login string with host, port, user and password options.
+	*
+	* @return string
+	*/ 
+	private function constructLoginString() {
+		$dbHost = $this->dbConfigs['host'];
+		$dbPort = $this->dbConfigs['port'];
+		$user = $this->dbConfigs['user'];
+		$password = $this->dbConfigs['password'];
+		$db = $this->dbConfigs['db'];
+		return "-h $dbHost -P $dbPort -u $user  -p$password $db ";
 	}
 
 	/**
@@ -64,17 +91,15 @@ class DBManager extends APIHelper {
 	* @return void
 	*/
 	public function backupDB() {
-		$dbHost = $this->configs['database']['host'];
-		$dbPort = $this->configs['database']['port'];
-		$user = $this->configs['database']['user'];
-		$password = $this->configs['database']['password'];
-		$db = $this->configs['database']['db'];
-
-		$currentDate = date('now');
-		$command = "mysqldump -u $user -h $dbHost -p$password $db > $currentDate-$db.sql";
-
-		shell_exec($command);
-		echo "Database export complete.\n\n";
+		try {
+			$loginStr = $this->constructLoginString();
+			$db = $this->dbConfigs['db'];
+			$currentDate = date('now');
+			$this->executeSQL("mysqldump $loginStr $db > $currentDate-$db.sql");
+			echo "Database export complete.\n\n";
+		} catch(Exception $e) {
+			echo "An error occured while backing up the DB with exception: ".$e->getMessage()."\n\n";
+		}
 	}
 
 	/**
@@ -83,22 +108,29 @@ class DBManager extends APIHelper {
 	* @param string $filePath File path for SQL file to run.
 	* @return void
 	*/
-	private function executeSQL($filePath) {
+	private function executeSQLFile($filePath) {
 		try {
+			$loginStr = $this->constructLoginString();
 			file_exists($filePath);
-
-			$dbHost = $this->configs['database']['host'];
-			$dbPort = $this->configs['database']['port'];
-			$user = $this->configs['database']['user'];
-			$password = $this->configs['database']['password'];
-			$db = $this->configs['database']['db'];
-
-			$mySQLString = "mysql -h $dbHost -P $dbPort -u $user -p$password -D $db -e 'source $filePath'";
-		
-			shell_exec($mySQLString);
+			echo "Running $filePath ...\n\n";
+			$this->executeSQL("mysql $loginStr source $filePath");
 			echo "Installed...\n\n";
 		} catch(Exception $e) {
 			echo "An error occured while processing $filePath with exception: ".$e->getMessage()."\n\n";
+		}
+	}
+
+	/**
+	* Executs an SQL statement.
+	*
+	* @param string $command MySQL command
+	* @return shell status
+	*/
+	private function executeSQL($command) {
+		try {		
+			return shell_exec($command);
+		} catch(Exception $e) {
+			throw $e;
 		}
 	}
 }
@@ -107,7 +139,7 @@ class DBManager extends APIHelper {
 
 $command = '';
 $runAll = true;
-$backup = true;
+$backup = false;
 
 if(isset($argv) && isset($argv[1])) {
 	$command = strtolower($argv[1]);
@@ -121,10 +153,10 @@ if(isset($argv) && isset($argv[1])) {
 	}
 
 	if(isset($argv[3])) {
-		if(strtolower($argv[3]) == 'backup') {
+		if(strtolower($argv[3]) == 'skip-backup') {
 			$backup = true;
 		} else {
-			die("Invalid option, ".$argv[3]."!!, valid option(s) are 'backup' to backup the existing database");
+			die("Invalid option, ".$argv[3]."!!, valid option(s) are 'skip-backup' to skip backing up the existing database");
 		}
 	}
 }
