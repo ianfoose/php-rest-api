@@ -6,7 +6,7 @@ require_once('api_utilities/APIHelper.php');
 /**
 * DBManager Class
 *
-* @version 1.0
+* @version 2.0
 * @return void
 */
 class DBManager extends APIHelper {
@@ -103,7 +103,7 @@ class DBManager extends APIHelper {
 	}
 
 	/**
-	* Execute SQL method
+	* Execute SQL from a file
 	*
 	* @param string $filePath File path for SQL file to run.
 	* @return void
