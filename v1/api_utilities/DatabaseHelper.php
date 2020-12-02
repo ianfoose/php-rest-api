@@ -96,6 +96,7 @@ class DatabaseHelper {
 
 				return self::$db;
 			} catch(Exception $e) {
+				error_log('DatabaseHelper: '.$e->getMessage());
 				$msg = '';
 			    
 				if($this->configs['environment'] == 'dev') {
