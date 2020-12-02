@@ -72,7 +72,6 @@ abstract class APIHelper {
 			try {
 				if(!empty($this->configs['database']['db']) && self::$db->connect()) {
 					if($results = self::$db->query("SELECT table_name as table_name FROM information_schema.tables where table_schema='".$this->configs['database']['db']."'")) {
-						
 						while($tblName = $results->fetch()) {
 							$tblName = $tblName['table_name'];
 
