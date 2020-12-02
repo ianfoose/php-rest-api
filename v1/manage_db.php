@@ -113,7 +113,7 @@ class DBManager extends APIHelper {
 			$loginStr = $this->constructLoginString();
 			file_exists($filePath);
 			echo "Running $filePath ...\n\n";
-			$this->executeSQL("mysql $loginStr source $filePath");
+			$this->executeSQL("mysql $loginStr -e 'source $filePath'");
 			echo "Installed...\n\n";
 		} catch(Exception $e) {
 			echo "An error occured while processing $filePath with exception: ".$e->getMessage()."\n\n";
