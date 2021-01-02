@@ -30,11 +30,11 @@ class EmailServices extends APIHelper {
 	public function exposeAPI() {
 		// templates
 		Router::get('/email/templates', function($req, $res) {
-			$res->send($this->getTemplates($_GET['deleted'], $this->getQueryDirection(), $this->getQueryOffset(), $this->getQueryLimit()));
+			$res->send($this->getTemplates($this->getQueryValue($_GET, 'deleted', 0), $this->getQueryDirection(), $this->getQueryOffset(), $this->getQueryLimit()));
 		}, 'email_templates');
 
 		Router::get('/email/templates/count/number', function($req, $res) {
-			$res->send($this->getTotalEmailTemplates($_GET['deleted']));
+			$res->send($this->getTotalEmailTemplates($this->getQueryValue($_GET, 'deleted', 0)));
 		}, 'email_templates');
 
 		Router::get('/email/template/:id', function($req, $res) {
