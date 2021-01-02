@@ -57,7 +57,7 @@ class TokenServices extends APIHelper {
 
 		Router::post('/token/refresh', function($req, $res) {
 			if(!empty($req->body['token'])) {
-				$res->send($this->refreshToken($req->body['token'], $req->body['token_exp'], $req->body['regenerate'], $req->body['refresh_exp']));
+				$res->send($this->refreshToken($req->body['token'], @$req->body['token_exp'], @$req->body['regenerate'], @$req->body['refresh_exp']));
 			}
 			throw new Exception('Missing token', 401);
 		});
