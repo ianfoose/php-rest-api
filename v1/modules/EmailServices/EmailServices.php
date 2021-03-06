@@ -30,11 +30,11 @@ class EmailServices extends APIHelper {
 	public function exposeAPI() {
 		// templates
 		Router::get('/email/templates', function($req, $res) {
-			$res->send($this->getTemplates($this->getQueryValue($_GET, 'deleted', 0), $this->getQueryDirection(), $this->getQueryOffset(), $this->getQueryLimit()));
+			$res->send($this->getTemplates($this->getRequestValue($_GET, 'deleted', 0), $this->getQueryDirection(), $this->getQueryOffset(), $this->getQueryLimit()));
 		}, 'email_templates');
 
 		Router::get('/email/templates/count/number', function($req, $res) {
-			$res->send($this->getTotalEmailTemplates($this->getQueryValue($_GET, 'deleted', 0)));
+			$res->send($this->getTotalEmailTemplates($this->getRequestValue($_GET, 'deleted', 0)));
 		}, 'email_templates');
 
 		Router::get('/email/template/:id', function($req, $res) {
@@ -64,9 +64,9 @@ class EmailServices extends APIHelper {
 		}, 'email_subscriptions');
 
 		Router::get('/email/subscriptions', function($req, $res) {
-			$filters = array('group'=>$this->getQueryValue($_GET, 'group', ''),
-				'subscriber'=>$this->getQueryValue($_GET, 'subscriber', ''),
-				'deleted'=>$this->getQueryValue($_GET, 'deleted', ''));
+			$filters = array('group'=>$this->getRequestValue($_GET, 'group', ''),
+				'subscriber'=>$this->getRequestValue($_GET, 'subscriber', ''),
+				'deleted'=>$this->getRequestValue($_GET, 'deleted', ''));
 
 			$res->send($this->getEmailSubscribers($filters, $this->getQueryDirection(), $this->getQueryOffset(), $this->getQueryLimit()));
 		}, 'email_subscriptions');
@@ -76,17 +76,17 @@ class EmailServices extends APIHelper {
 		}, 'email_subscriptions');
 
 		Router::get('/email/subscriptions/search/:query', function($req, $res) {
-			$filters = array('group'=>$this->getQueryValue($_GET, 'group', ''),
-				'subscriber'=>$this->getQueryValue($_GET, 'subscriber', ''),
-				'deleted'=>$this->getQueryValue($_GET, 'deleted', ''));
+			$filters = array('group'=>$this->getRequestValue($_GET, 'group', ''),
+				'subscriber'=>$this->getRequestValue($_GET, 'subscriber', ''),
+				'deleted'=>$this->getRequestValue($_GET, 'deleted', ''));
 
 			$res->send($this->searchEmails($req->params['query'], $filters, $this->getQueryDirection(), $this->getQueryOffset(), $this->getQueryLimit()));
 		}, 'email_subscriptions');
 
 		Router::get('/email/subscriptions/count/number', function($req, $res) {
-			$filters = array('group'=>$this->getQueryValue($_GET, 'group', ''),
-				'subscriber'=>$this->getQueryValue($_GET, 'subscriber', ''),
-				'deleted'=>$this->getQueryValue($_GET, 'deleted', ''));
+			$filters = array('group'=>$this->getRequestValue($_GET, 'group', ''),
+				'subscriber'=>$this->getRequestValue($_GET, 'subscriber', ''),
+				'deleted'=>$this->getRequestValue($_GET, 'deleted', ''));
 
 			$res->send($this->getEmailSubscriptionTotal($filters));
 		}, 'email_subscriptions');

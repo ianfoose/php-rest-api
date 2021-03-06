@@ -29,11 +29,11 @@ class IPServices extends APIHelper {
 	*/
 	public function exposeAPI() {
 		Router::get('/traffic', function($req, $res) {
-			$res->send($this->getTraffic($this->getQueryValue($_GET, 'deleted', 0), $this->getQueryDirection(), $this->getQueryOffset(), $this->getQueryLimit()));
+			$res->send($this->getTraffic($this->getRequestValue($_GET, 'deleted', 0), $this->getQueryDirection(), $this->getQueryOffset(), $this->getQueryLimit()));
 		}, 'traffic');
 
 		Router::get('/traffic/count/number', function($req, $res) {
-			$res->send($this->getTrafficTotal($this->getQueryValue($_GET, 'deleted', 0)));
+			$res->send($this->getTrafficTotal($this->getRequestValue($_GET, 'deleted', 0)));
 		}, 'traffic');
 
 		Router::get('/traffic/:id', function($req, $res) {

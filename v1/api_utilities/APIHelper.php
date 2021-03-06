@@ -411,14 +411,14 @@ abstract class APIHelper {
 	}
 
 	/**
-	* Checks for a value and if null provides a default
+	* Checks for a value in the request and if null provides a default
 	*
 	* @param array $parent Parent array, ex $_GET, $_POST
 	* @param string $key Key value to check
 	* @param any $default Default value
 	* @return any
 	*/
-	public function getQueryValue($parent, $key, $default='') {
+	public function getRequestValue($parent, $key, $default='') {
 		if(array_key_exists($key, $parent)) {
 			return isset($parent[$key])?$parent[$key]:$default;
 		}
@@ -431,7 +431,7 @@ abstract class APIHelper {
     * @return int
     */
 	public function getQueryOffset() {
-		$offset = $this->getQueryValue($_GET, 'offset', 0);
+		$offset = $this->getRequestValue($_GET, 'offset', 0);
 
 		if(!is_numeric($offset)) {
 			$offset = 0;
@@ -446,7 +446,7 @@ abstract class APIHelper {
 	* @return int
 	*/
 	public function getQueryLimit() {
-		$limit = $this->getQueryValue($_GET, 'limit', $this->configs['database']['limit']);
+		$limit = $this->getRequestValue($_GET, 'limit', $this->configs['database']['limit']);
 
 		if(!is_numeric($limit)) {
 			$limit = $this->configs['database']['limit'];
@@ -461,7 +461,7 @@ abstract class APIHelper {
 	* @return string
 	*/
 	public function getQueryDirection() {
-		$direction = $this->getQueryValue($_GET, 'direction', $this->configs['database']['direction']);
+		$direction = $this->getRequestValue($_GET, 'direction', $this->configs['database']['direction']);
 
 		if($direction != 'ASC' || $direction != 'DESC') {
 			$direction = $this->configs['database']['direction'];
