@@ -124,14 +124,16 @@ class TokenServices extends APIHelper {
 	public function validate($token) {
 		if($this->checkTokenConfigs()) {
 			$token = $this->decodeToken($token);
-			$sig = sha1($this->prefix.':'.$this->secret.':'.$token['auth']['t']);
+			if(isset($token['auth']['t'])) {
+				$sig = sha1($this->prefix.':'.$this->secret.':'.$token['auth']['t']);
 
-			if($sig === $token['auth']['s']) {
-				$today = date('Y:m:d H:i:s');
+				if(isset($token['auth']['s']) && $sig === $token['auth']['s']) {
+					$today = date('Y:m:d H:i:s');
 
-				if($today < $token['auth']['t']) {
-				    return $token;
-				} 
+					if($today < $token['auth']['t']) {
+					    return $token;
+					} 
+				}
 			}
 			return false;
 		} else {
