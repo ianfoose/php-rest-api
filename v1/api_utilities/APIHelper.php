@@ -296,7 +296,7 @@ abstract class APIHelper {
 	* @return int
 	* @throws Exception
 	*/
-	public function getActivityCount($filters=array()) {
+	public function getActivityCount($filters=array(), $strict=false) {
 		try {
 			$queryString = 'SELECT * FROM '.ACTIVITY;
 			$params = array();
@@ -317,7 +317,11 @@ abstract class APIHelper {
 					$params[$paramID] = $value;	
 
 					if($value != end($filters)) {
-						$queryString .= ' AND ';
+						if($strict) {
+							$queryString .= ' AND ';
+						} else {
+							$queryString .= ' OR ';
+						}
 					}
 				}
 			}
@@ -340,7 +344,7 @@ abstract class APIHelper {
 	* @return array
 	* @throws Exception
 	*/
-	public function getActivity($filters=array(), $direction='ASC', $offset=0, $limit=40, $formatFunc=null) {
+	public function getActivity($filters=array(), $strict=false, $direction='ASC', $offset=0, $limit=40, $formatFunc=null) {
 		try {
 			$queryString = 'SELECT * FROM '.ACTIVITY;
 			$params = array(':limit'=>$limit,':offset'=>$offset);
@@ -361,7 +365,11 @@ abstract class APIHelper {
 					$params[$paramID] = $value;	
 
 					if($value != end($filters)) {
-						$queryString .= ' AND ';
+						if($strict) {
+							$queryString .= ' AND ';
+						} else {
+							$queryString .= ' OR ';
+						}
 					}
 				}
 			}
