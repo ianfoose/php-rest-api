@@ -271,12 +271,11 @@ abstract class APIHelper {
 	*
 	* @param int $id Activity Id
 	* @param string $filter, column filter, default 'id'
-	* @param string $mapping Table name
 	* @param function $formatFunc Function to format sql row
 	* @return Data Object
 	* @throws Exception
 	*/
-	public function getActivityLog($id, $filter='id', $mapping=null, $formatFunc=null) {
+	public function getActivityLog($id, $filter='id', $formatFunc=null) {
 		try {
 			$filters = array('id','object_id','row_id','editor_id');
 			if(!in_array($filter, $filters)) {
@@ -284,7 +283,7 @@ abstract class APIHelper {
 			}
 
 			$auditLog = self::$db->find('*', array($filter=>$id), ACTIVITY, 'Activity');
-			return $this->getActivityData($auditLog, $mapping, $formatFunc);
+			return $this->getActivityData($auditLog, $formatFunc);
 		} catch (Exception $e) {
 			throw $e;
 		}
@@ -337,12 +336,11 @@ abstract class APIHelper {
 	* @param string $direction Query Direction
 	* @param int $offset Pagination offset
 	* @param int $limit Pagination Limit
-	* @param string $mapping Table name
 	* @param function $formatFunc Function to format sql row
 	* @return array
 	* @throws Exception
 	*/
-	public function getActivity($filters=array(), $direction='ASC', $offset=0, $limit=40, $mapping=null, $formatFunc=null) {
+	public function getActivity($filters=array(), $direction='ASC', $offset=0, $limit=40, $formatFunc=null) {
 		try {
 			$queryString = 'SELECT * FROM '.ACTIVITY;
 			$params = array(':limit'=>$limit,':offset'=>$offset);
@@ -374,7 +372,7 @@ abstract class APIHelper {
 			$logs = array();
 
 			while($log = $results->fetch()) {
-				$logs[] = $this->getActivityData($log, $mapping, $formatFunc);
+				$logs[] = $this->getActivityData($log, $formatFunc);
 			}
 
 			return $logs;
@@ -387,25 +385,18 @@ abstract class APIHelper {
 	* Gets an activity logs data and formats it
 	* 
 	* @param object $log Log Object
-	* @param string $mapping Table name to map log data to, Experimental
 	* @param method $formatFunc Method to format a mapped object, Experimental
 	* @return object
 	* @throws Exception
 	*/
-	private function getActivityData($log=null, $mapping=null, $formatFunc=null) {
+	private function getActivityData($log=null, $formatFunc=null) {
 		if(isset($log['date'])) {
 			$log['string_date'] = $this->formatDate($log['date']);
 		}
 
-		// if(!empty($mapping)) {
-		// 	if($object = self::$db->find('*',array('id'=>$log['row_id']), $mapping)) {
-		// 		if($formatFunc) {
-		// 			$log['object'] = $formatFunc($log['object']);
-		// 		} else {
-		// 			$log['object'] = $object;
-		// 		}
-		// 	}
-		// }
+		if(!empty($formatFunc)) {
+			$log['object'] = $formatFunc($log);
+		}
 
 		return $log;
 	}
