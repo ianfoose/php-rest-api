@@ -293,6 +293,7 @@ abstract class APIHelper {
 	* Gets activity count
 	*
 	* @param array $filters Database filters
+	* @param boolean $strict Strict filtering, when true 'AND' will be used in queries.
 	* @return int
 	* @throws Exception
 	*/
@@ -337,6 +338,7 @@ abstract class APIHelper {
 	* Gets all activity logs
 	*
 	* @param array $filters Database filters
+	* @param boolean $strict Strict filtering, when true 'AND' will be used in queries.
 	* @param string $direction Query Direction
 	* @param int $offset Pagination offset
 	* @param int $limit Pagination Limit
